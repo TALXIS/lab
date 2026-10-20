@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Body1, Button, Title2 } from "@fluentui/react-components";
 import { CheckmarkCircleFilled } from "@fluentui/react-icons";
-import { useStyles } from "@/styles/ResultPanel.styles";
+import { useStyles } from "@/styles/result-panel.styles";
 
 type ResultPanelProps = {
   title: string;

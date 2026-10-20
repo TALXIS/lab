@@ -1,6 +1,6 @@
 import type { ReactElement } from "react"
 import { Body1, Title2 } from "@fluentui/react-components"
-import { useStyles } from "@/styles/PageHeader.styles"
+import { useStyles } from "@/styles/page-header.styles"
 
 type PageHeaderProps = {
   icon: ReactElement

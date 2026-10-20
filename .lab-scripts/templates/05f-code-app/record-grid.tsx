@@ -8,7 +8,7 @@ import {
   type IColumn,
   type IRawRecord,
 } from "@talxis/client-libraries";
-import { RecordCards } from "@/components/RecordCards";
+import { RecordCards } from "@/components/record-cards";
 import { useIsPhone } from "@/hooks/use-is-phone";
 import { getEntity } from "@/providers/pcf-host";
 

@@ -1,6 +1,6 @@
 import { Body1, Button, Input, Label } from "@fluentui/react-components";
 import { AddRegular, SubtractRegular } from "@fluentui/react-icons";
-import { useStyles } from "@/styles/QuantityStepper.styles";
+import { useStyles } from "@/styles/quantity-stepper.styles";
 
 type QuantityStepperProps = {
   id: string;

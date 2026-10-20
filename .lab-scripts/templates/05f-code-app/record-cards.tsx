@@ -3,7 +3,7 @@ import { Body1, Input, Spinner, mergeClasses } from "@fluentui/react-components"
 import { SearchRegular } from "@fluentui/react-icons";
 import { useEventEmitter } from "@talxis/base-controls";
 import type { Dataset, IColumn, IRecord, MemoryDataProvider } from "@talxis/client-libraries";
-import { useStyles } from "@/styles/RecordCards.styles";
+import { useStyles } from "@/styles/record-cards.styles";
 
 type RecordCardsProps = {
   /** The dataset a RecordGrid keeps for its rows: the cards show what the grid would. */

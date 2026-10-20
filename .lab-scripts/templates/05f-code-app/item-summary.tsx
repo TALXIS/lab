@@ -1,6 +1,6 @@
 import { Body1, Button, Subtitle1 } from "@fluentui/react-components";
 import type { PickItem } from "@/hooks/use-pick-items";
-import { useStyles } from "@/styles/ItemSummary.styles";
+import { useStyles } from "@/styles/item-summary.styles";
 
 type ItemSummaryProps = {
   item: PickItem;

@@ -2,10 +2,10 @@ import { useMemo, useReducer, useState, type ReactNode } from "react";
 import { CommandBar } from "@fluentui/react";
 import { Body1, Tab, TabList, Title3, mergeClasses } from "@fluentui/react-components";
 import { Form, useEventEmitter, useForm } from "@talxis/base-controls";
-import { RecordForm } from "@/components/RecordForm";
-import { RecordFormFields, type FormField, type LookupRecord } from "@/components/RecordFormFields";
+import { RecordForm } from "@/components/record-form";
+import { RecordFormFields, type FormField, type LookupRecord } from "@/components/record-form-fields";
 import { getEntity } from "@/providers/pcf-host";
-import { useStyles } from "@/styles/RecordDetailForm.styles";
+import { useStyles } from "@/styles/record-detail-form.styles";
 
 /** A tab after the General one; its content can be anything, e.g. a grid of the record's children. */
 type DetailTab = { id: string; label: string; content: ReactNode };

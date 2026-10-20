@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Body1, Button, Input, Spinner } from "@fluentui/react-components";
 import { useBarcodeCamera } from "@/hooks/use-barcode-camera";
 import { eanError } from "@/utils/barcode";
-import { useStyles } from "@/styles/BarcodeScanPanel.styles";
+import { useStyles } from "@/styles/barcode-scan-panel.styles";
 
 type BarcodeScanPanelProps = {
   /** Gets the barcode that was scanned or typed. */
