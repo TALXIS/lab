@@ -6,7 +6,7 @@ import { __PASCAL___warehousetransactionsService } from "@/generated/services/__
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryOptionMetadata, statusOptions, transactionTypeOptionMetadata } from "@/utils/option-sets";
+import { categoryOptionMetadata, statusOptions, transactionTypeOptionMetadata } from "@/utils/OptionSets";
 import {
   Body1,
   Button,
@@ -15,13 +15,13 @@ import {
 } from "@fluentui/react-components";
 import { ArrowLeftRegular } from "@fluentui/react-icons";
 import type { IColumn } from "@talxis/client-libraries";
-import { RecordDetailForm } from "@/components/record-detail-form";
-import { RecordFormDialog } from "@/components/record-form-dialog";
-import type { FormField } from "@/components/record-form-fields";
-import { RecordGrid } from "@/components/record-grid";
+import { RecordDetailForm } from "@/components/RecordDetailForm";
+import { RecordFormDialog } from "@/components/RecordFormDialog";
+import type { FormField } from "@/components/RecordFormFields";
+import { RecordGrid } from "@/components/RecordGrid";
 import { useToast } from "@/hooks/use-toast";
-import { useStyles } from "@/styles/warehouse-item-detail.styles";
-import { servicePayload } from "@/utils/service-payload";
+import { useStyles } from "@/styles/WarehouseItemDetail.styles";
+import { servicePayload } from "@/utils/ServicePayload";
 
 const transactionColumns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 240 },

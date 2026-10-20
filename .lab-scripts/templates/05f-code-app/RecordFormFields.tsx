@@ -1,7 +1,7 @@
 import { Form, useField } from "@talxis/base-controls";
 import type { IColumn } from "@talxis/client-libraries";
 import { RequiredLevelEnum } from "@talxis/client-metadata";
-import { RecordLookup } from "@/components/record-lookup";
+import { RecordLookup } from "@/components/RecordLookup";
 
 export type FormField = {
   /** Carries the validation rules, e.g. metadata MinValue/MaxValue/MaxLength. */

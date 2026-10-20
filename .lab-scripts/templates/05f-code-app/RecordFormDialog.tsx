@@ -10,9 +10,9 @@ import {
   DialogTrigger,
 } from "@fluentui/react-components";
 import { DismissRegular } from "@fluentui/react-icons";
-import { RecordForm } from "@/components/record-form";
-import { RecordFormFields, type FormField, type LookupRecord } from "@/components/record-form-fields";
-import { useStyles } from "@/styles/record-form-dialog.styles";
+import { RecordForm } from "@/components/RecordForm";
+import { RecordFormFields, type FormField, type LookupRecord } from "@/components/RecordFormFields";
+import { useStyles } from "@/styles/RecordFormDialog.styles";
 
 type RecordFormDialogProps = {
   open: boolean;

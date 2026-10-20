@@ -175,7 +175,7 @@ public sealed class WarehousePickingSteps
     }
 
     // CI/Playwright runners have no camera - the scan dialog's manual EAN input is the test
-    // hook barcode-scan-dialog.tsx exposes for exactly this case, so this step never touches the
+    // hook BarcodeScanDialog.tsx exposes for exactly this case, so this step never touches the
     // (unavailable) camera path at all.
     [When("I enter the barcode {string} and look it up")]
     public async Task WhenIEnterTheBarcodeAndLookItUp(string barcode)

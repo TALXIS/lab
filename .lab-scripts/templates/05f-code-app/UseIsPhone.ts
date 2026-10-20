@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// The same width the layout switches its navigation at (styles/_layout.styles.ts)
+// The same width the layout switches its navigation at (styles/Layout.styles.ts)
 const PHONE_QUERY = "(max-width: 640px)";
 
 /** True while the window is phone-sized; follows resizes and rotation. */
