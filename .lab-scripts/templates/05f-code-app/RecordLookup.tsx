@@ -14,7 +14,7 @@ type RecordLookupProps = {
   onChange: (id: string) => void;
   /** id of the control's input, for labels and UI tests. */
   inputId?: string;
-  /** Marks the input aria-required (the page validates on submit). */
+  /** Marks the input aria-required (the surrounding form validates it). */
   required?: boolean;
 };
 

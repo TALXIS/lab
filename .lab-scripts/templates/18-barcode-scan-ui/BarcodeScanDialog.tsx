@@ -23,7 +23,8 @@ import { BarcodeScannerRegular } from "@fluentui/react-icons";
 import { TextField, usePcfContext } from "@talxis/base-controls";
 import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/binary";
-import { useStyles } from "./BarcodeScanDialog.styles";
+import { servicePayload } from "@/utils/service-payload";
+import { useStyles } from "@/styles/BarcodeScanDialog.styles";
 
 type BarcodeScanDialogProps = {
   itemId: string;
@@ -31,6 +32,16 @@ type BarcodeScanDialogProps = {
   currentProductId?: string;
   onLinked: () => void;
 };
+
+// What a barcode can be before it's worth a connector round trip: digits only, in one of the
+// standard lengths (EAN-8, UPC-A, EAN-13, GTIN-14). Deliberately no checksum - a typo that happens
+// to keep the length is cheap to find out from the lookup itself.
+function eanError(value: string): string | undefined {
+  if (!value) return undefined; // nothing typed yet: not an error
+  if (!/^\d+$/.test(value)) return "A barcode contains only digits";
+  if (![8, 12, 13, 14].includes(value.length)) return "A barcode has 8, 12, 13 or 14 digits";
+  return undefined;
+}
 
 // A camera scan and a manually-typed EAN both end up going through the same handleEan path -
 // there's exactly one place that decides what a barcode means. The manual input is also the
@@ -43,6 +54,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   const context = usePcfContext();
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
+  const eanMessage = eanError(ean);
   const [looking, setLooking] = useState(false);
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
@@ -77,6 +89,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         controlsRef.current = controls;
         if (cancelled || !result || productFoundRef.current) return;
         const text = result.getText();
+        // Some other kind of code in frame (a QR, a misread): keep scanning for a real barcode
+        if (eanError(text)) return;
         controls.stop();
         setEan(text);
         void handleEan(text);
@@ -94,7 +108,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   }, [open, videoEl]);
 
   const handleEan = async (barcode: string) => {
-    if (!barcode) return;
+    if (!barcode || eanError(barcode)) return;
     setLooking(true);
     setProduct(null);
     setImgError(false);
@@ -164,14 +178,14 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         // createRecordAsync's response shape for the new record's id isn't reliable across
         // hosts - re-query by the same EAN filter used above instead of trusting the create
         // call's own return value.
-        await __PASCAL___productsService.create({
+        await __PASCAL___productsService.create(servicePayload({
           __PREFIX___name: product.name || ean,
           __PREFIX___ean: ean,
           __PREFIX___brand: product.brand,
           __PREFIX___quantity: product.quantity,
           __PREFIX___imageurl: product.imageUrl,
           __PREFIX___lastsyncedon: new Date().toISOString(),
-        } as any);
+        }));
 
         const created = await __PASCAL___productsService.getAll({
           select: ["__PREFIX___productid"],
@@ -186,9 +200,9 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         return;
       }
 
-      await __PASCAL___warehouseitemsService.update(itemId, {
+      await __PASCAL___warehouseitemsService.update(itemId, servicePayload({
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
-      } as any);
+      }));
 
       if (imageBytes) {
         try {
@@ -245,13 +259,18 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
                 playsInline
               />
 
-              <Field label="EAN / UPC barcode">
+              {/* The TextField only underlines its error in red; the message itself shows on the Field */}
+              <Field
+                label="EAN / UPC barcode"
+                validationState={eanMessage ? "error" : "none"}
+                validationMessage={eanMessage}
+              >
                 <div className={styles.eanRow}>
                   <div className={styles.eanInput}>
                     <TextField
                       context={context}
                       parameters={{
-                        value: { raw: ean, type: "SingleLine.Text" },
+                        value: { raw: ean, type: "SingleLine.Text", error: !!eanMessage, errorMessage: eanMessage },
                         Placeholder: { raw: "e.g. 3017620422003" },
                       }}
                       onNotifyOutputChanged={(outputs) => setEan(outputs.value ?? "")}
@@ -272,7 +291,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
                     type="button"
                     appearance="primary"
                     data-testid="scan-lookup-button"
-                    disabled={!ean || looking}
+                    disabled={!ean || !!eanMessage || looking}
                     onClick={() => void handleEan(ean)}
                   >
                     {looking ? <Spinner size="tiny" /> : "Look Up"}

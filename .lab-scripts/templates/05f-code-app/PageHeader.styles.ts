@@ -4,9 +4,6 @@ export const useStyles = makeStyles({
   root: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: tokens.spacingHorizontalL,
-    flexWrap: "wrap",
   },
   heading: {
     display: "flex",
@@ -23,9 +20,5 @@ export const useStyles = makeStyles({
   },
   subtitle: {
     color: tokens.colorNeutralForeground3,
-  },
-  actions: {
-    display: "flex",
-    gap: tokens.spacingHorizontalS,
   },
 })

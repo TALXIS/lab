@@ -4,29 +4,20 @@ import { __PASCAL___warehousetransactionsService } from "@/generated/services/__
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import type { __PASCAL___warehousetransactions } from "@/generated/models/__PASCAL___warehousetransactionsModel";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
-import { statusOptions, transactionTypeOptionMetadata, optionSetProperty } from "@/utils/optionSets";
+import { transactionTypeOptionMetadata } from "@/utils/optionSets";
 import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
-  DialogTitle,
-  Field,
   MessageBar,
   MessageBarBody,
-  Skeleton,
-  SkeletonItem,
 } from "@fluentui/react-components";
-import { ArrowSwapRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
-import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import { ArrowSwapRegular } from "@fluentui/react-icons";
 import type { IColumn } from "@talxis/client-libraries";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
-import { RecordLookup } from "@/components/RecordLookup";
+import { RecordFormDialog } from "@/components/RecordFormDialog";
+import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
-import { useStyles } from "./transactions.styles";
+import { useStyles } from "@/styles/transactions.styles";
+import { servicePayload } from "@/utils/service-payload";
 
 const transactionTypeMetadata = {
   OptionSet: transactionTypeOptionMetadata,
@@ -36,22 +27,26 @@ const columns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 240 },
   { name: "__PREFIX___quantity", displayName: "Quantity", dataType: "Whole.None", visualSizeFactor: 110 },
   { name: "__PREFIX___transactiontype", displayName: "Type", dataType: "OptionSet", visualSizeFactor: 130, metadata: transactionTypeMetadata },
-  { name: "statecode", displayName: "Status", dataType: "OptionSet", visualSizeFactor: 110, metadata: { OptionSet: statusOptions } as IColumn["metadata"] },
+  { name: "item", displayName: "Item", dataType: "SingleLine.Text", visualSizeFactor: 200 },
   { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+];
+
+// The New Transaction form: every field is required, and a quantity must be at least 1 - the
+// direction comes from the type. The item is an id string, picked through a RecordLookup.
+const formFields: FormField[] = [
+  { column: { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true }, required: true },
+  { column: { name: "__PREFIX___itemid", displayName: "Warehouse Item", dataType: "SingleLine.Text" }, required: true, lookupEntity: "__PREFIX___warehouseitem" },
+  { column: { name: "__PREFIX___quantity", displayName: "Quantity", dataType: "Whole.None", metadata: { MinValue: 1 } as IColumn["metadata"] }, required: true },
+  { column: { name: "__PREFIX___transactiontype", displayName: "Transaction Type", dataType: "OptionSet", metadata: transactionTypeMetadata }, required: true },
 ];
 
 export default function TransactionsPage() {
   const styles = useStyles();
   const toast = useToast();
-  const context = usePcfContext();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [txName, setTxName] = useState("");
-  const [txQuantity, setTxQuantity] = useState<number | null>(null);
-  const [txType, setTxType] = useState<number | null>(null);
-  const [txItemId, setTxItemId] = useState("");
 
-  const { data: transactions, isLoading, error } = useQuery({
+  const { data: transactions, error } = useQuery({
     queryKey: ["allTransactions"],
     queryFn: async () => {
       const result = await __PASCAL___warehousetransactionsService.getAll({
@@ -61,7 +56,7 @@ export default function TransactionsPage() {
           "__PREFIX___quantity",
           "__PREFIX___transactiontype",
           "__PREFIX___transactiondate",
-          "statecode",
+          "___PREFIX___itemid_value",
         ],
         orderBy: ["__PREFIX___transactiondate desc"],
       });
@@ -73,70 +68,62 @@ export default function TransactionsPage() {
     queryKey: ["warehouseItemsLookup"],
     queryFn: async () => {
       const result = await __PASCAL___warehouseitemsService.getAll({
-        select: ["__PREFIX___warehouseitemid", "__PREFIX___name"],
-        filter: "statecode eq 0",
+        // All items, inactive ones too: the grid names the item of every transaction
+        select: ["__PREFIX___warehouseitemid", "__PREFIX___name", "statecode"],
         orderBy: ["__PREFIX___name asc"],
       });
       return result.data ?? [];
     },
   });
 
+  // Only active items can be picked for a new transaction
   const itemRecords = useMemo(
     () =>
-      (items ?? []).map((item: __PASCAL___warehouseitems) => ({
-        id: item.__PREFIX___warehouseitemid,
-        name: item.__PREFIX___name ?? "",
-      })),
+      (items ?? [])
+        .filter((item: __PASCAL___warehouseitems) => Number(item.statecode) === 0)
+        .map((item: __PASCAL___warehouseitems) => ({
+          id: item.__PREFIX___warehouseitemid,
+          name: item.__PREFIX___name ?? "",
+        })),
     [items]
   );
 
+  const itemNames = useMemo(
+    () => new Map((items ?? []).map((item: __PASCAL___warehouseitems) => [item.__PREFIX___warehouseitemid, item.__PREFIX___name ?? ""])),
+    [items]
+  );
+
+  // Grid rows: numbers for numeric/option set columns, and the item lookup resolved to its name
   const rows = useMemo(
     () =>
       transactions?.map((tx: __PASCAL___warehousetransactions) => ({
         ...tx,
         __PREFIX___quantity: Number(tx.__PREFIX___quantity),
         __PREFIX___transactiontype: Number(tx.__PREFIX___transactiontype),
-        statecode: Number(tx.statecode),
+        item: itemNames.get(tx.___PREFIX___itemid_value ?? "") ?? "",
       })),
-    [transactions]
+    [transactions, itemNames]
   );
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      return __PASCAL___warehousetransactionsService.create({
-        __PREFIX___name: txName,
-        __PREFIX___quantity: String(txQuantity),
-        __PREFIX___transactiontype: txType as any,
+    mutationFn: async (values: Record<string, unknown>) => {
+      return __PASCAL___warehousetransactionsService.create(servicePayload({
+        __PREFIX___name: values.__PREFIX___name,
+        __PREFIX___quantity: String(values.__PREFIX___quantity),
+        // Option set values come out of the form as strings
+        __PREFIX___transactiontype: Number(values.__PREFIX___transactiontype),
         __PREFIX___transactiondate: new Date().toISOString(),
-        "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${txItemId})`,
-      } as any);
+        "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${values.__PREFIX___itemid})`,
+      }));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["allTransactions"] });
       toast.success("Transaction created successfully");
-      resetForm();
     },
     onError: (err) => {
       toast.error("Failed to create transaction: " + String(err));
     },
   });
-
-  const resetForm = () => {
-    setDialogOpen(false);
-    setTxName("");
-    setTxQuantity(null);
-    setTxType(null);
-    setTxItemId("");
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!txName || txQuantity === null || txType === null || !txItemId) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-    createMutation.mutate();
-  };
 
   return (
     <div className={styles.page}>
@@ -144,21 +131,6 @@ export default function TransactionsPage() {
         icon={<ArrowSwapRegular />}
         title="Transactions"
         subtitle="All warehouse transactions"
-        actions={
-          <>
-            <Button
-              appearance="outline"
-              icon={<ArrowClockwiseRegular />}
-              aria-label="Refresh"
-              onClick={() =>
-                queryClient.refetchQueries({ queryKey: ["allTransactions"] })
-              }
-            />
-            <Button appearance="primary" icon={<AddRegular />} onClick={() => setDialogOpen(true)}>
-              New Transaction
-            </Button>
-          </>
-        }
       />
 
       {error && (
@@ -167,74 +139,24 @@ export default function TransactionsPage() {
         </MessageBar>
       )}
 
-      {isLoading ? (
-        <Skeleton>
-          <SkeletonItem size={48} />
-        </Skeleton>
-      ) : (
-        <RecordGrid
-          rows={rows}
-          columns={columns}
-          entityName="__PREFIX___warehousetransaction"
-        />
-      )}
+      <RecordGrid
+        rows={rows}
+        columns={columns}
+        entityName="__PREFIX___warehousetransaction"
+        commands={[{ id: "new", label: "New Transaction", icon: "Add", onExecute: () => setDialogOpen(true) }]}
+        onRefresh={() => queryClient.refetchQueries({ queryKey: ["allTransactions"] })}
+      />
 
-      <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
-        <DialogSurface>
-          <form onSubmit={handleSubmit}>
-            <DialogBody>
-              <DialogTitle>Create New Transaction</DialogTitle>
-              <DialogContent className={styles.form}>
-                <Field label={{ children: "Name", htmlFor: "txName" }} required>
-                  <TextField
-                    context={context}
-                    parameters={{ value: { raw: txName, type: "SingleLine.Text" } }}
-                    onNotifyOutputChanged={(outputs) => setTxName(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "txName", "aria-required": true })}
-                  />
-                </Field>
-                <Field label={{ children: "Warehouse Item", htmlFor: "txItem" }} required>
-                  <RecordLookup
-                    entityName="__PREFIX___warehouseitem"
-                    records={itemRecords}
-                    value={txItemId}
-                    onChange={setTxItemId}
-                    inputId="txItem"
-                    required
-                  />
-                </Field>
-                <Field label={{ children: "Quantity", htmlFor: "txQuantity" }} required>
-                  <Decimal
-                    context={context}
-                    parameters={{ value: { raw: txQuantity, type: "Whole.None" } }}
-                    // Unparsable input arrives as the raw text: treat it as no value
-                    onNotifyOutputChanged={(outputs) =>
-                      setTxQuantity(typeof outputs.value === "number" ? outputs.value : null)
-                    }
-                    onOverrideComponentProps={(props) => ({ ...props, id: "txQuantity", "aria-required": true })}
-                  />
-                </Field>
-                <Field label={{ children: "Transaction Type", htmlFor: "txType-input" }} required>
-                  <OptionSet
-                    context={context}
-                    parameters={{ value: optionSetProperty(txType, transactionTypeOptionMetadata) }}
-                    onNotifyOutputChanged={(outputs) => setTxType(outputs.value ?? null)}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "txType", required: true })}
-                  />
-                </Field>
-              </DialogContent>
-              <DialogActions>
-                <Button type="button" appearance="secondary" onClick={resetForm}>
-                  Cancel
-                </Button>
-                <Button type="submit" appearance="primary" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
-                </Button>
-              </DialogActions>
-            </DialogBody>
-          </form>
-        </DialogSurface>
-      </Dialog>
+      <RecordFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title="Create New Transaction"
+        entityName="__PREFIX___warehousetransaction"
+        fields={formFields}
+        lookupRecords={{ __PREFIX___itemid: itemRecords }}
+        onCreate={(values) => createMutation.mutateAsync(values)}
+        pending={createMutation.isPending}
+      />
     </div>
   );
 }
