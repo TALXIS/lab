@@ -19,13 +19,20 @@
 # as a CanvasApp root component and packs dist/ into the solution.
 #
 # After scaffolding and data-source generation, the placeholder UI is replaced with a real
-# implementation (templates/05f-code-app/): an items list, an item detail with its
+# implementation (templates/05f-code-app/): an items list, an item detail form with its
 # transactions, a transactions list and a locations list — all built on the typed models
 # and services that pp-app-code-data generated from the Solutions.DataModel metadata.
-# Lists and form fields are TALXIS base controls (@talxis/base-controls) — the same Dataverse
-# controls as PCF — on the pp-app-code starter's Fluent UI shell.
+# Lists are TALXIS base-controls Grids with a dataset ribbon (New / Refresh); records are created
+# in dialogs and edited on the item page through base-controls Forms (ribbon, header, tabs), validated
+# by their columns — the same Dataverse controls as PCF — on the pp-app-code starter's Fluent UI shell.
 # All three tables get their own page; locations additionally resolve the item's location
-# lookup (list column, detail card, New Item picker) and show a per-location item count.
+# lookup (list column, detail form field, New Item picker) and show a per-location item count.
+# The app opens on a Home screen of big quick-action tiles for the same floor worker on a phone:
+# Take inventory, Receive stock, Pick stock and Find item (components/mobile/, pages/quick-*.tsx,
+# stock-count.tsx, find-item.tsx). Each is a few touch-sized steps that end in one stock transaction
+# (Inbound/Outbound, a stock count books the difference), so the server-side quantity logic is reused.
+# The top tabs become a bottom bar on phones (styles/_layout.styles.ts), and every RecordGrid shows its
+# records as form-style cards there (RecordCards.tsx), since a table doesn't fit a phone.
 # Expects: $PublisherPrefix from parent scope.
 #
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -105,10 +112,13 @@ Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouselocation" -Foreground
 # toasts (useToast) and react-query. We add the real warehouse screens on top of it: an
 # items list, an item detail page with its transactions, a global transactions ledger, and
 # a locations list — then wire them into the router/nav and drop the now-superseded demo page.
-# Lists and form fields are TALXIS base controls (Grid, TextField, Decimal, OptionSet, Lookup),
-# which the starter already wires to a PCF context; two lab components adapt them to a code app:
-# RecordGrid feeds a Grid from rows the page loaded through the generated services, and
-# RecordLookup searches an in-memory list instead of Dataverse views.
+# Lists and form fields are TALXIS base controls, which the starter already wires to a PCF context;
+# lab components adapt them to a code app: RecordGrid feeds a Grid (or, on phones, RecordCards) from
+# rows the page loaded through the generated services and carries the dataset ribbon; RecordForm wraps
+# a base-controls Form over one in-memory record, RecordFormDialog builds the create dialogs on it and
+# RecordDetailForm the item's editable detail form (both validate through the fields' columns, sharing
+# RecordFormFields); RecordLookup searches an in-memory list instead of Dataverse views; and
+# servicePayload hands Dataverse-shaped records to the generated services.
 # Full sources: .lab-scripts/templates/05f-code-app/
 
 Write-Host "`n── Code App Pages ──" -ForegroundColor Cyan
@@ -120,23 +130,52 @@ $appSrc = "src/Apps.WarehousePicking/src"
 $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 
 foreach ($file in @(
+    @{ Template = "service-payload.ts";        Target = "utils/service-payload.ts" },
     @{ Template = "optionSets.ts";             Target = "utils/optionSets.ts" },
     @{ Template = "entities.ts";               Target = "utils/entities.ts" },
     @{ Template = "PageHeader.tsx";            Target = "components/PageHeader.tsx" },
-    @{ Template = "PageHeader.styles.ts";      Target = "components/PageHeader.styles.ts" },
+    @{ Template = "PageHeader.styles.ts";      Target = "styles/PageHeader.styles.ts" },
+    @{ Template = "use-is-phone.ts"; Target = "hooks/use-is-phone.ts" },
+    @{ Template = "RecordCards.tsx"; Target = "components/RecordCards.tsx" },
+    @{ Template = "RecordCards.styles.ts"; Target = "styles/RecordCards.styles.ts" },
     @{ Template = "RecordGrid.tsx";            Target = "components/RecordGrid.tsx" },
+    @{ Template = "RecordForm.tsx";            Target = "components/RecordForm.tsx" },
+    @{ Template = "RecordFormDialog.tsx";      Target = "components/RecordFormDialog.tsx" },
+    @{ Template = "RecordFormDialog.styles.ts"; Target = "styles/RecordFormDialog.styles.ts" },
+    @{ Template = "RecordFormFields.tsx";      Target = "components/RecordFormFields.tsx" },
+    @{ Template = "RecordDetailForm.tsx";      Target = "components/RecordDetailForm.tsx" },
+    @{ Template = "RecordDetailForm.styles.ts"; Target = "styles/RecordDetailForm.styles.ts" },
+    @{ Template = "main.tsx";                  Target = "main.tsx" },
     @{ Template = "RecordLookup.tsx";          Target = "components/RecordLookup.tsx" },
+    @{ Template = "use-pick-items.ts"; Target = "hooks/use-pick-items.ts" },
+    @{ Template = "stock-transactions.ts"; Target = "utils/stock-transactions.ts" },
+    @{ Template = "MobilePage.tsx"; Target = "components/mobile/MobilePage.tsx" },
+    @{ Template = "ItemPicker.tsx"; Target = "components/mobile/ItemPicker.tsx" },
+    @{ Template = "QuantityStepper.tsx"; Target = "components/mobile/QuantityStepper.tsx" },
+    @{ Template = "ItemSummary.tsx"; Target = "components/mobile/ItemSummary.tsx" },
+    @{ Template = "ResultPanel.tsx"; Target = "components/mobile/ResultPanel.tsx" },
+    @{ Template = "MobilePage.styles.ts"; Target = "styles/MobilePage.styles.ts" },
+    @{ Template = "QuantityStepper.styles.ts"; Target = "styles/QuantityStepper.styles.ts" },
+    @{ Template = "ItemPicker.styles.ts"; Target = "styles/ItemPicker.styles.ts" },
+    @{ Template = "ItemSummary.styles.ts"; Target = "styles/ItemSummary.styles.ts" },
+    @{ Template = "ResultPanel.styles.ts"; Target = "styles/ResultPanel.styles.ts" },
+    @{ Template = "quick-actions.tsx"; Target = "pages/quick-actions.tsx" },
+    @{ Template = "quick-actions.styles.ts"; Target = "styles/quick-actions.styles.ts" },
+    @{ Template = "quick-transaction.tsx"; Target = "pages/quick-transaction.tsx" },
+    @{ Template = "quick-transaction.styles.ts"; Target = "styles/quick-transaction.styles.ts" },
+    @{ Template = "stock-count.tsx"; Target = "pages/stock-count.tsx" },
+    @{ Template = "find-item.tsx"; Target = "pages/find-item.tsx" },
     @{ Template = "router.tsx";                Target = "router.tsx" },
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
-    @{ Template = "_layout.styles.ts";         Target = "pages/_layout.styles.ts" },
+    @{ Template = "_layout.styles.ts";         Target = "styles/_layout.styles.ts" },
     @{ Template = "warehouse-items.tsx";       Target = "pages/warehouse-items.tsx" },
-    @{ Template = "warehouse-items.styles.ts"; Target = "pages/warehouse-items.styles.ts" },
+    @{ Template = "warehouse-items.styles.ts"; Target = "styles/warehouse-items.styles.ts" },
     @{ Template = "warehouse-item-detail.tsx"; Target = "pages/warehouse-item-detail.tsx" },
-    @{ Template = "warehouse-item-detail.styles.ts"; Target = "pages/warehouse-item-detail.styles.ts" },
+    @{ Template = "warehouse-item-detail.styles.ts"; Target = "styles/warehouse-item-detail.styles.ts" },
     @{ Template = "transactions.tsx";          Target = "pages/transactions.tsx" },
-    @{ Template = "transactions.styles.ts";    Target = "pages/transactions.styles.ts" },
+    @{ Template = "transactions.styles.ts";    Target = "styles/transactions.styles.ts" },
     @{ Template = "locations.tsx";             Target = "pages/locations.tsx" },
-    @{ Template = "locations.styles.ts";       Target = "pages/locations.styles.ts" }
+    @{ Template = "locations.styles.ts";       Target = "styles/locations.styles.ts" }
 )) {
     Expand-LabTemplate -Path "05f-code-app/$($file.Template)" `
         -Destination "$appSrc/$($file.Target)" `
@@ -144,7 +183,26 @@ foreach ($file in @(
     Write-Host "  ✓ $($file.Target)" -ForegroundColor Green
 }
 
+# Form.Field's requiredLevel takes a RequiredLevelEnum from @talxis/client-metadata, which base
+# controls only pull in transitively: declare it so the import is a real dependency
+# The starter also brings two packages nothing in this app uses (a state store and a table library).
+Push-Location "src/Apps.WarehousePicking"
+npm pkg set "dependencies.@talxis/client-metadata=^0.0.7"
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm pkg set @talxis/client-metadata failed" }
+npm pkg delete dependencies.zustand "dependencies.@tanstack/react-table"
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm pkg delete zustand/react-table failed" }
+Pop-Location
+
 # Drop the now-superseded counter-demo home page (and its styles) — the router no longer references it
 Remove-Item "$appSrc/pages/home.tsx", "$appSrc/pages/home.styles.ts" -ErrorAction SilentlyContinue
+
+# ...and the starter's theme toggle (never placed in the layout) with its hook, and its React logo
+Remove-Item "$appSrc/components/mode-toggle.tsx", "$appSrc/hooks/use-theme.ts", "$appSrc/assets/react.svg" -ErrorAction SilentlyContinue
+if (-not (Get-ChildItem "$appSrc/assets" -ErrorAction SilentlyContinue)) { Remove-Item "$appSrc/assets" -ErrorAction SilentlyContinue }
+
+# Styles live apart from components and pages: move the starter's own page styles there too
+New-Item -ItemType Directory -Force "$appSrc/styles" | Out-Null
+Move-Item "$appSrc/pages/not-found.styles.ts" "$appSrc/styles/not-found.styles.ts" -Force -ErrorAction SilentlyContinue
+(Get-Content "$appSrc/pages/not-found.tsx" -Raw) -replace 'from "\./not-found\.styles"', 'from "@/styles/not-found.styles"' | Set-Content "$appSrc/pages/not-found.tsx" -NoNewline
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray

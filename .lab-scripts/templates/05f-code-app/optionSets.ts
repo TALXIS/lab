@@ -1,8 +1,7 @@
-import type { IOptionSetProperty } from "@talxis/base-controls";
 import { __PASCAL___warehouseitems__PREFIX___category } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import { __PASCAL___warehousetransactions__PREFIX___transactiontype } from "@/generated/models/__PASCAL___warehousetransactionsModel";
 
-export const categoryLabels = __PASCAL___warehouseitems__PREFIX___category;
+const categoryLabels = __PASCAL___warehouseitems__PREFIX___category;
 
 // Option set choices as base-controls option metadata (OptionSet control options, grid columns)
 const toOptionMetadata = (labels: Record<number, string>) =>
@@ -16,11 +15,3 @@ export const statusOptions = [
   { Value: 0, Label: "Active", Color: "#107C10" },
   { Value: 1, Label: "Inactive", Color: "#C50F1F" },
 ];
-
-// Value parameter for a base-controls OptionSet field
-export function optionSetProperty(
-  raw: number | null,
-  options: ComponentFramework.PropertyHelper.OptionMetadata[]
-): IOptionSetProperty {
-  return { raw, attributes: { Options: options } };
-}

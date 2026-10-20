@@ -22,6 +22,17 @@ Feature: Warehouse Picking
         When I pick a quantity of '5'
         Then the quantity on hand should have decreased by '5'
 
+    # The Home screen's quick actions: the same stock movements, a few taps from the phone-friendly tiles
+    Scenario: Receiving stock from the home screen raises the quantity
+        Given I open the 'Office Laptop' item
+        When I receive '3' of 'Office Laptop' from the home screen
+        Then the quantity on hand of 'Office Laptop' should have increased by '3'
+
+    Scenario: A stock count below the record books the difference
+        Given I open the 'Office Laptop' item
+        When I take inventory of 'Office Laptop' counting '2' fewer than recorded
+        Then the quantity on hand of 'Office Laptop' should have decreased by '2'
+
     # 3017620422003 is a real, stable Open Food Facts barcode (Nutella) - chosen because it's
     # unlikely to ever be removed from the public database, the same reasoning CP11's own
     # checkpoint script comments use it for.

@@ -7,9 +7,4 @@ export const useStyles = makeStyles({
     flexDirection: "column",
     gap: tokens.spacingVerticalXL,
   },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: tokens.spacingVerticalM,
-  },
 });

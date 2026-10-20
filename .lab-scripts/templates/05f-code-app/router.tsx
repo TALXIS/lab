@@ -1,5 +1,9 @@
 import { createBrowserRouter } from "react-router-dom"
 import Layout from "@/pages/_layout"
+import QuickActionsPage from "@/pages/quick-actions"
+import QuickTransactionPage from "@/pages/quick-transaction"
+import StockCountPage from "@/pages/stock-count"
+import FindItemPage from "@/pages/find-item"
 import WarehouseItemsPage from "@/pages/warehouse-items"
 import WarehouseItemDetailPage from "@/pages/warehouse-item-detail"
 import TransactionsPage from "@/pages/transactions"
@@ -21,7 +25,12 @@ export const router = createBrowserRouter([
     element: <Layout showHeader={true} />,
     errorElement: <NotFoundPage />,
     children: [
-      { index: true, element: <WarehouseItemsPage /> },
+      { index: true, element: <QuickActionsPage /> },
+      { path: "receive", element: <QuickTransactionPage mode="receive" /> },
+      { path: "pick", element: <QuickTransactionPage mode="pick" /> },
+      { path: "inventory", element: <StockCountPage /> },
+      { path: "find", element: <FindItemPage /> },
+      { path: "items", element: <WarehouseItemsPage /> },
       { path: "items/:id", element: <WarehouseItemDetailPage /> },
       { path: "transactions", element: <TransactionsPage /> },
       { path: "locations", element: <LocationsPage /> },

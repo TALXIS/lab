@@ -3,7 +3,7 @@
 # ║                            18: Barcode Scan UI                                         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Adds a "Scan Barcode" button to the item detail page (CP09). It opens a dialog that decodes
+# Adds a "Scan Barcode" button to the item detail page (CP09), in the header of its form. It opens a dialog that decodes
 # a barcode with the device camera (@zxing/browser) or accepts one typed in manually, looks
 # it up via the connector, and on confirmation upserts a Product record, links it to the item,
 # and shows its image (once linked) via a new LinkedProductImage component.
@@ -32,8 +32,8 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
             -Destination "$appSrc/components/$component.tsx" `
             -Tokens $uiTokens
         Expand-LabTemplate -Path "18-barcode-scan-ui/$component.styles.ts" `
-            -Destination "$appSrc/components/$component.styles.ts"
-        Write-Host "  ✓ components/$component.tsx (+ $component.styles.ts)" -ForegroundColor Green
+            -Destination "$appSrc/styles/$component.styles.ts"
+        Write-Host "  ✓ components/$component.tsx (+ styles/$component.styles.ts)" -ForegroundColor Green
     }
 
     $detailPagePath = "$appSrc/pages/warehouse-item-detail.tsx"
@@ -45,7 +45,7 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
     if ($detailPage.Contains("BarcodeScanDialog")) {
         Write-Host "  ✓ warehouse-item-detail.tsx (already wired)" -ForegroundColor Green
     } else {
-        $importAnchor = 'import { ArrowLeftRegular, AddRegular, BoxRegular, ArrowSwapRegular, LocationRegular } from "@fluentui/react-icons";'
+        $importAnchor = 'import { ArrowLeftRegular } from "@fluentui/react-icons";'
         $importReplacement = @"
 $importAnchor
 import BarcodeScanDialog from "@/components/BarcodeScanDialog";
@@ -75,29 +75,31 @@ $mutationAnchor
         if (-not $detailPage.Contains($mutationAnchor)) { throw "warehouse-item-detail.tsx: mutation anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
-        # Reuses the page's own toolbar/inline/muted/name styles (warehouse-item-detail.styles.ts),
-        # so the patch needs no new style entries.
-        $cardsAnchor = '      <div className={styles.cards}>'
-        $cardsReplacement = @"
-      <div className={styles.toolbar}>
-        <BarcodeScanDialog
-          itemId={id!}
-          currentProductId={linkedProductId}
-          onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
-        />
-        {linkedProduct && (
-          <div className={styles.inline} data-testid="linked-product-name">
-            <LinkedProductImage productId={linkedProductId!} />
-            <Body1 className={styles.muted}>Linked product:</Body1>
-            <Body1 className={styles.name}>{linkedProduct.${PublisherPrefix}_name}</Body1>
-          </div>
-        )}
-      </div>
-
-$cardsAnchor
+        # The scan button and the linked product go into the detail form's header (its headerExtras
+        # slot, on the right of the record title), reusing the page's own inline/muted/name styles
+        # (styles/warehouse-item-detail.styles.ts), so the patch needs no new style entries.
+        $headerAnchor = '            onBack={() => navigate("/items")}'
+        $headerReplacement = @"
+            headerExtras={
+              <>
+                <BarcodeScanDialog
+                  itemId={id!}
+                  currentProductId={linkedProductId}
+                  onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
+                />
+                {linkedProduct && (
+                  <div className={styles.inline} data-testid="linked-product-name">
+                    <LinkedProductImage productId={linkedProductId!} />
+                    <Body1 className={styles.muted}>Linked product:</Body1>
+                    <Body1 className={styles.name}>{linkedProduct.${PublisherPrefix}_name}</Body1>
+                  </div>
+                )}
+              </>
+            }
+$headerAnchor
 "@
-        if (-not $detailPage.Contains($cardsAnchor)) { throw "warehouse-item-detail.tsx: cards anchor not found - CP09 template may have changed." }
-        $detailPage = $detailPage.Replace($cardsAnchor, $cardsReplacement)
+        if (-not $detailPage.Contains($headerAnchor)) { throw "warehouse-item-detail.tsx: header anchor not found - CP09 template may have changed." }
+        $detailPage = $detailPage.Replace($headerAnchor, $headerReplacement)
 
         Set-Content -Path $detailPagePath -Value $detailPage -Encoding UTF8 -NoNewline
         Write-Host "  ✓ warehouse-item-detail.tsx (Scan Barcode button + linked product wired)" -ForegroundColor Green

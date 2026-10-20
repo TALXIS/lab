@@ -4,29 +4,20 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryOptionMetadata, statusOptions, optionSetProperty } from "@/utils/optionSets";
+import { categoryOptionMetadata, statusOptions } from "@/utils/optionSets";
 import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogBody,
-  DialogContent,
-  DialogSurface,
-  DialogTitle,
-  Field,
   MessageBar,
   MessageBarBody,
-  Skeleton,
-  SkeletonItem,
 } from "@fluentui/react-components";
-import { BoxRegular, AddRegular, ArrowClockwiseRegular } from "@fluentui/react-icons";
-import { Decimal, OptionSet, TextField, usePcfContext } from "@talxis/base-controls";
+import { BoxRegular } from "@fluentui/react-icons";
 import type { IColumn } from "@talxis/client-libraries";
 import { PageHeader } from "@/components/PageHeader";
 import { RecordGrid } from "@/components/RecordGrid";
-import { RecordLookup } from "@/components/RecordLookup";
+import { RecordFormDialog } from "@/components/RecordFormDialog";
+import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
-import { useStyles } from "./warehouse-items.styles";
+import { useStyles } from "@/styles/warehouse-items.styles";
+import { servicePayload } from "@/utils/service-payload";
 
 const columns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 220 },
@@ -38,19 +29,23 @@ const columns: IColumn[] = [
   { name: "createdon", displayName: "Created", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
 ];
 
+// The New Item form: name, SKU, quantity (no negatives) and category are required; the location
+// is optional and picked through a RecordLookup (it holds the location's id).
+const formFields: FormField[] = [
+  { column: { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true }, required: true },
+  { column: { name: "__PREFIX___sku", displayName: "SKU", dataType: "SingleLine.Text" }, required: true },
+  { column: { name: "__PREFIX___availablequantity", displayName: "Available Quantity", dataType: "Whole.None", metadata: { MinValue: 0 } as IColumn["metadata"] }, required: true },
+  { column: { name: "__PREFIX___category", displayName: "Category", dataType: "OptionSet", metadata: { OptionSet: categoryOptionMetadata } as IColumn["metadata"] }, required: true },
+  { column: { name: "__PREFIX___locationid", displayName: "Location", dataType: "SingleLine.Text" }, lookupEntity: "__PREFIX___warehouselocation" },
+];
+
 export default function WarehouseItemsPage() {
   const styles = useStyles();
   const toast = useToast();
-  const context = usePcfContext();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [sku, setSku] = useState("");
-  const [quantity, setQuantity] = useState<number | null>(null);
-  const [category, setCategory] = useState<number | null>(null);
-  const [locationId, setLocationId] = useState("");
 
-  const { data: items, isLoading, error } = useQuery({
+  const { data: items, error } = useQuery({
     queryKey: ["warehouseItems"],
     queryFn: async () => {
       const result = await __PASCAL___warehouseitemsService.getAll({
@@ -104,44 +99,26 @@ export default function WarehouseItemsPage() {
   }, [items, locationRecords]);
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      return __PASCAL___warehouseitemsService.create({
-        __PREFIX___name: name,
-        __PREFIX___sku: sku,
-        __PREFIX___availablequantity: String(quantity),
-        __PREFIX___category: category as any,
-        ...(locationId
-          ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${locationId})` }
+    mutationFn: async (values: Record<string, unknown>) => {
+      return __PASCAL___warehouseitemsService.create(servicePayload({
+        __PREFIX___name: values.__PREFIX___name,
+        __PREFIX___sku: values.__PREFIX___sku,
+        __PREFIX___availablequantity: String(values.__PREFIX___availablequantity),
+        // Option set values come out of the form as strings
+        __PREFIX___category: Number(values.__PREFIX___category),
+        ...(values.__PREFIX___locationid
+          ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${values.__PREFIX___locationid})` }
           : {}),
-      } as any);
+      }));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseItems"] });
       toast.success("Item created successfully");
-      resetForm();
     },
     onError: (err) => {
       toast.error("Failed to create item: " + String(err));
     },
   });
-
-  const resetForm = () => {
-    setDialogOpen(false);
-    setName("");
-    setSku("");
-    setQuantity(null);
-    setCategory(null);
-    setLocationId("");
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !sku || quantity === null || category === null) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-    createMutation.mutate();
-  };
 
   return (
     <div className={styles.page}>
@@ -149,21 +126,6 @@ export default function WarehouseItemsPage() {
         icon={<BoxRegular />}
         title="Warehouse Items"
         subtitle="Manage your warehouse inventory"
-        actions={
-          <>
-            <Button
-              appearance="outline"
-              icon={<ArrowClockwiseRegular />}
-              aria-label="Refresh"
-              onClick={() =>
-                queryClient.invalidateQueries({ queryKey: ["warehouseItems"] })
-              }
-            />
-            <Button appearance="primary" icon={<AddRegular />} onClick={() => setDialogOpen(true)}>
-              New Item
-            </Button>
-          </>
-        }
       />
 
       {error && (
@@ -172,82 +134,25 @@ export default function WarehouseItemsPage() {
         </MessageBar>
       )}
 
-      {isLoading ? (
-        <Skeleton>
-          <SkeletonItem size={48} />
-        </Skeleton>
-      ) : (
-        <RecordGrid
-          rows={rows}
-          columns={columns}
-          entityName="__PREFIX___warehouseitem"
-          rowClassName="warehouse-item-row"
-        />
-      )}
+      <RecordGrid
+        rows={rows}
+        columns={columns}
+        entityName="__PREFIX___warehouseitem"
+        rowClassName="warehouse-item-row"
+        commands={[{ id: "new", label: "New Item", icon: "Add", onExecute: () => setDialogOpen(true) }]}
+        onRefresh={() => queryClient.refetchQueries({ queryKey: ["warehouseItems"] })}
+      />
 
-      <Dialog open={dialogOpen} onOpenChange={(_, data) => setDialogOpen(data.open)}>
-        <DialogSurface>
-          <form onSubmit={handleSubmit}>
-            <DialogBody>
-              <DialogTitle>Create New Item</DialogTitle>
-              <DialogContent className={styles.form}>
-                <Field label={{ children: "Name", htmlFor: "name" }} required>
-                  <TextField
-                    context={context}
-                    parameters={{ value: { raw: name, type: "SingleLine.Text" } }}
-                    onNotifyOutputChanged={(outputs) => setName(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "name", "aria-required": true })}
-                  />
-                </Field>
-                <Field label={{ children: "SKU", htmlFor: "sku" }} required>
-                  <TextField
-                    context={context}
-                    parameters={{ value: { raw: sku, type: "SingleLine.Text" } }}
-                    onNotifyOutputChanged={(outputs) => setSku(outputs.value ?? "")}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "sku", "aria-required": true })}
-                  />
-                </Field>
-                <Field label={{ children: "Available Quantity", htmlFor: "quantity" }} required>
-                  <Decimal
-                    context={context}
-                    parameters={{ value: { raw: quantity, type: "Whole.None" } }}
-                    // Unparsable input arrives as the raw text: treat it as no value
-                    onNotifyOutputChanged={(outputs) =>
-                      setQuantity(typeof outputs.value === "number" ? outputs.value : null)
-                    }
-                    onOverrideComponentProps={(props) => ({ ...props, id: "quantity", "aria-required": true })}
-                  />
-                </Field>
-                <Field label={{ children: "Category", htmlFor: "category-input" }} required>
-                  <OptionSet
-                    context={context}
-                    parameters={{ value: optionSetProperty(category, categoryOptionMetadata) }}
-                    onNotifyOutputChanged={(outputs) => setCategory(outputs.value ?? null)}
-                    onOverrideComponentProps={(props) => ({ ...props, id: "category", required: true })}
-                  />
-                </Field>
-                <Field label={{ children: "Location", htmlFor: "location" }}>
-                  <RecordLookup
-                    entityName="__PREFIX___warehouselocation"
-                    records={locationRecords}
-                    value={locationId}
-                    onChange={setLocationId}
-                    inputId="location"
-                  />
-                </Field>
-              </DialogContent>
-              <DialogActions>
-                <Button type="button" appearance="secondary" onClick={resetForm}>
-                  Cancel
-                </Button>
-                <Button type="submit" appearance="primary" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create"}
-                </Button>
-              </DialogActions>
-            </DialogBody>
-          </form>
-        </DialogSurface>
-      </Dialog>
+      <RecordFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title="Create New Item"
+        entityName="__PREFIX___warehouseitem"
+        fields={formFields}
+        lookupRecords={{ __PREFIX___locationid: locationRecords }}
+        onCreate={(values) => createMutation.mutateAsync(values)}
+        pending={createMutation.isPending}
+      />
     </div>
   );
 }
