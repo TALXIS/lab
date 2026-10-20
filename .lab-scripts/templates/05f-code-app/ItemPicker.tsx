@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Body1, Input, MessageBar, MessageBarBody, Spinner } from "@fluentui/react-components";
-import { SearchRegular } from "@fluentui/react-icons";
+import { Body1, Input, MessageBar, MessageBarBody, Spinner, mergeClasses } from "@fluentui/react-components";
+import { AddRegular, SearchRegular } from "@fluentui/react-icons";
 import { usePickItems, type PickItem } from "@/hooks/use-pick-items";
 import { useStyles } from "@/styles/ItemPicker.styles";
 
@@ -8,13 +8,15 @@ type ItemPickerProps = {
   onSelect: (item: PickItem) => void;
   /** Leave out each item's quantity on record, e.g. for a blind count. */
   hideOnHand?: boolean;
+  /** Adds a "New item" row at the end of the list; gets what was typed in the search. */
+  onCreate?: (search: string) => void;
 };
 
 const MAX_ROWS = 50;
 
 // Search box and a list of big rows to choose an item from. Matches the name, SKU or barcode as typed
 // (any part, any case); with nothing typed it lists the first items alphabetically.
-export function ItemPicker({ onSelect, hideOnHand }: ItemPickerProps) {
+export function ItemPicker({ onSelect, hideOnHand, onCreate }: ItemPickerProps) {
   const styles = useStyles();
   const { items, isLoading, error } = usePickItems();
   const [search, setSearch] = useState("");
@@ -69,6 +71,15 @@ export function ItemPicker({ onSelect, hideOnHand }: ItemPickerProps) {
         ))}
         {!isLoading && !error && matches.length === 0 && (
           <Body1 className={styles.empty}>No items match "{search}".</Body1>
+        )}
+        {onCreate && !isLoading && (
+          <button type="button" className={mergeClasses(styles.row, styles.createRow)} data-testid="new-item-row" onClick={() => onCreate(search.trim())}>
+            <span className={styles.rowText}>
+              <span className={styles.name}>{needle ? `New item "${search.trim()}"` : "New item"}</span>
+              <span className={styles.meta}>Not in the list? Add it</span>
+            </span>
+            <AddRegular />
+          </button>
         )}
       </div>
     </div>

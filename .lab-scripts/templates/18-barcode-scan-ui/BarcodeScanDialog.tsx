@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
-import type { IScannerControls } from "@zxing/browser";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
 import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
@@ -21,8 +19,11 @@ import {
 } from "@fluentui/react-components";
 import { BarcodeScannerRegular } from "@fluentui/react-icons";
 import { TextField, usePcfContext } from "@talxis/base-controls";
+import { useBarcodeCamera } from "@/hooks/use-barcode-camera";
 import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/binary";
+import { eanError } from "@/utils/barcode";
+import { ensureProductRecord } from "@/utils/barcode-lookup";
 import { servicePayload } from "@/utils/service-payload";
 import { useStyles } from "@/styles/BarcodeScanDialog.styles";
 
@@ -32,16 +33,6 @@ type BarcodeScanDialogProps = {
   currentProductId?: string;
   onLinked: () => void;
 };
-
-// What a barcode can be before it's worth a connector round trip: digits only, in one of the
-// standard lengths (EAN-8, UPC-A, EAN-13, GTIN-14). Deliberately no checksum - a typo that happens
-// to keep the length is cheap to find out from the lookup itself.
-function eanError(value: string): string | undefined {
-  if (!value) return undefined; // nothing typed yet: not an error
-  if (!/^\d+$/.test(value)) return "A barcode contains only digits";
-  if (![8, 12, 13, 14].includes(value.length)) return "A barcode has 8, 12, 13 or 14 digits";
-  return undefined;
-}
 
 // A camera scan and a manually-typed EAN both end up going through the same handleEan path -
 // there's exactly one place that decides what a barcode means. The manual input is also the
@@ -67,45 +58,23 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   // A callback ref, not useRef: the decode effect must not start before the <video> is
   // actually mounted, and state (unlike a ref) retriggers the effect once it is.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
   // A camera decode and a manual lookup can resolve in either order - once one of them has
   // already produced a product, a late/stray camera decode (e.g. a misread off a bad frame)
   // must not silently overwrite it.
   const productFoundRef = useRef(false);
 
+  // A fresh scan starts every time the dialog opens
   useEffect(() => {
-    if (!open || !videoEl) return;
-    productFoundRef.current = false;
+    if (open) productFoundRef.current = false;
+  }, [open]);
 
-    // React's `muted` JSX attribute doesn't reliably set the underlying DOM property; some
-    // browsers require the property itself for autoplay to work.
-    videoEl.muted = true;
-
-    const reader = new BrowserMultiFormatReader();
-    let cancelled = false;
-
-    reader
-      .decodeFromVideoDevice(undefined, videoEl, (result, _err, controls) => {
-        controlsRef.current = controls;
-        if (cancelled || !result || productFoundRef.current) return;
-        const text = result.getText();
-        // Some other kind of code in frame (a QR, a misread): keep scanning for a real barcode
-        if (eanError(text)) return;
-        controls.stop();
-        setEan(text);
-        void handleEan(text);
-      })
-      .catch(() => {
-        // No camera available (headless CI, permission denied, no device) - not an error
-        // worth surfacing, the manual EAN input below is the fallback either way.
-      });
-
-    return () => {
-      cancelled = true;
-      controlsRef.current?.stop();
-      controlsRef.current = null;
-    };
-  }, [open, videoEl]);
+  // The camera (see use-barcode-camera: back camera, skips anything that isn't a plausible barcode,
+  // stops itself); with no camera the manual input below is the fallback either way
+  useBarcodeCamera(videoEl, open, (text) => {
+    if (productFoundRef.current) return;
+    setEan(text);
+    void handleEan(text);
+  });
 
   const handleEan = async (barcode: string) => {
     if (!barcode || eanError(barcode)) return;
@@ -164,36 +133,7 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     if (!product || !ean) return;
     setLinking(true);
     try {
-      // No alternate key on EAN (see .lab-scripts/scaffold/15-product-table.ps1) - a plain
-      // filter-then-create instead of an upsert, so scanning the same barcode twice reuses
-      // the existing Product record rather than duplicating it.
-      const existing = await __PASCAL___productsService.getAll({
-        select: ["__PREFIX___productid"],
-        filter: `__PREFIX___ean eq '${ean}'`,
-        top: 1,
-      });
-      let productId = existing.data?.[0]?.__PREFIX___productid;
-
-      if (!productId) {
-        // createRecordAsync's response shape for the new record's id isn't reliable across
-        // hosts - re-query by the same EAN filter used above instead of trusting the create
-        // call's own return value.
-        await __PASCAL___productsService.create(servicePayload({
-          __PREFIX___name: product.name || ean,
-          __PREFIX___ean: ean,
-          __PREFIX___brand: product.brand,
-          __PREFIX___quantity: product.quantity,
-          __PREFIX___imageurl: product.imageUrl,
-          __PREFIX___lastsyncedon: new Date().toISOString(),
-        }));
-
-        const created = await __PASCAL___productsService.getAll({
-          select: ["__PREFIX___productid"],
-          filter: `__PREFIX___ean eq '${ean}'`,
-          top: 1,
-        });
-        productId = created.data?.[0]?.__PREFIX___productid;
-      }
+      const productId = await ensureProductRecord(ean, product);
 
       if (!productId) {
         toast.error("Could not resolve a Product record to link");
@@ -202,6 +142,8 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
       await __PASCAL___warehouseitemsService.update(itemId, servicePayload({
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
+        // So the Receive screen finds this item by the same barcode next time
+        __PREFIX___barcode: ean,
       }));
 
       if (imageBytes) {

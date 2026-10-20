@@ -38,6 +38,10 @@ export const useStyles = makeStyles({
       backgroundColor: tokens.colorNeutralBackground1Pressed,
     },
   },
+  createRow: {
+    border: `${tokens.strokeWidthThin} dashed ${tokens.colorBrandStroke1}`,
+    color: tokens.colorBrandForeground1,
+  },
   rowText: {
     display: "flex",
     flexDirection: "column",

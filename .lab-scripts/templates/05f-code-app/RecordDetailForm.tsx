@@ -87,29 +87,31 @@ export function RecordDetailForm({
         <div className={styles.ribbon}>
           <FormRibbon onBack={onBack} />
         </div>
-        <div className={styles.header}>
-          <div className={styles.headerTop}>
-            <div className={styles.titleBlock}>
-              <div className={styles.titleRow}>
-                <Title3 as="h1">{title}</Title3>
-                <SaveStatus />
+        <div className={styles.detail}>
+          <div className={styles.header}>
+            <div className={styles.headerTop}>
+              <div className={styles.titleBlock}>
+                <div className={styles.titleRow}>
+                  <Title3 as="h1">{title}</Title3>
+                  <SaveStatus />
+                </div>
+                <Body1 className={styles.subtitle}>{getEntity(entityName)?.displayName}</Body1>
               </div>
-              <Body1 className={styles.subtitle}>{getEntity(entityName)?.displayName}</Body1>
+              {headerExtras && <div className={styles.extras}>{headerExtras}</div>}
             </div>
-            {headerExtras && <div className={styles.extras}>{headerExtras}</div>}
+            <TabList selectedValue={current.id} onTabSelect={(_, data) => setActiveTab(String(data.value))}>
+              {allTabs.map((tab) => (
+                <Tab key={tab.id} value={tab.id} data-id={`tab-header-${tab.id}`}>
+                  {tab.label}
+                </Tab>
+              ))}
+            </TabList>
           </div>
-          <TabList selectedValue={current.id} onTabSelect={(_, data) => setActiveTab(String(data.value))}>
-            {allTabs.map((tab) => (
-              <Tab key={tab.id} value={tab.id} data-id={`tab-header-${tab.id}`}>
-                {tab.label}
-              </Tab>
-            ))}
-          </TabList>
-        </div>
-        <div className={styles.body}>
-          <Form.Tab key={current.id} id={current.id} label={current.label}>
-            <Form.Column>{current.content}</Form.Column>
-          </Form.Tab>
+          <div className={styles.body}>
+            <Form.Tab key={current.id} id={current.id} label={current.label}>
+              <Form.Column>{current.content}</Form.Column>
+            </Form.Tab>
+          </div>
         </div>
       </div>
       {/* The ribbon's Save only reacts to the mouse; this makes Enter inside a field save too */}

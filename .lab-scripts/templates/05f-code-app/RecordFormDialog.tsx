@@ -23,6 +23,8 @@ type RecordFormDialogProps = {
   /** Keep this array stable (define it at module level): the form is built from it once. */
   fields: FormField[];
   lookupRecords?: Record<string, LookupRecord[]>;
+  /** Starting values for the fields (see RecordForm's `defaults`). */
+  defaults?: Record<string, unknown>;
   /** Creates the record; throw to keep the dialog open (the caller reports the failure). */
   onCreate: (values: Record<string, unknown>) => Promise<unknown>;
   pending?: boolean;
@@ -40,6 +42,7 @@ export function RecordFormDialog({
   entityName,
   fields,
   lookupRecords = {},
+  defaults,
   onCreate,
   pending,
   submitTestId,
@@ -59,6 +62,7 @@ export function RecordFormDialog({
         <RecordForm
           entityName={entityName}
           columns={columns}
+          defaults={defaults}
           onSave={onCreate}
           onSaved={() => onOpenChange(false)}
         >

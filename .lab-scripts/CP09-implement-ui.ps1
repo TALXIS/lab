@@ -62,6 +62,7 @@ Build the model-driven warehouse experience so users can navigate inventory data
 - register the three warehouse tables as code app data sources (typed models + services)
 - implement the code app UI: items list, item detail form with its transactions, a transactions list and a locations list (with per-location item counts), all querying Dataverse through the generated services; locations also resolve the item's location lookup
 - make the code app work on a phone: a Home screen of big quick-action tiles (Pick stock, Receive stock, Take inventory as a blind counter, Find item) that end in one stock transaction, a bottom navigation bar, and form-style record cards in place of grids at phone width
+- let the Receive screen scan a barcode with the phone camera (or type it): a match jumps to the item, no match offers a New item form prefilled with the barcode, so new goods are created and received in one flow
 - add Node setup to the build workflow so the code app builds in CI
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the UI, TALXIS Grid, and code app included

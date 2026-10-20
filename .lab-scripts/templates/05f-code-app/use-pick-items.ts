@@ -17,6 +17,20 @@ export type PickItem = {
 };
 
 export const PICK_ITEMS_KEY = ["mobileItems"];
+export const LOCATIONS_KEY = ["warehouseLocations"];
+
+/** Items as the quick-action screens list them, with their location names resolved. */
+export function toPickItems(items: __PASCAL___warehouseitems[], locations: __PASCAL___warehouselocations[]): PickItem[] {
+  const locationNames = new Map(locations.map((loc) => [loc.__PREFIX___warehouselocationid, loc.__PREFIX___name ?? ""]));
+  return items.map((item) => ({
+    id: item.__PREFIX___warehouseitemid,
+    name: item.__PREFIX___name ?? "",
+    sku: item.__PREFIX___sku ?? "",
+    barcode: item.__PREFIX___barcode ?? "",
+    quantity: Number(item.__PREFIX___availablequantity),
+    location: locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "",
+  }));
+}
 
 // The active items the quick actions choose from, with their location names resolved. Loaded
 // whole and filtered on the device: instant typing on a phone, fine for a warehouse's item list.
@@ -42,7 +56,7 @@ export function usePickItems() {
 
   // Same query (and key) as the Items page's location lookup, so the two share one request
   const { data: locations } = useQuery({
-    queryKey: ["warehouseLocations"],
+    queryKey: LOCATIONS_KEY,
     queryFn: async () => {
       const result = await __PASCAL___warehouselocationsService.getAll({
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
@@ -52,19 +66,12 @@ export function usePickItems() {
     },
   });
 
-  const items = useMemo<PickItem[]>(() => {
-    const locationNames = new Map(
-      (locations ?? []).map((loc: __PASCAL___warehouselocations) => [loc.__PREFIX___warehouselocationid, loc.__PREFIX___name ?? ""])
-    );
-    return (itemsQuery.data ?? []).map((item: __PASCAL___warehouseitems) => ({
-      id: item.__PREFIX___warehouseitemid,
-      name: item.__PREFIX___name ?? "",
-      sku: item.__PREFIX___sku ?? "",
-      barcode: item.__PREFIX___barcode ?? "",
-      quantity: Number(item.__PREFIX___availablequantity),
-      location: locationNames.get(item.___PREFIX___locationid_value ?? "") ?? "",
-    }));
-  }, [itemsQuery.data, locations]);
+  const items = useMemo(() => toPickItems(itemsQuery.data ?? [], locations ?? []), [itemsQuery.data, locations]);
+  // For a location lookup (id and name)
+  const locationRecords = useMemo(
+    () => (locations ?? []).map((loc: __PASCAL___warehouselocations) => ({ id: loc.__PREFIX___warehouselocationid, name: loc.__PREFIX___name ?? "" })),
+    [locations]
+  );
 
-  return { items, isLoading: itemsQuery.isLoading, error: itemsQuery.error };
+  return { items, locationRecords, isLoading: itemsQuery.isLoading, error: itemsQuery.error };
 }
