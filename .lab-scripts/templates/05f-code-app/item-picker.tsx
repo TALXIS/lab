@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Body1, Input, MessageBar, MessageBarBody, Spinner, mergeClasses } from "@fluentui/react-components";
 import { AddRegular, SearchRegular } from "@fluentui/react-icons";
 import { usePickItems, type PickItem } from "@/hooks/use-pick-items";
-import { useStyles } from "@/styles/ItemPicker.styles";
+import { useStyles } from "@/styles/item-picker.styles";
 
 type ItemPickerProps = {
   onSelect: (item: PickItem) => void;

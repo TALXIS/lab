@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Title2 } from "@fluentui/react-components";
 import { ArrowLeftRegular } from "@fluentui/react-icons";
-import { useStyles } from "@/styles/MobilePage.styles";
+import { useStyles } from "@/styles/mobile-page.styles";
 
 type MobilePageProps = {
   title: string;

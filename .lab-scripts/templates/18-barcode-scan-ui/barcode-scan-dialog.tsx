@@ -25,7 +25,7 @@ import { toBytes, bytesToDataUrl } from "@/utils/binary";
 import { eanError } from "@/utils/barcode";
 import { ensureProductRecord } from "@/utils/barcode-lookup";
 import { servicePayload } from "@/utils/service-payload";
-import { useStyles } from "@/styles/BarcodeScanDialog.styles";
+import { useStyles } from "@/styles/barcode-scan-dialog.styles";
 
 type BarcodeScanDialogProps = {
   itemId: string;

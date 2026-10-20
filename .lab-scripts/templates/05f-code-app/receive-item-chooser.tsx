@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Button, MessageBar, MessageBarActions, MessageBarBody } from "@fluentui/react-components";
 import { BarcodeScannerRegular } from "@fluentui/react-icons";
-import { BarcodeScanPanel } from "@/components/mobile/BarcodeScanPanel";
-import { ItemPicker } from "@/components/mobile/ItemPicker";
-import { NewItemDialog } from "@/components/mobile/NewItemDialog";
+import { BarcodeScanPanel } from "@/components/mobile/barcode-scan-panel";
+import { ItemPicker } from "@/components/mobile/item-picker";
+import { NewItemDialog } from "@/components/mobile/new-item-dialog";
 import { usePickItems, type PickItem } from "@/hooks/use-pick-items";
 import { sameBarcode } from "@/utils/barcode";
 import { lookupBarcode, type BarcodeProduct } from "@/utils/barcode-lookup";
-import { useStyles } from "@/styles/ReceiveItemChooser.styles";
+import { useStyles } from "@/styles/receive-item-chooser.styles";
 
 type ReceiveItemChooserProps = {
   onSelect: (item: PickItem) => void;

@@ -1,10 +1,10 @@
-import { RecordFormDialog } from "@/components/RecordFormDialog";
-import type { FormField } from "@/components/RecordFormFields";
+import { RecordFormDialog } from "@/components/record-form-dialog";
+import type { FormField } from "@/components/record-form-fields";
 import { useCreateItem } from "@/hooks/use-create-item";
 import { usePickItems, type PickItem } from "@/hooks/use-pick-items";
 import type { IColumn } from "@talxis/client-libraries";
 import { useToast } from "@/hooks/use-toast";
-import { categoryOptionMetadata } from "@/utils/optionSets";
+import { categoryOptionMetadata } from "@/utils/option-sets";
 import { errorText } from "@/utils/stock-transactions";
 import type { BarcodeProduct } from "@/utils/barcode-lookup";
 

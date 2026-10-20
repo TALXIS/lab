@@ -35,7 +35,7 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         -Tokens $uiTokens
     Write-Host "  ✓ utils/barcode-lookup.ts (Open Food Facts)" -ForegroundColor Green
 
-    foreach ($component in @("BarcodeScanDialog", "LinkedProductImage")) {
+    foreach ($component in @("barcode-scan-dialog", "linked-product-image")) {
         Expand-LabTemplate -Path "18-barcode-scan-ui/$component.tsx" `
             -Destination "$appSrc/components/$component.tsx" `
             -Tokens $uiTokens
@@ -56,8 +56,8 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         $importAnchor = 'import { ArrowLeftRegular } from "@fluentui/react-icons";'
         $importReplacement = @"
 $importAnchor
-import BarcodeScanDialog from "@/components/BarcodeScanDialog";
-import LinkedProductImage from "@/components/LinkedProductImage";
+import BarcodeScanDialog from "@/components/barcode-scan-dialog";
+import LinkedProductImage from "@/components/linked-product-image";
 import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPascal}_productsService";
 "@
         if (-not $detailPage.Contains($importAnchor)) { throw "warehouse-item-detail.tsx: import anchor not found - CP09 template may have changed." }

@@ -4,17 +4,17 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
-import { categoryOptionMetadata, statusOptions } from "@/utils/optionSets";
+import { categoryOptionMetadata, statusOptions } from "@/utils/option-sets";
 import {
   MessageBar,
   MessageBarBody,
 } from "@fluentui/react-components";
 import { BoxRegular } from "@fluentui/react-icons";
 import type { IColumn } from "@talxis/client-libraries";
-import { PageHeader } from "@/components/PageHeader";
-import { RecordGrid } from "@/components/RecordGrid";
-import { RecordFormDialog } from "@/components/RecordFormDialog";
-import type { FormField } from "@/components/RecordFormFields";
+import { PageHeader } from "@/components/page-header";
+import { RecordGrid } from "@/components/record-grid";
+import { RecordFormDialog } from "@/components/record-form-dialog";
+import type { FormField } from "@/components/record-form-fields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/warehouse-items.styles";
 import { servicePayload } from "@/utils/service-payload";

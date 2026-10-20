@@ -154,7 +154,7 @@ Save-Checkpoint -Id "cp11" -Message "Add barcode scan UI to the item detail page
 Add a "Scan Barcode" button to the item detail page. It opens a dialog that decodes a barcode with the device camera (or accepts one typed in manually), looks it up via the Open Food Facts connector, and on confirmation upserts a Product record (matched by EAN) and links it to the item.
 
 ## Changes
-- add components/BarcodeScanDialog.tsx (built on the camera scanner and barcode helpers the phone screens already have)
+- add components/barcode-scan-dialog.tsx (built on the camera scanner and barcode helpers the phone screens already have)
 - wire it into the header of pages/warehouse-item-detail.tsx
 - replace the Receive screen's do-nothing barcode lookup with Open Food Facts: a barcode that matches no item prefills the New item form with the product's name and links the new item to its Product record
 - linking a product also stores the barcode on the item, so the Receive screen finds it on later scans
