@@ -79,18 +79,13 @@ function Invoke-WithRetry([string]$Description, [scriptblock]$Command) {
     throw "$Description failed after 2 attempts (exit $LASTEXITCODE)"
 }
 
-# Ensure TALXIS CLI is latest (picks up any last-minute fixes).
-Write-Info "Updating TALXIS CLI to latest..."
-Invoke-WithRetry "TALXIS CLI update" { dotnet tool update --global TALXIS.CLI }
+# Bring txc and its template pack to their latest releases (picks up any last-minute fixes).
+# `txc workspace component create` (used by every scaffold script) scaffolds from the template
+# pack, so the two move together. The image does this on every start too; this covers running
+# the image directly (LOCAL-DRY-RUN.md) and a fix released mid-session.
+Write-Info "Updating TALXIS CLI and DevKit templates to latest..."
+Invoke-WithRetry "TALXIS CLI and templates update" { agentbox prerequisite update txc devkit-templates }
 Write-Ok "TALXIS CLI: $((txc --version) -replace '\+.*','')"
-
-# The agentbox image bakes in a pinned txc + template pack version for fast startup, but
-# `txc workspace component create` (used by every scaffold script) reads its scaffolding
-# from the TALXIS.DevKit.Templates.Dataverse template pack, not from the CLI binary above.
-# Keep the two in lockstep so newly-scaffolded components match the CLI we just updated to.
-Write-Info "Updating TALXIS DevKit templates to latest..."
-Invoke-WithRetry "TALXIS DevKit templates update" { dotnet new install TALXIS.DevKit.Templates.Dataverse }
-Write-Ok "TALXIS DevKit templates updated"
 
 # ── 2. Sign in to GitHub, Power Platform, Azure and Power Apps ───────────────────────────
 . "$PSScriptRoot/lab-signin.ps1"
