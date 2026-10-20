@@ -16,11 +16,12 @@ docker run -it --rm \
   -w /workspaces/lab \
   -e LAB_LOCAL_MODE=1 -e LAB_AUTO_MERGE=1 -e LAB_AUTO=1 \
   ghcr.io/talxis/tools-agentbox/image:latest \
-  pwsh -c 'foreach ($cp in Get-ChildItem .lab-scripts/CP*.ps1 | Sort-Object Name) { & $cp.FullName }'
+  bash -c 'agentbox prerequisite update && pwsh -c "foreach (\$cp in Get-ChildItem .lab-scripts/CP*.ps1 | Sort-Object Name) { & \$cp.FullName }"'
 ```
 
-Git identity and branch state are handled by the scripts themselves — nothing to set up
-first.
+`agentbox prerequisite update` brings the tools to their latest releases first, as a Codespace
+does on every start. Git identity and branch state are handled by the scripts themselves —
+nothing to set up first.
 
 ## If your network intercepts HTTPS
 
