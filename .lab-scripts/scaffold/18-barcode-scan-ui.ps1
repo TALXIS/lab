@@ -23,19 +23,19 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
     $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substring(1)
     $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 
-    Expand-LabTemplate -Path "18-barcode-scan-ui/binary.ts" `
-        -Destination "$appSrc/utils/binary.ts"
-    Write-Host "  ✓ utils/binary.ts" -ForegroundColor Green
+    Expand-LabTemplate -Path "18-barcode-scan-ui/Binary.ts" `
+        -Destination "$appSrc/utils/Binary.ts"
+    Write-Host "  ✓ utils/Binary.ts" -ForegroundColor Green
 
     # Replaces the do-nothing barcode lookup the phone screens ship with (05f): from now on a barcode
     # that matches no item on the Receive screen is looked up in Open Food Facts to prefill the new
     # item, and the item is linked to its Product record.
-    Expand-LabTemplate -Path "18-barcode-scan-ui/barcode-lookup.ts" `
-        -Destination "$appSrc/utils/barcode-lookup.ts" `
+    Expand-LabTemplate -Path "18-barcode-scan-ui/BarcodeLookup.ts" `
+        -Destination "$appSrc/utils/BarcodeLookup.ts" `
         -Tokens $uiTokens
-    Write-Host "  ✓ utils/barcode-lookup.ts (Open Food Facts)" -ForegroundColor Green
+    Write-Host "  ✓ utils/BarcodeLookup.ts (Open Food Facts)" -ForegroundColor Green
 
-    foreach ($component in @("barcode-scan-dialog", "linked-product-image")) {
+    foreach ($component in @("BarcodeScanDialog", "LinkedProductImage")) {
         Expand-LabTemplate -Path "18-barcode-scan-ui/$component.tsx" `
             -Destination "$appSrc/components/$component.tsx" `
             -Tokens $uiTokens
@@ -44,23 +44,23 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         Write-Host "  ✓ components/$component.tsx (+ styles/$component.styles.ts)" -ForegroundColor Green
     }
 
-    $detailPagePath = "$appSrc/pages/warehouse-item-detail.tsx"
+    $detailPagePath = "$appSrc/pages/WarehouseItemDetail.tsx"
     if (-not (Test-Path $detailPagePath)) {
         throw "$detailPagePath not found - run CP09 first."
     }
     $detailPage = Get-Content $detailPagePath -Raw
 
     if ($detailPage.Contains("BarcodeScanDialog")) {
-        Write-Host "  ✓ warehouse-item-detail.tsx (already wired)" -ForegroundColor Green
+        Write-Host "  ✓ WarehouseItemDetail.tsx (already wired)" -ForegroundColor Green
     } else {
         $importAnchor = 'import { ArrowLeftRegular } from "@fluentui/react-icons";'
         $importReplacement = @"
 $importAnchor
-import BarcodeScanDialog from "@/components/barcode-scan-dialog";
-import LinkedProductImage from "@/components/linked-product-image";
+import BarcodeScanDialog from "@/components/BarcodeScanDialog";
+import LinkedProductImage from "@/components/LinkedProductImage";
 import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPascal}_productsService";
 "@
-        if (-not $detailPage.Contains($importAnchor)) { throw "warehouse-item-detail.tsx: import anchor not found - CP09 template may have changed." }
+        if (-not $detailPage.Contains($importAnchor)) { throw "WarehouseItemDetail.tsx: import anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($importAnchor, $importReplacement)
 
         # The linked-product lookup is a hook, so it has to run on every render alongside the
@@ -80,12 +80,12 @@ import { ${prefixPascal}_productsService } from "@/generated/services/${prefixPa
 
 $mutationAnchor
 "@
-        if (-not $detailPage.Contains($mutationAnchor)) { throw "warehouse-item-detail.tsx: mutation anchor not found - CP09 template may have changed." }
+        if (-not $detailPage.Contains($mutationAnchor)) { throw "WarehouseItemDetail.tsx: mutation anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($mutationAnchor, $mutationReplacement)
 
         # The scan button and the linked product go into the detail form's header (its headerExtras
         # slot, on the right of the record title), reusing the page's own inline/muted/name styles
-        # (styles/warehouse-item-detail.styles.ts), so the patch needs no new style entries.
+        # (styles/WarehouseItemDetail.styles.ts), so the patch needs no new style entries.
         $headerAnchor = '            onBack={() => navigate("/items")}'
         $headerReplacement = @"
             headerExtras={
@@ -106,11 +106,11 @@ $mutationAnchor
             }
 $headerAnchor
 "@
-        if (-not $detailPage.Contains($headerAnchor)) { throw "warehouse-item-detail.tsx: header anchor not found - CP09 template may have changed." }
+        if (-not $detailPage.Contains($headerAnchor)) { throw "WarehouseItemDetail.tsx: header anchor not found - CP09 template may have changed." }
         $detailPage = $detailPage.Replace($headerAnchor, $headerReplacement)
 
         Set-Content -Path $detailPagePath -Value $detailPage -Encoding UTF8 -NoNewline
-        Write-Host "  ✓ warehouse-item-detail.tsx (Scan Barcode button + linked product wired)" -ForegroundColor Green
+        Write-Host "  ✓ WarehouseItemDetail.tsx (Scan Barcode button + linked product wired)" -ForegroundColor Green
     }
 
     Set-LabValue 'barcodeScanUiScaffolded' $true

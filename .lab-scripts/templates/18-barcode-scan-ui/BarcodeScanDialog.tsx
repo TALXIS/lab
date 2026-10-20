@@ -19,13 +19,13 @@ import {
 } from "@fluentui/react-components";
 import { BarcodeScannerRegular } from "@fluentui/react-icons";
 import { TextField, usePcfContext } from "@talxis/base-controls";
-import { useBarcodeCamera } from "@/hooks/use-barcode-camera";
+import { useBarcodeCamera } from "@/hooks/UseBarcodeCamera";
 import { useToast } from "@/hooks/use-toast";
-import { toBytes, bytesToDataUrl } from "@/utils/binary";
-import { eanError } from "@/utils/barcode";
-import { ensureProductRecord } from "@/utils/barcode-lookup";
-import { servicePayload } from "@/utils/service-payload";
-import { useStyles } from "@/styles/barcode-scan-dialog.styles";
+import { toBytes, bytesToDataUrl } from "@/utils/Binary";
+import { eanError } from "@/utils/Barcode";
+import { ensureProductRecord } from "@/utils/BarcodeLookup";
+import { servicePayload } from "@/utils/ServicePayload";
+import { useStyles } from "@/styles/BarcodeScanDialog.styles";
 
 type BarcodeScanDialogProps = {
   itemId: string;

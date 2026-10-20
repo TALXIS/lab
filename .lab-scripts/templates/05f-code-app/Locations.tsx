@@ -10,14 +10,14 @@ import {
 } from "@fluentui/react-components";
 import { LocationRegular } from "@fluentui/react-icons";
 import type { IColumn } from "@talxis/client-libraries";
-import { PageHeader } from "@/components/page-header";
-import { RecordFormDialog } from "@/components/record-form-dialog";
-import type { FormField } from "@/components/record-form-fields";
-import { RecordGrid } from "@/components/record-grid";
-import { statusOptions } from "@/utils/option-sets";
+import { PageHeader } from "@/components/PageHeader";
+import { RecordFormDialog } from "@/components/RecordFormDialog";
+import type { FormField } from "@/components/RecordFormFields";
+import { RecordGrid } from "@/components/RecordGrid";
+import { statusOptions } from "@/utils/OptionSets";
 import { useToast } from "@/hooks/use-toast";
-import { useStyles } from "@/styles/locations.styles";
-import { servicePayload } from "@/utils/service-payload";
+import { useStyles } from "@/styles/Locations.styles";
+import { servicePayload } from "@/utils/ServicePayload";
 
 const columns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 200 },

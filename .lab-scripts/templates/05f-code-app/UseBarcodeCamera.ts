@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
-import { eanError } from "@/utils/barcode";
+import { eanError } from "@/utils/Barcode";
 
 export type CameraStatus = "starting" | "scanning" | "unavailable";
 

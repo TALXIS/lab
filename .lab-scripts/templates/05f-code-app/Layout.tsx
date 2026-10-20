@@ -2,7 +2,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { Subtitle1, Tab, TabList, mergeClasses } from "@fluentui/react-components"
 import { BoxRegular, ArrowSwapRegular, HomeRegular, LocationRegular } from "@fluentui/react-icons"
 import type { ReactElement } from "react"
-import { useStyles } from "@/styles/_layout.styles"
+import { useStyles } from "@/styles/Layout.styles"
 
 // Home is the landing page and also owns the quick-action flows; the items list owns /items and the
 // /items/:id detail pages.

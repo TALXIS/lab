@@ -1,12 +1,12 @@
-import { RecordFormDialog } from "@/components/record-form-dialog";
-import type { FormField } from "@/components/record-form-fields";
-import { useCreateItem } from "@/hooks/use-create-item";
-import { usePickItems, type PickItem } from "@/hooks/use-pick-items";
+import { RecordFormDialog } from "@/components/RecordFormDialog";
+import type { FormField } from "@/components/RecordFormFields";
+import { useCreateItem } from "@/hooks/UseCreateItem";
+import { usePickItems, type PickItem } from "@/hooks/UsePickItems";
 import type { IColumn } from "@talxis/client-libraries";
 import { useToast } from "@/hooks/use-toast";
-import { categoryOptionMetadata } from "@/utils/option-sets";
-import { errorText } from "@/utils/stock-transactions";
-import type { BarcodeProduct } from "@/utils/barcode-lookup";
+import { categoryOptionMetadata } from "@/utils/OptionSets";
+import { errorText } from "@/utils/StockTransactions";
+import type { BarcodeProduct } from "@/utils/BarcodeLookup";
 
 // A new item's fields: what it is (name, SKU, category) is required, where it lives and its barcode
 // are not. A scanned barcode and a name from a catalog arrive as starting values.

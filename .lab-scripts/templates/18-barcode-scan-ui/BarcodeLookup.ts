@@ -1,7 +1,7 @@
 import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
-import { servicePayload } from "@/utils/service-payload";
+import { servicePayload } from "@/utils/ServicePayload";
 
 /** What is known about a barcode from an outside catalog. */
 export type BarcodeProduct = {

@@ -8,8 +8,8 @@ import {
   type IColumn,
   type IRawRecord,
 } from "@talxis/client-libraries";
-import { RecordCards } from "@/components/record-cards";
-import { useIsPhone } from "@/hooks/use-is-phone";
+import { RecordCards } from "@/components/RecordCards";
+import { useIsPhone } from "@/hooks/UseIsPhone";
 import { getEntity } from "@/providers/pcf-host";
 
 type RecordGridProps = {

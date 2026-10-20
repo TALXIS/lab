@@ -7,7 +7,7 @@ import {
   ClipboardTaskListLtrRegular,
   SearchRegular,
 } from "@fluentui/react-icons";
-import { useStyles } from "@/styles/quick-actions.styles";
+import { useStyles } from "@/styles/QuickActions.styles";
 
 type Tile = { to: string; label: string; hint: string; icon: ReactElement };
 
