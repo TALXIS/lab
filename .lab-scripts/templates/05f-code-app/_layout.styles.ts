@@ -9,8 +9,12 @@ export const useStyles = makeStyles({
     display: "flex",
     flexDirection: "column",
   },
+  // On phones the bottom bar is the navigation, and a title bar would only cost screen height
   header: {
     borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
+    [PHONE]: {
+      display: "none",
+    },
   },
   headerInner: {
     boxSizing: "border-box",
@@ -21,9 +25,6 @@ export const useStyles = makeStyles({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    [PHONE]: {
-      padding: `0 ${tokens.spacingHorizontalL}`,
-    },
   },
   topTabs: {
     [PHONE]: {

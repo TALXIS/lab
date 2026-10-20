@@ -1,4 +1,4 @@
-import { useMemo, useRef, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type FormEvent, type ReactNode } from "react";
 import { Form, useForm, type IFormStrategy } from "@talxis/base-controls";
 import type { IColumn } from "@talxis/client-libraries";
 import { getEntity } from "@/providers/pcf-host";
@@ -11,6 +11,9 @@ type RecordFormProps = {
   /** An existing record to edit; without it the form starts empty, for a new record. Keep it stable
    *  (memoize it): a new object reloads the form with the new values. */
   record?: { id: string; values: Record<string, unknown> };
+  /** Starting values for a new record's fields. Unlike `record`, they count as entered by the user, so
+   *  they are sent on save. Applied once each time the form loads. */
+  defaults?: Record<string, unknown>;
   /** Saves the changed field values (all filled ones on a new record); throw to signal a failed save. */
   onSave: (values: Record<string, unknown>) => Promise<unknown>;
   /** Runs after a successful save. */
@@ -23,7 +26,7 @@ type RecordFormProps = {
 // MemoryDataProvider record, binds each Form.Control to its field and validates the columns' rules
 // (required, ranges, number parsing) when saving. The strategy only decides where a valid record
 // goes: onSave, which gets the changed fields (on a new record that is every filled one).
-export function RecordForm({ entityName, columns, record, onSave, onSaved, children }: RecordFormProps) {
+export function RecordForm({ entityName, columns, record, defaults, onSave, onSaved, children }: RecordFormProps) {
   const entity = getEntity(entityName);
   if (!entity) throw new Error(`RecordForm: '${entityName}' isn't registered in entities.ts`);
 
@@ -57,14 +60,23 @@ export function RecordForm({ entityName, columns, record, onSave, onSaved, child
 
   return (
     <Form.Root strategy={strategy} onAfterSave={({ success }) => success && onSaved?.()}>
-      <FormBody>{children}</FormBody>
+      <FormBody defaults={defaults}>{children}</FormBody>
     </Form.Root>
   );
 }
 
 // Enter submits like a native form; everything goes through the form's own save (validation first).
-function FormBody({ children }: { children: ReactNode }) {
+function FormBody({ children, defaults }: { children: ReactNode; defaults?: Record<string, unknown> }) {
   const form = useForm();
+
+  // Entered through the fields, not loaded with the record, so they are dirty and saved
+  useEffect(() => {
+    for (const [name, value] of Object.entries(defaults ?? {})) {
+      if (value !== undefined && value !== "") form.getField(name).setValue(value);
+    }
+    // once per load: this component is remounted whenever the form reloads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();

@@ -4,6 +4,7 @@ import { ItemPicker } from "@/components/mobile/ItemPicker";
 import { ItemSummary } from "@/components/mobile/ItemSummary";
 import { MobilePage } from "@/components/mobile/MobilePage";
 import { QuantityStepper } from "@/components/mobile/QuantityStepper";
+import { ReceiveItemChooser } from "@/components/mobile/ReceiveItemChooser";
 import { ResultPanel } from "@/components/mobile/ResultPanel";
 import type { PickItem } from "@/hooks/use-pick-items";
 import { errorText, useStockTransaction } from "@/utils/stock-transactions";
@@ -44,7 +45,7 @@ function QuickTransactionFlow({ mode }: { mode: Mode }) {
   if (!item) {
     return (
       <MobilePage title={config.title}>
-        <ItemPicker onSelect={setItem} />
+        {mode === "receive" ? <ReceiveItemChooser onSelect={setItem} /> : <ItemPicker onSelect={setItem} />}
       </MobilePage>
     );
   }

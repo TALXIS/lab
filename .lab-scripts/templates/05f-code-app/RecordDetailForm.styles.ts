@@ -16,11 +16,24 @@ export const useStyles = makeStyles({
     ...card,
     padding: `0 ${tokens.spacingHorizontalS}`,
   },
-  header: {
+  // The header (title and tabs) and the active tab's content read as one card
+  detail: {
     ...card,
+    overflow: "hidden",
+    // The form's section draws its own card; inside this one it is just the content, so its card
+    // look (border, shadow, rounding, slide-in) goes
+    "& [data-id^='section-']": {
+      border: "none",
+      borderRadius: 0,
+      boxShadow: "none",
+      transitionProperty: "none",
+    },
+  },
+  header: {
     padding: `${tokens.spacingVerticalL} ${tokens.spacingHorizontalXL} 0`,
     display: "flex",
     flexDirection: "column",
+    borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
   },
   headerTop: {
     display: "flex",
@@ -53,7 +66,6 @@ export const useStyles = makeStyles({
     gap: tokens.spacingHorizontalL,
   },
   body: {
-    // The form's own section draws the card
     display: "flex",
     flexDirection: "column",
   },

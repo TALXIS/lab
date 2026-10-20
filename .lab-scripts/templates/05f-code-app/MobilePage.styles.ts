@@ -3,7 +3,11 @@ import { makeStyles, tokens } from "@fluentui/react-components";
 export const useStyles = makeStyles({
   root: {
     boxSizing: "border-box",
+    // Wide screens keep the app's 56px top bar above; on phones that bar is hidden
     minHeight: "calc(100dvh - 56px)",
+    "@media (max-width: 640px)": {
+      minHeight: "100dvh",
+    },
     maxWidth: "640px",
     margin: "0 auto",
     display: "flex",

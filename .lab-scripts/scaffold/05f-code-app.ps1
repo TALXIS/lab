@@ -31,6 +31,7 @@
 # Take inventory, Receive stock, Pick stock and Find item (components/mobile/, pages/quick-*.tsx,
 # stock-count.tsx, find-item.tsx). Each is a few touch-sized steps that end in one stock transaction
 # (Inbound/Outbound, a stock count books the difference), so the server-side quantity logic is reused.
+# Receive can also scan a barcode with the camera and create the item when nothing matches it.
 # The top tabs become a bottom bar on phones (styles/_layout.styles.ts), and every RecordGrid shows its
 # records as form-style cards there (RecordCards.tsx), since a table doesn't fit a phone.
 # Expects: $PublisherPrefix from parent scope.
@@ -165,6 +166,15 @@ foreach ($file in @(
     @{ Template = "quick-transaction.styles.ts"; Target = "styles/quick-transaction.styles.ts" },
     @{ Template = "stock-count.tsx"; Target = "pages/stock-count.tsx" },
     @{ Template = "find-item.tsx"; Target = "pages/find-item.tsx" },
+    @{ Template = "barcode.ts"; Target = "utils/barcode.ts" },
+    @{ Template = "barcode-lookup.ts"; Target = "utils/barcode-lookup.ts" },
+    @{ Template = "use-barcode-camera.ts"; Target = "hooks/use-barcode-camera.ts" },
+    @{ Template = "use-create-item.ts"; Target = "hooks/use-create-item.ts" },
+    @{ Template = "BarcodeScanPanel.tsx"; Target = "components/mobile/BarcodeScanPanel.tsx" },
+    @{ Template = "BarcodeScanPanel.styles.ts"; Target = "styles/BarcodeScanPanel.styles.ts" },
+    @{ Template = "NewItemDialog.tsx"; Target = "components/mobile/NewItemDialog.tsx" },
+    @{ Template = "ReceiveItemChooser.tsx"; Target = "components/mobile/ReceiveItemChooser.tsx" },
+    @{ Template = "ReceiveItemChooser.styles.ts"; Target = "styles/ReceiveItemChooser.styles.ts" },
     @{ Template = "router.tsx";                Target = "router.tsx" },
     @{ Template = "_layout.tsx";               Target = "pages/_layout.tsx" },
     @{ Template = "_layout.styles.ts";         Target = "styles/_layout.styles.ts" },
@@ -185,10 +195,11 @@ foreach ($file in @(
 
 # Form.Field's requiredLevel takes a RequiredLevelEnum from @talxis/client-metadata, which base
 # controls only pull in transitively: declare it so the import is a real dependency
+# The Receive screen reads barcodes from the phone's camera with @zxing/browser.
 # The starter also brings two packages nothing in this app uses (a state store and a table library).
 Push-Location "src/Apps.WarehousePicking"
-npm pkg set "dependencies.@talxis/client-metadata=^0.0.7"
-if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm pkg set @talxis/client-metadata failed" }
+npm pkg set "dependencies.@talxis/client-metadata=^0.0.7" "dependencies.@zxing/browser=^0.2.1"
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm pkg set @talxis/client-metadata / @zxing/browser failed" }
 npm pkg delete dependencies.zustand "dependencies.@tanstack/react-table"
 if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm pkg delete zustand/react-table failed" }
 Pop-Location

@@ -27,6 +27,14 @@ if (-not (Get-LabValue 'barcodeScanUiScaffolded')) {
         -Destination "$appSrc/utils/binary.ts"
     Write-Host "  ✓ utils/binary.ts" -ForegroundColor Green
 
+    # Replaces the do-nothing barcode lookup the phone screens ship with (05f): from now on a barcode
+    # that matches no item on the Receive screen is looked up in Open Food Facts to prefill the new
+    # item, and the item is linked to its Product record.
+    Expand-LabTemplate -Path "18-barcode-scan-ui/barcode-lookup.ts" `
+        -Destination "$appSrc/utils/barcode-lookup.ts" `
+        -Tokens $uiTokens
+    Write-Host "  ✓ utils/barcode-lookup.ts (Open Food Facts)" -ForegroundColor Green
+
     foreach ($component in @("BarcodeScanDialog", "LinkedProductImage")) {
         Expand-LabTemplate -Path "18-barcode-scan-ui/$component.tsx" `
             -Destination "$appSrc/components/$component.tsx" `

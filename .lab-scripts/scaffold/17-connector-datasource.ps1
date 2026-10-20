@@ -188,14 +188,6 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         -Destination "$appRoot/src/generated/services/OpenFoodFactsService.ts"
     Write-Host "  ✓ OpenFoodFactsModel.ts + OpenFoodFactsService.ts" -ForegroundColor Green
 
-    Write-Host "  → Installing @zxing/browser (camera barcode decoding)..." -ForegroundColor White
-    Push-Location $appRoot
-    try {
-        npm install @zxing/browser --save --silent
-        if ($LASTEXITCODE -ne 0) { throw "npm install @zxing/browser failed" }
-    } finally { Pop-Location }
-    Write-Host "  ✓ @zxing/browser installed" -ForegroundColor Green
-
     $connectorSchemaName = "${PublisherPrefix}_connectorsopenfoodfacts"
     if ($env:LAB_LOCAL_MODE) {
         Write-Info "LAB_LOCAL_MODE: skipped — would look the connector up with 'pa connector list',"
