@@ -1,9 +1,11 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║          08: Logic Solution — Plugin Assembly Registration and Steps                   ║
+# ║          08: Logic Solution — Plugin Registration via Build                            ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Creates Solutions.Logic with plugin assembly reference and SDK message processing steps.
+# Creates Solutions.Logic and references Plugins.Warehouse from it. Nothing about the plugin
+# is scaffolded: dotnet build of the solution writes the plugin assembly (PluginAssemblies/)
+# and the steps declared by [PluginStep] attributes (SdkMessageProcessingSteps/) into it.
 # Expects: $PublisherName, $PublisherPrefix from parent scope.
 # Expects: Plugins.Warehouse already built (07-plugins.ps1).
 #
@@ -36,27 +38,12 @@ cd ../..
 
 Write-Host "  ✓ ProjectReference: Plugins.Warehouse → Solutions.Logic" -ForegroundColor Green
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                         Plugin Assembly Registration
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-Write-Host "`n── Plugin Assembly & Steps ──" -ForegroundColor Cyan
-
-# Must run before the first build: the build registers the assembly itself if none exists,
-# and the template would then append a second, orphaned PluginAssembly root component.
-$assemblyGuid = [guid]::NewGuid()
-
-txc workspace component create pp-plugin-assembly `
-    --output "src/Solutions.Logic" `
-    --param "AssemblyId=$assemblyGuid" `
-    --param "PluginProjectRootPath=../Plugins.Warehouse"
-
-Write-Host "  ✓ Plugin assembly registered" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Build Logic Solution
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+# Generates PluginAssemblies/ and SdkMessageProcessingSteps/ from the referenced plugin project.
 Write-Host "  → Building Solutions.Logic..." -ForegroundColor White
 cd src/Solutions.Logic
 dotnet build --nologo --verbosity quiet
@@ -67,39 +54,8 @@ if ($LASTEXITCODE -eq 0) {
 }
 cd ../..
 
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                      SDK Message Processing Steps
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-# PreValidation step — ValidateWarehouseTransactionPlugin
-# Runs before the DB transaction starts: the cheapest place to reject invalid input.
-txc workspace component create pp-plugin-assembly-step `
-    --output "src/Solutions.Logic" `
-    --param "PrimaryEntity=${PublisherPrefix}_warehousetransaction" `
-    --param "PluginProjectName=Plugins.Warehouse" `
-    --param "PluginName=ValidateWarehouseTransactionPlugin" `
-    --param "Stage=Pre-validation" `
-    --param "SdkMessage=Create"
-
-
-Write-Host "  ✓ Step: ValidateWarehouseTransactionPlugin (Pre-validation, Create)" -ForegroundColor Green
-
-# PostOperation step — SubtractQuantityPlugin
-# Runs after the record is written, still inside the transaction: the stock update and
-# the transaction record commit or roll back together.
-txc workspace component create pp-plugin-assembly-step `
-    --output "src/Solutions.Logic" `
-    --param "PrimaryEntity=${PublisherPrefix}_warehousetransaction" `
-    --param "PluginProjectName=Plugins.Warehouse" `
-    --param "PluginName=SubtractQuantityPlugin" `
-    --param "Stage=Post-operation" `
-    --param "SdkMessage=Create"
-
-
-Write-Host "  ✓ Step: SubtractQuantityPlugin (Post-operation, Create)" -ForegroundColor Green
-
 # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
-# re-run after a partial failure (e.g. solution created but assembly/step registration
+# re-run after a partial failure (e.g. solution created but the reference or build
 # didn't finish) retries everything rather than silently skipping the missing work.
 Set-LabValue 'logicSolutionScaffolded' $true
 
