@@ -22,6 +22,7 @@ import { RecordGrid } from "@/components/RecordGrid";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/WarehouseItemDetail.styles";
 import { servicePayload } from "@/utils/ServicePayload";
+import { toNumber } from "@/utils/RecordValues";
 
 const transactionColumns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 240 },
@@ -107,8 +108,8 @@ export default function WarehouseItemDetailPage() {
     () =>
       transactions?.map((tx: __PASCAL___warehousetransactions) => ({
         ...tx,
-        __PREFIX___quantity: Number(tx.__PREFIX___quantity),
-        __PREFIX___transactiontype: Number(tx.__PREFIX___transactiontype),
+        __PREFIX___quantity: toNumber(tx.__PREFIX___quantity),
+        __PREFIX___transactiontype: toNumber(tx.__PREFIX___transactiontype),
       })),
     [transactions]
   );
@@ -131,8 +132,8 @@ export default function WarehouseItemDetailPage() {
             values: {
               __PREFIX___name: item.__PREFIX___name,
               __PREFIX___sku: item.__PREFIX___sku,
-              __PREFIX___availablequantity: Number(item.__PREFIX___availablequantity),
-              __PREFIX___category: Number(item.__PREFIX___category),
+              __PREFIX___availablequantity: toNumber(item.__PREFIX___availablequantity),
+              __PREFIX___category: toNumber(item.__PREFIX___category),
               __PREFIX___locationid: item.___PREFIX___locationid_value ?? null,
               statecode: Number(item.statecode),
             },

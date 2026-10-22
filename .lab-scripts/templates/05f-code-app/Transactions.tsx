@@ -18,6 +18,7 @@ import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Transactions.styles";
 import { servicePayload } from "@/utils/ServicePayload";
+import { toNumber } from "@/utils/RecordValues";
 
 const transactionTypeMetadata = {
   OptionSet: transactionTypeOptionMetadata,
@@ -98,8 +99,8 @@ export default function TransactionsPage() {
     () =>
       transactions?.map((tx: __PASCAL___warehousetransactions) => ({
         ...tx,
-        __PREFIX___quantity: Number(tx.__PREFIX___quantity),
-        __PREFIX___transactiontype: Number(tx.__PREFIX___transactiontype),
+        __PREFIX___quantity: toNumber(tx.__PREFIX___quantity),
+        __PREFIX___transactiontype: toNumber(tx.__PREFIX___transactiontype),
         item: itemNames.get(tx.___PREFIX___itemid_value ?? "") ?? "",
       })),
     [transactions, itemNames]
