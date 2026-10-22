@@ -37,6 +37,23 @@ cd ../..
 Write-Host "  ✓ ProjectReference: Plugins.Warehouse → Solutions.Logic" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
+#                         Plugin Assembly Registration
+# ──────────────────────────────────────────────────────────────────────────────────────────
+
+Write-Host "`n── Plugin Assembly & Steps ──" -ForegroundColor Cyan
+
+# Must run before the first build: the build registers the assembly itself if none exists,
+# and the template would then append a second, orphaned PluginAssembly root component.
+$assemblyGuid = [guid]::NewGuid()
+
+txc workspace component create pp-plugin-assembly `
+    --output "src/Solutions.Logic" `
+    --param "AssemblyId=$assemblyGuid" `
+    --param "PluginProjectRootPath=../Plugins.Warehouse"
+
+Write-Host "  ✓ Plugin assembly registered" -ForegroundColor Green
+
+# ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Build Logic Solution
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
@@ -49,21 +66,6 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "  ⚠ Logic build had issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
 }
 cd ../..
-
-# ──────────────────────────────────────────────────────────────────────────────────────────
-#                         Plugin Assembly Registration
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-Write-Host "`n── Plugin Assembly & Steps ──" -ForegroundColor Cyan
-
-$assemblyGuid = [guid]::NewGuid()
-
-txc workspace component create pp-plugin-assembly `
-    --output "src/Solutions.Logic" `
-    --param "AssemblyId=$assemblyGuid" `
-    --param "PluginProjectRootPath=../Plugins.Warehouse"
-
-Write-Host "  ✓ Plugin assembly registered" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                      SDK Message Processing Steps
