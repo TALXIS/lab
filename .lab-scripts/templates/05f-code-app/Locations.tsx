@@ -18,6 +18,7 @@ import { statusOptions } from "@/utils/OptionSets";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Locations.styles";
 import { servicePayload } from "@/utils/ServicePayload";
+import { toNumber } from "@/utils/RecordValues";
 
 const columns: IColumn[] = [
   { name: "__PREFIX___name", displayName: "Name", dataType: "SingleLine.Text", isPrimary: true, visualSizeFactor: 200 },
@@ -78,7 +79,7 @@ export default function LocationsPage() {
     });
     return locations.map((loc: __PASCAL___warehouselocations) => ({
       ...loc,
-      __PREFIX___capacity: loc.__PREFIX___capacity != null ? Number(loc.__PREFIX___capacity) : null,
+      __PREFIX___capacity: toNumber(loc.__PREFIX___capacity),
       itemCount: itemCounts.get(loc.__PREFIX___warehouselocationid) ?? 0,
       active: loc.__PREFIX___isactive ? 0 : 1,
     }));

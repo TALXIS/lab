@@ -11,6 +11,7 @@ import {
 import { RecordCards } from "@/components/RecordCards";
 import { useIsPhone } from "@/hooks/UseIsPhone";
 import { getEntity } from "@/providers/pcf-host";
+import { useToast } from "@/hooks/use-toast";
 
 type RecordGridProps = {
   /** Rows the page already loaded through the generated services; undefined while loading. */
@@ -72,6 +73,14 @@ export function RecordGrid({ rows, columns, entityName, rowClassName, commands, 
   const showRibbon = !!commands || !!onRefresh;
   const isPhone = useIsPhone();
 
+  // Opens a record like any control would; a failure (no page for it) is reported, not left unhandled
+  const toast = useToast();
+  const openRecord = (id: string) => {
+    context.navigation
+      .openForm({ entityName: entity.logicalName, entityId: id })
+      .catch((err) => toast.error("Failed to open the record: " + String(err)));
+  };
+
   const [dataset] = useState(() => {
     // LogicalName becomes the entity type of opened records (the metadata type comes from Xrm's)
     const metadata = {
@@ -82,9 +91,7 @@ export function RecordGrid({ rows, columns, entityName, rowClassName, commands, 
     const dataset = new Dataset(new MemoryDataProvider({ dataSource: [], metadata }));
     dataset.setColumns(columns);
     // A memory provider doesn't open records itself; hand them to the context like a form would
-    dataset.setInterceptor("onOpenDatasetItem", (entityReference) =>
-      void context.navigation.openForm({ entityName: entity.logicalName, entityId: entityReference.id.guid })
-    );
+    dataset.setInterceptor("onOpenDatasetItem", (entityReference) => openRecord(entityReference.id.guid));
     dataset.setInterceptor("onRetrieveRecordCommand", async (options, defaultAction) => {
       const defaults = await defaultAction(options);
       // The dataset's own Refresh would re-read the provider's rows; ours re-queries the page's data
@@ -123,7 +130,7 @@ export function RecordGrid({ rows, columns, entityName, rowClassName, commands, 
       columns={columns}
       onOpen={
         entity.formPath
-          ? (id) => void context.navigation.openForm({ entityName: entity.logicalName, entityId: id })
+          ? openRecord
           : undefined
       }
     />
