@@ -130,6 +130,11 @@ $prefixPascal = [char]::ToUpper($PublisherPrefix[0]) + $PublisherPrefix.Substrin
 $appSrc = "src/Apps.WarehousePicking/src"
 $uiTokens = @{ PREFIX = $PublisherPrefix; PASCAL = $prefixPascal }
 
+# Router.tsx and pages/Layout.tsx below replace the starter's router.tsx and pages/_layout.tsx. Drop
+# those first: on a case-sensitive file system router.tsx would stay next to Router.tsx (and win the
+# "@/router" import); on a case-insensitive one Router.tsx would be written into it under the old name.
+Remove-Item "$appSrc/router.tsx", "$appSrc/pages/_layout.tsx", "$appSrc/pages/_layout.styles.ts" -ErrorAction SilentlyContinue
+
 foreach ($file in @(
     @{ Template = "ServicePayload.ts";        Target = "utils/ServicePayload.ts" },
     @{ Template = "RecordValues.ts";          Target = "utils/RecordValues.ts" },
@@ -207,6 +212,9 @@ Pop-Location
 
 # Drop the now-superseded counter-demo home page (and its styles) — the router no longer references it
 Remove-Item "$appSrc/pages/home.tsx", "$appSrc/pages/home.styles.ts" -ErrorAction SilentlyContinue
+
+# Point App.tsx at the lab's Router.tsx (the starter's router.tsx was dropped above)
+(Get-Content "$appSrc/App.tsx" -Raw) -replace 'from "@/router"', 'from "@/Router"' | Set-Content "$appSrc/App.tsx" -NoNewline
 
 # ...and the starter's theme toggle (never placed in the layout) with its hook, and its React logo
 Remove-Item "$appSrc/components/mode-toggle.tsx", "$appSrc/hooks/use-theme.ts", "$appSrc/assets/react.svg" -ErrorAction SilentlyContinue

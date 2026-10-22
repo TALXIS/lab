@@ -1,6 +1,6 @@
 import type { HostEntity } from "@/providers/pcf-host";
 
-// The warehouse tables as TALXIS base controls see them (registered in router.tsx): lookups read
+// The warehouse tables as TALXIS base controls see them (registered in Router.tsx): lookups read
 // their metadata, grids their primary columns, and items open on their detail page.
 export const warehouseEntities: HostEntity[] = [
   {
