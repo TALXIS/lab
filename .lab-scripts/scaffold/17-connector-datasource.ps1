@@ -64,13 +64,19 @@ Set-Content -Path $indexTsPath -Value (Get-Content $indexTsPath | Select-Object 
 
 Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouseitem (refreshed for new Product lookup)" -ForegroundColor Green
 
-# Re-running pp-app-code-data for a table that already has a service leaves the template's
-# placeholder copy, services/capitalizedentitylogicalnameexamplesService.ts, next to the real
-# one (templates 1.25.1 included). It declares the same class, so it breaks the build with
-# TS2308 as soon as anything globs the directory - 'pa app add data-source' does when it
-# regenerates index.ts - and it has no business in the repository either way.
-Get-ChildItem "src/Apps.WarehousePicking/src/generated/services" -Filter "capitalizedentitylogicalname*" -ErrorAction SilentlyContinue |
-    ForEach-Object { Remove-Item $_.FullName -Force; Write-Host "  ✓ Removed stray template file: $($_.Name)" -ForegroundColor DarkGray }
+# The refresh above re-runs the template for a table whose service file already exists. The
+# template's ReplacePlaceholder.ps1 renames its placeholder copy with Rename-Item, which
+# refuses an existing target ("The file ... already exists"); the error is non-terminating,
+# so the post-actions still report success and the cleanup runs, but the freshly generated
+# service stays under the placeholder name next to the stale one. Two files declaring the
+# same class break the build with TS2308 as soon as 'pa app add data-source' regenerates
+# index.ts. Finish the rename here until the template does (templates 1.25.1 still fails).
+$servicesDir = "src/Apps.WarehousePicking/src/generated/services"
+$strayService = Join-Path $servicesDir "capitalizedentitylogicalnameexamplesService.ts"
+if (Test-Path $strayService) {
+    Move-Item -LiteralPath $strayService -Destination (Join-Path $servicesDir "${prefixPascal}_warehouseitemsService.ts") -Force
+    Write-Host "  ✓ ${prefixPascal}_warehouseitemsService.ts (finished the template's rename of its refreshed copy)" -ForegroundColor Green
+}
 
 # pa prints status lines around the JSON even with --json: keep what sits between the first
 # '{' and the last '}'.
