@@ -5,6 +5,8 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
+import { getClient } from "@microsoft/power-apps/data";
+import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -184,8 +186,19 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
 
       if (imageBytes) {
         try {
-          const file = new File([imageBytes as BlobPart], `${ean}.jpg`, { type: "image/jpeg" });
-          await __PASCAL___productsService.upload(productId, "__PREFIX___productimage", file);
+          // The generated services cover create/update/get but emit nothing for file columns -
+          // the runtime client does, and it takes the bytes directly. It reports failures as
+          // { success: false } rather than throwing, so the result has to be checked.
+          const upload = await getClient(dataSourcesInfo).uploadFileToRecord(
+            "__PREFIX___products",
+            productId,
+            "__PREFIX___productimage",
+            `${ean}.jpg`,
+            imageBytes
+          );
+          if (!upload.success) {
+            throw upload.error ?? new Error("upload rejected");
+          }
         } catch (err) {
           // The product is linked either way - only the photo failed to save, so this is a
           // warning, not a failure of the whole action.
