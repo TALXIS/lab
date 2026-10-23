@@ -70,12 +70,31 @@ Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouseitem (refreshed for n
 # so the post-actions still report success and the cleanup runs, but the freshly generated
 # service stays under the placeholder name next to the stale one. Two files declaring the
 # same class break the build with TS2308 as soon as 'pa app add data-source' regenerates
-# index.ts. Finish the rename here until the template does (templates 1.25.1 still fails).
+# index.ts. Finish the rename here until the template does: TALXIS/tools-devkit-templates#169
+# (and #177 for the pattern across templates); 1.25.1 still fails.
 $servicesDir = "src/Apps.WarehousePicking/src/generated/services"
 $strayService = Join-Path $servicesDir "capitalizedentitylogicalnameexamplesService.ts"
 if (Test-Path $strayService) {
     Move-Item -LiteralPath $strayService -Destination (Join-Path $servicesDir "${prefixPascal}_warehouseitemsService.ts") -Force
     Write-Host "  ✓ ${prefixPascal}_warehouseitemsService.ts (finished the template's rename of its refreshed copy)" -ForegroundColor Green
+}
+
+# The Power Platform environment id (not the Dataverse organization id): the one CP04 stored
+# for the Dev environment, re-resolved from the tenant's environment list when asked to - a
+# recreated Dev environment keeps its URL but gets a new id.
+function Resolve-DevEnvironmentId {
+    param([switch]$Refresh)
+    $id = if ($Refresh) { $null } else { Get-LabValue 'devEnvId' }
+    if (-not $id) {
+        $devEnvUrl = Get-LabValue 'devEnvUrl'
+        try {
+            $id = @(txc env list --profile (Get-LabValue 'devProfile') --format json 2>$null | ConvertFrom-Json -ErrorAction Stop |
+                Where-Object { "$($_.environmentUrl)".TrimEnd('/') -eq "$devEnvUrl".TrimEnd('/') })[0].environmentId
+        } catch { $id = $null }
+        if (-not $id) { throw "Could not resolve the Dev environment id for $devEnvUrl - run CP04 again." }
+        Set-LabValue 'devEnvId' $id
+    }
+    return $id
 }
 
 # pa prints status lines around the JSON even with --json: keep what sits between the first
@@ -184,20 +203,8 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         Write-Info "  <id> --connection-id <connection>' from src/Apps.WarehousePicking to bind a real"
         Write-Info "  Dev connection into power.config.json."
     } else {
-        # Non-interactive pa (an agent, an unattended run) refuses without --environment-id, and
-        # the environment id is not the Dataverse organization id. CP04 recorded it; fall back to
-        # the tenant's environment list for a lab state written before it did.
-        $environmentId = Get-LabValue 'devEnvId'
-        if (-not $environmentId) {
-            $devEnvUrl = Get-LabValue 'devEnvUrl'
-            $devProfileName = Get-LabValue 'devProfile'
-            try {
-                $environmentId = @(txc env list --profile $devProfileName --format json 2>$null | ConvertFrom-Json -ErrorAction Stop |
-                    Where-Object { "$($_.environmentUrl)".TrimEnd('/') -eq "$devEnvUrl".TrimEnd('/') })[0].environmentId
-            } catch { $environmentId = $null }
-            if (-not $environmentId) { throw "Could not resolve the Dev environment id for $devEnvUrl - run CP04 again." }
-            Set-LabValue 'devEnvId' $environmentId
-        }
+        # Non-interactive pa (an agent, an unattended run) refuses without --environment-id.
+        $environmentId = Resolve-DevEnvironmentId
         Write-Ok "Environment id: $environmentId"
 
         Push-Location $appRoot
@@ -208,7 +215,13 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
             # That suffix cannot be derived locally, so look it up.
             Write-Info "Resolving the connector's id..."
             $connectorListJson = pa connector list --environment-id $environmentId --search "Open Food Facts" --json
-            if ($LASTEXITCODE -ne 0) { throw "pa connector list failed" }
+            if ($LASTEXITCODE -ne 0) {
+                # Lab state is a cache: if the stored environment id is stale, look it up again once.
+                $environmentId = Resolve-DevEnvironmentId -Refresh
+                Write-Warn2 "Retrying with the environment id resolved from the tenant: $environmentId"
+                $connectorListJson = pa connector list --environment-id $environmentId --search "Open Food Facts" --json
+                if ($LASTEXITCODE -ne 0) { throw "pa connector list failed for environment $environmentId" }
+            }
             $connectorApiName = (ConvertFrom-PaJson $connectorListJson).items |
                 Where-Object { $_.displayName -eq "Open Food Facts" } |
                 Select-Object -First 1 -ExpandProperty name
@@ -217,8 +230,17 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
             }
             Write-Ok "Connector id: $connectorApiName (Dataverse schema name is $connectorSchemaName)"
 
-            # Each run of CP11 should bind one connection, not create another.
+            # Each run of CP11 should bind one connection, not create another - but the stored one
+            # may have been deleted in the maker portal, so confirm it is still there.
             $connectionId = Get-LabValue 'openFoodFactsConnectionId'
+            if ($connectionId) {
+                $connectionsJson = pa connection list --environment-id $environmentId --search "Open Food Facts" --json
+                $known = if ($LASTEXITCODE -eq 0) { @((ConvertFrom-PaJson $connectionsJson).items | Where-Object { $_.connectionId -eq $connectionId -or $_.id -eq $connectionId -or $_.name -eq $connectionId }) } else { @() }
+                if ($known.Count -eq 0) {
+                    Write-Warn2 "Connection $connectionId from lab state no longer exists - creating a new one"
+                    $connectionId = $null
+                }
+            }
             if ($connectionId) {
                 Write-Ok "Connection exists: $connectionId"
             } else {
