@@ -91,7 +91,8 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
         --param "RequiredLevel=none" `
         --param "PublisherPrefix=$PublisherPrefix" `
         --param "LogicalName=lastsyncedon" `
-        --param "DisplayName=Last Synced On"
+        --param "DisplayName=Last Synced On" `
+        --param "DateTimeFormat=date"
 
     Write-Host "  ✓ product.lastsyncedon (DateTime)" -ForegroundColor Green
 
