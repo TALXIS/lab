@@ -79,18 +79,15 @@ Run a checkpoint:
 .lab-scripts/CP01-check-machine-setup.ps1
 ```
 
-## Rollback
+## Checkpoint tags
 
-Every checkpoint commits, pushes, and tags its result (the tag marks the latest run of that
-checkpoint). To roll back to an earlier checkpoint locally and carry on from there:
-
-```powershell
-git reset --hard cp05
-.lab-scripts/CP06-implement-data-model.ps1
-```
-
-The next checkpoint opens a PR as usual. `main` on your fork keeps its history — the branch
-protection from CP03 refuses force pushes to it, exactly as it would on a real team.
+Every checkpoint commits, pushes, and tags its result; the tag marks the latest run of that
+checkpoint. Use the tags to look at how the repo looked at any point (`git checkout tags/cp05`,
+then `git switch main` to come back). They are not a rewind button: `main` on your fork keeps
+its history, because the branch protection from CP03 refuses force pushes to it, exactly as
+it would on a real team. To undo a checkpoint for real, open a PR that reverts its commit, or
+start over on a fresh fork. Re-running a checkpoint is the normal way to fix one that failed
+partway.
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
@@ -101,16 +98,15 @@ Codespace even if your terminal crashes.
 live on whatever machine you're on right now — they don't come along with a `git clone`.
 To pick up the lab on a fresh Codespace, VM, or after a crash:
 
-1. Clone the repo (or open a new Codespace on your fork).
-2. If you want to resume from a specific checkpoint rather than the latest commit:
-   `git checkout tags/<tag>` (e.g. `git checkout tags/cp07`). The tags are pushed to your fork,
-   so a fresh clone has them.
-3. Run `.lab-scripts/lab-status.ps1` — it reports which checkpoints are done according to
+1. Clone the repo (or open a new Codespace on your fork). The checkpoint tags come with it.
+2. Run `.lab-scripts/lab-status.ps1` — it reports which checkpoints are done according to
    `.lab-state.json` and git tags, and whether this machine's own `gh`/`txc`/`az` sessions
    actually match what lab-state expects (a mismatch here is the most common reason a
    checkpoint fails partway through instead of at the top with a clear message).
-4. Run `.lab-scripts/lab-signin.ps1` if `lab-status.ps1` flags missing/mismatched auth, then continue with
-   whichever checkpoint it names as next.
+3. Run `.lab-scripts/lab-signin.ps1` if `lab-status.ps1` flags missing/mismatched auth, then continue with
+   whichever checkpoint it names as next. Each checkpoint starts by bringing `main` up to date
+   with your fork, so a checkpoint whose PR you merged on GitHub from another machine is
+   picked up as done.
 
 ## Developing this lab
 

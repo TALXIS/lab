@@ -118,6 +118,9 @@ function Save-Checkpoint {
     $branch = "checkpoint/$Id"
     Push-Location $LabRoot
     try {
+        # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)
+        $forkRepo = (git remote get-url origin) -replace 'https://github.com/',''-replace '\.git$',''
+        $owner = $forkRepo.Split('/')[0]
         if (-not (git config user.email)) {
             if ($env:LAB_LOCAL_MODE) {
                 git config user.email "agent@local.test"
@@ -133,6 +136,17 @@ function Save-Checkpoint {
         $resuming = (git branch --show-current) -eq $branch
         if ($resuming) {
             Write-Info "Resuming the interrupted save of $Id on $branch..."
+            if (-not $env:LAB_LOCAL_MODE) {
+                # Stopped between the merge on GitHub and the local pull? Then origin/main already
+                # holds this branch's tree and there is nothing left to push - just finish.
+                git fetch origin main --quiet 2>&1 | Out-Null
+                git diff --quiet origin/main HEAD 2>&1 | Out-Null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Info "The PR for $Id was already merged - finishing the checkpoint."
+                    Complete-Checkpoint -Id $Id -Branch $branch -Repo $forkRepo
+                    return
+                }
+            }
         } else {
             Write-Info "Syncing main..."
             git switch main --quiet 2>&1 | Out-Null
@@ -191,9 +205,6 @@ function Save-Checkpoint {
             Write-Err "Pushing $branch to origin failed. Check 'gh auth status' (or run .lab-scripts/lab-signin.ps1), then re-run this checkpoint."
             exit 1
         }
-        # Always target the fork's origin repo explicitly (avoids gh resolving upstream instead)
-        $forkRepo = (git remote get-url origin) -replace 'https://github.com/',''-replace '\.git$',''
-        $owner = $forkRepo.Split('/')[0]
         $prBody = if ([string]::IsNullOrWhiteSpace($Body)) { "## Summary`n$Message" } else { $Body }
         # An interrupted run may have left this checkpoint's PR open; the push above refreshed it.
         $pr = gh api "repos/$forkRepo/pulls?state=open&head=${owner}:$branch" 2>$null | ConvertFrom-Json | Select-Object -First 1
@@ -209,30 +220,45 @@ function Save-Checkpoint {
         if ([Console]::IsInputRedirected -and -not $env:LAB_AUTO_MERGE) {
             # No terminal (e.g. an agent runs this): a person reviews and merges on GitHub.
             Write-Info "Review and merge the PR on GitHub: $url"
-            do { Start-Sleep 15; $state = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .state 2>$null } while ($state -ne 'closed')
-            if ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null) -ne 'true') { Write-Err "PR was closed without merging: $url"; exit 1 }
+            $failures = 0
+            do {
+                Start-Sleep 15
+                $state = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .state 2>$null
+                if ($LASTEXITCODE -ne 0) { if (++$failures -ge 10) { Write-Err "Lost contact with GitHub while waiting for $url - re-run this checkpoint once it is back."; exit 1 } }
+                else { $failures = 0 }
+            } while ($state -ne 'closed')
+            $merged = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null
+            if ($LASTEXITCODE -ne 0 -or $merged -ne 'true') { Write-Err "PR was closed without merging: $url"; exit 1 }
         } else {
             if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
             Merge-CheckpointPullRequest -Repo $forkRepo -Number $pr.number -Url $url
         }
 
-        git switch main --quiet
-        git pull --ff-only --quiet 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Err "Could not fast-forward main to the merged PR. Check 'git status', then re-run this checkpoint - it only adds the tag."
-            exit 1
-        }
-        git branch -D $branch 2>&1 | Out-Null
-        gh api -X DELETE "repos/$forkRepo/git/refs/heads/$branch" 2>&1 | Out-Null   # merged; keep the fork tidy
-        git tag -f $Id 2>&1 | Out-Null
-        Publish-CheckpointTag $Id
-        Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
+        Complete-Checkpoint -Id $Id -Branch $branch -Repo $forkRepo
     } finally { Pop-Location }
 }
 
+# After the PR is merged: bring main up to date, drop the work branch here and on the fork,
+# move the tag. Also the whole job when a re-run finds the merge already done.
+function Complete-Checkpoint {
+    param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Branch, [Parameter(Mandatory)][string]$Repo)
+    git switch main --quiet 2>&1 | Out-Null
+    git pull --ff-only --quiet 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "Could not fast-forward main to the merged PR. Check 'git status', then re-run this checkpoint - it only finishes the tag."
+        exit 1
+    }
+    git branch -D $Branch 2>&1 | Out-Null
+    gh api -X DELETE "repos/$Repo/git/refs/heads/$Branch" 2>&1 | Out-Null   # merged; keep the fork tidy
+    git tag -f $Id 2>&1 | Out-Null
+    Publish-CheckpointTag $Id
+    Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
+}
+
 # Squash-merges the checkpoint's PR through the REST API. GitHub answers 405 while a required
-# check is still running (CP13 onwards) - that is the gate working, so keep trying. Anything
-# else needs a person: say so and stop, the re-run reuses the same PR.
+# check is still running (CP13 onwards) - that is the gate working, so keep trying while the
+# PR's own state says the checks are pending. A conflict, a failed check or anything but a
+# 405 needs a person: say so and stop, the re-run reuses the same PR.
 function Merge-CheckpointPullRequest {
     param([Parameter(Mandatory)][string]$Repo, [Parameter(Mandatory)]$Number, [Parameter(Mandatory)][string]$Url)
     Write-Info "Merging..."
@@ -242,17 +268,27 @@ function Merge-CheckpointPullRequest {
         $result = gh api -X PUT "repos/$Repo/pulls/$Number/merge" -f merge_method=squash 2>&1
         if ($LASTEXITCODE -eq 0) { return }
         $text = $result -join "`n"
-        # "is expected" / "is pending": the required check has not reported yet. GitHub also
-        # answers 405 "not mergeable" for a short while after a push, before it has computed
-        # mergeability - so only a failing check or a lasting conflict stops us.
-        $retryable = $text -match 'HTTP 405' -and $text -notmatch 'failing' -and
-                     ($text -notmatch 'not mergeable' -or (Get-Date) -lt $deadline.AddMinutes(-28))
-        if (-not $retryable) {
-            Write-Err "Merge failed: $text"
+        $stop = $null
+        if ($text -notmatch 'HTTP 405') {
+            $stop = $text
+        } else {
+            $pr = gh api "repos/$Repo/pulls/$Number" 2>$null | ConvertFrom-Json
+            $state = "$($pr.mergeable_state)"
+            if ($state -eq 'dirty') {
+                $stop = "the PR has a merge conflict with main"
+            } elseif ($state -in 'blocked', 'unknown', 'behind', '') {
+                # A required check is still running - or has failed; the check runs on the head commit tell.
+                $conclusions = gh api "repos/$Repo/commits/$($pr.head.sha)/check-runs" -q '[.check_runs[].conclusion | select(. != null)] | join(",")' 2>$null
+                if ("$conclusions" -match 'failure|cancelled|timed_out|action_required') { $stop = "a required check failed ($conclusions)" }
+            }
+            # clean / unstable / has_hooks: GitHub accepts the merge in principle - retry.
+        }
+        if ($stop) {
+            Write-Err "Merge failed: $stop"
             Write-Info "Resolve it on GitHub: $Url - then re-run this checkpoint (it reuses the PR)."
             exit 1
         }
-        if ((Get-Date) -gt $deadline) { Write-Err "Gave up waiting for the PR to become mergeable: $Url"; exit 1 }
+        if ((Get-Date) -gt $deadline) { Write-Err "Gave up waiting for the PR to become mergeable: $Url"; Write-Info "Last answer: $text"; exit 1 }
         if (-not $waiting) { Write-Info "Waiting for the required checks to pass (see $Url)..."; $waiting = $true }
         Start-Sleep 15
     }
@@ -266,6 +302,15 @@ function Publish-CheckpointTag {
     if ($env:LAB_LOCAL_MODE) { return }
     git push --force origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Err "Pushing tag $Id to origin failed. Re-run this checkpoint to retry."; exit 1 }
+}
+
+# Real mode: bring main up to date before a checkpoint starts scaffolding. A run interrupted
+# after its PR merged leaves local main one squash commit behind origin; if the scaffolds
+# regenerate those files first, the later fast-forward pull would refuse to run over them.
+# Best effort: offline, on another branch, or with local changes it simply does nothing.
+if (-not $env:LAB_LOCAL_MODE -and (git -C $LabRoot branch --show-current 2>$null) -eq 'main' -and -not (git -C $LabRoot status --porcelain 2>$null)) {
+    $savedPrompt = $env:GIT_TERMINAL_PROMPT; $env:GIT_TERMINAL_PROMPT = '0'
+    try { git -C $LabRoot pull --ff-only --quiet 2>&1 | Out-Null } finally { $env:GIT_TERMINAL_PROMPT = $savedPrompt }
 }
 
 Import-LabState | Out-Null

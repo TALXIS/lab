@@ -49,10 +49,13 @@ try {
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env sln import src/Solutions.DataModel"
     Write-Info "  --managed' to bring the Product table and the Item lookup into Dev ($devUrl)."
+} elseif (Get-LabValue 'productTableDeployed') {
+    Write-Ok "Product table and Item lookup already deployed to Dev"
 } else {
     Write-Info "Deploying Solutions.DataModel to Dev environment ($devUrl)..."
     txc env sln import (Join-Path $LabRoot "src/Solutions.DataModel") --managed --wait --profile $devProfile
     if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.DataModel import to Dev failed"; exit 1 }
+    Set-LabValue 'productTableDeployed' $true
     Write-Ok "Product table and Item lookup are live in Dev"
 }
 
