@@ -37,14 +37,21 @@ ask Copilot Chat to *sign me in* and it walks you through each step.
 
 Checkpoints don't push straight to `main` — they teach the real ALM loop. Each one:
 
-1. Creates a branch and commits its changes.
+1. Creates a `checkpoint/cpNN` branch and commits its changes.
 2. Opens a **Pull Request** and prints the link.
 3. **Pauses** — open the PR in your browser, review the diff and the running build check.
-4. Press **Enter** to continue: it waits for the build check, squash-merges, and tags for rollback.
+4. Press **Enter** to continue: it squash-merges, deletes the branch, and moves the `cpNN` tag
+   to the merged commit for rollback. Once CP13 makes the build check required, the merge
+   waits for it to pass — before that, GitHub accepts the merge right away, which is the point
+   CP13 makes.
 
 This is the slow, deliberate part — read the PR, watch the build go green, then merge. The
 first time a checkpoint enables GitHub Actions you may be asked to **approve workflows on your
 fork** — say yes.
+
+Re-running a checkpoint is safe: with nothing new to commit it only makes sure the tag is
+there; with new changes it opens another PR for the same checkpoint and moves the tag; and a
+PR left open by an interrupted run is picked up again instead of duplicated.
 
 ## Checkpoints
 
@@ -74,12 +81,16 @@ Run a checkpoint:
 
 ## Rollback
 
-Every checkpoint commits, pushes, and tags its result. To roll back to an earlier checkpoint:
+Every checkpoint commits, pushes, and tags its result (the tag marks the latest run of that
+checkpoint). To roll back to an earlier checkpoint locally and carry on from there:
 
 ```powershell
 git reset --hard cp05
-git push --force
+.lab-scripts/CP06-implement-data-model.ps1
 ```
+
+The next checkpoint opens a PR as usual. `main` on your fork keeps its history — the branch
+protection from CP03 refuses force pushes to it, exactly as it would on a real team.
 
 Your variables persist in `.lab-state.json` (committed), so you can resume on a fresh
 Codespace even if your terminal crashes.
@@ -92,7 +103,8 @@ To pick up the lab on a fresh Codespace, VM, or after a crash:
 
 1. Clone the repo (or open a new Codespace on your fork).
 2. If you want to resume from a specific checkpoint rather than the latest commit:
-   `git checkout <tag>` (e.g. `git checkout cp07`).
+   `git checkout tags/<tag>` (e.g. `git checkout tags/cp07`). The tags are pushed to your fork,
+   so a fresh clone has them.
 3. Run `.lab-scripts/lab-status.ps1` — it reports which checkpoints are done according to
    `.lab-state.json` and git tags, and whether this machine's own `gh`/`txc`/`az` sessions
    actually match what lab-state expects (a mismatch here is the most common reason a
