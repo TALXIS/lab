@@ -25,7 +25,11 @@ Write-Step "CP03 — Continuous Integration (branch protection)"
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would resolve the origin repo and create the"
     Write-Info "  'lab-main-protection' ruleset (deletion/non_fast_forward/pull_request rules)"
-    Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'."
+    Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'. Stubbing repo/ruleset values so"
+    Write-Info "  later checkpoints and lab-status.ps1 see this checkpoint as complete."
+    Set-LabValue 'repo'            'local/lab.invalid'
+    Set-LabValue 'mainRulesetId'   1   # any non-empty value; nothing calls GitHub with it in local mode
+    Set-LabValue 'mainRulesetName' 'lab-main-protection'
 } else {
 
 # Step 1: Resolve the fork (owner/repo) from the origin remote (not the upstream parent).
@@ -80,21 +84,12 @@ Set-LabValue 'mainRulesetName' $rulesetRecord.name
 
 }
 
-# Step 3: Demonstrate the loop — create a topic branch for upcoming work.
-Push-Location $LabRoot
-try {
-    git checkout main --quiet 2>$null
-    git checkout -B "setup/runtime" --quiet 2>$null
-    Write-Ok "Created topic branch: setup/runtime"
-} finally { Pop-Location }
-
 Save-Checkpoint -Id "cp03" -Message "Add main branch protection for pull request workflow" -Body @'
 Protect the main branch so warehouse app changes land through pull requests instead of direct pushes. This establishes the review loop before the first functional features are added.
 
 ## Changes
 - create the lab-main-protection GitHub ruleset for main
 - require pull requests and up-to-date branches before merge
-- seed a setup/runtime topic branch for the next implementation step
 ## Testing
 - ruleset creation succeeds and main is configured to accept changes through PRs
 '@

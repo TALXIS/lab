@@ -24,24 +24,27 @@ Write-Step "Lab status"
 
 # ── 1. Checkpoint tags vs lab-state keys ────────────────────────────────────────────────
 # Each entry: the checkpoint id, the git tag Save-Checkpoint leaves behind, and the
-# lab-state keys that checkpoint is expected to have populated (if any — several
-# checkpoints only scaffold files under src/ and don't add new lab-state).
+# lab-state keys that checkpoint is expected to have populated: values later checkpoints
+# read, and the *Scaffolded flags each scaffold block sets once it has fully run. A tag
+# without its flags means the checkpoint stopped partway (or its work was lost), so it is
+# the one to re-run next.
 $checkpoints = @(
     @{ Id = "cp01"; Keys = @("txcAuth", "tenantId", "randomIdentifier") }
     @{ Id = "cp02"; Keys = @("slnxName", "publisherName", "publisherPrefix") }
     @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
     @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
     @{ Id = "cp05"; Keys = @("appId") }
-    @{ Id = "cp06"; Keys = @() }
-    @{ Id = "cp07"; Keys = @() }
-    @{ Id = "cp08"; Keys = @() }
-    @{ Id = "cp09"; Keys = @() }
+    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded") }
+    @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
+    @{ Id = "cp08"; Keys = @("securityScaffolded") }
+    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded") }
     @{ Id = "cp10"; Keys = @() }
-    @{ Id = "cp11"; Keys = @() }
+    # CP11 saves four times under one tag; its scaffold flags tell which of the four steps landed.
+    @{ Id = "cp11"; Keys = @("productTableScaffolded", "connectorScaffolded", "productDataSourceScaffolded", "connectorDataSourceScaffolded", "barcodeScanUiScaffolded") }
     @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
     @{ Id = "cp13"; Keys = @("mainRulesetId") }
-    @{ Id = "cp14"; Keys = @() }
-    @{ Id = "cp15"; Keys = @() }
+    @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
+    @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
 )
 
 $tags = @(git -C $LabRoot tag --list "cp*" 2>$null)
@@ -55,7 +58,8 @@ foreach ($cp in $checkpoints) {
     if ($tagged -and $missingKeys.Count -eq 0) {
         Write-Ok "$($cp.Id) — done"
     } elseif ($tagged -and $missingKeys.Count -gt 0) {
-        Write-Warn2 "$($cp.Id) — tagged, but lab-state is missing: $($missingKeys -join ', ')"
+        Write-Warn2 "$($cp.Id) — tagged, but lab-state is missing: $($missingKeys -join ', ') (re-run it)"
+        if (-not $firstMissing) { $firstMissing = $cp.Id }
     } else {
         Write-Info "$($cp.Id) — not run"
         if (-not $firstMissing) { $firstMissing = $cp.Id }
@@ -108,7 +112,7 @@ foreach ($profileKey in @('devProfile', 'testProfile')) {
 # ── 3. What's next ───────────────────────────────────────────────────────────────────────
 Write-Host "`n── Next ──" -ForegroundColor Cyan
 if ($firstMissing) {
-    Write-Info "Next runnable checkpoint: .lab-scripts/$firstMissing-*.ps1"
+    Write-Info "Next checkpoint to run: .lab-scripts/$firstMissing-*.ps1 (re-running is safe - it only adds what is missing)"
 } else {
     Write-Ok "All checkpoints done."
 }
