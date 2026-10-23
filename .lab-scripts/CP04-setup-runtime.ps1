@@ -50,6 +50,7 @@ if ($env:LAB_LOCAL_MODE) {
     Write-Info "  that only check for their presence can still run."
     foreach ($key in @('dev', 'test')) {
         Set-LabValue "${key}EnvUrl" "https://local-$key.stub.invalid"
+        Set-LabValue "${key}EnvId" "00000000-0000-0000-0000-00000000000$(if ($key -eq 'dev') { 1 } else { 2 })"
         Set-LabValue "${key}Profile" $key
     }
 } else {
