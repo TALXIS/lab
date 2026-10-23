@@ -234,7 +234,7 @@ txc workspace component create pp-entity-attribute `
     --param "PublisherPrefix=$PublisherPrefix" `
     --param "LogicalName=transactiondate" `
     --param "DisplayName=Transaction Date" `
-    --param "DateTimeFormat=date"
+    --param "DateTimeFormat=datetime"
 
 Write-Host "  ✓ warehousetransaction.transactiondate (DateTime)" -ForegroundColor Green
 

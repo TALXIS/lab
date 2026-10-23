@@ -284,7 +284,7 @@ export default function WarehouseItemDetailPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {tx.__PREFIX___transactiondate
-                        ? new Date(tx.__PREFIX___transactiondate).toLocaleDateString()
+                        ? new Date(tx.__PREFIX___transactiondate).toLocaleString()
                         : "-"}
                     </TableCell>
                   </TableRow>

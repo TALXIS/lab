@@ -1,12 +1,12 @@
 export class TransactionForm {
     /**
      * OnLoad handler for the Warehouse Transaction main form.
-     * Sets default transaction date to today if empty.
+     * Sets default transaction date and time to now if empty.
      */
     public static onLoad(executionContext: Xrm.Events.EventContext): void {
         const formContext = executionContext.getFormContext();
 
-        // Default transaction date to today
+        // Default transaction date to now
         const dateAttr = formContext.getAttribute("__PREFIX___transactiondate");
         if (dateAttr && !dateAttr.getValue()) {
             dateAttr.setValue(new Date());
