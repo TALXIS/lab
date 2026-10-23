@@ -28,7 +28,7 @@ if ($env:LAB_LOCAL_MODE) {
     Write-Info "  via 'gh api repos/<owner>/<repo>/rulesets'. Stubbing repo/ruleset values so"
     Write-Info "  later checkpoints and lab-status.ps1 see this checkpoint as complete."
     Set-LabValue 'repo'            'local/lab.invalid'
-    Set-LabValue 'mainRulesetId'   0
+    Set-LabValue 'mainRulesetId'   1   # any non-empty value; nothing calls GitHub with it in local mode
     Set-LabValue 'mainRulesetName' 'lab-main-protection'
 } else {
 
