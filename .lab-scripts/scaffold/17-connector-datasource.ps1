@@ -64,6 +64,14 @@ Set-Content -Path $indexTsPath -Value (Get-Content $indexTsPath | Select-Object 
 
 Write-Host "  ✓ Data source: ${PublisherPrefix}_warehouseitem (refreshed for new Product lookup)" -ForegroundColor Green
 
+# Re-running pp-app-code-data for a table that already has a service leaves the template's
+# placeholder copy, services/capitalizedentitylogicalnameexamplesService.ts, next to the real
+# one (templates 1.25.1 included). It declares the same class, so it breaks the build with
+# TS2308 as soon as anything globs the directory - 'pa app add data-source' does when it
+# regenerates index.ts - and it has no business in the repository either way.
+Get-ChildItem "src/Apps.WarehousePicking/src/generated/services" -Filter "capitalizedentitylogicalname*" -ErrorAction SilentlyContinue |
+    ForEach-Object { Remove-Item $_.FullName -Force; Write-Host "  ✓ Removed stray template file: $($_.Name)" -ForegroundColor DarkGray }
+
 # pa prints status lines around the JSON even with --json: keep what sits between the first
 # '{' and the last '}'.
 function ConvertFrom-PaJson {
@@ -170,13 +178,6 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
         Write-Info "  <id> --connection-id <connection>' from src/Apps.WarehousePicking to bind a real"
         Write-Info "  Dev connection into power.config.json."
     } else {
-        # pp-app-code-data (templates up to 1.25.0) left services/capitalizedentitylogicalname...
-        # behind - a second file declaring the same class, which breaks the build with TS2308
-        # as soon as 'pa app add data-source' regenerates index.ts. Newer packs rename it;
-        # removing it when present keeps older packs working.
-        Get-ChildItem "$appRoot/src/generated/services" -Filter "capitalizedentitylogicalname*" -ErrorAction SilentlyContinue |
-            ForEach-Object { Remove-Item $_.FullName -Force; Write-Host "  ✓ Removed stray template file: $($_.Name)" -ForegroundColor DarkGray }
-
         # Non-interactive pa (an agent, an unattended run) refuses without --environment-id, and
         # the environment id is not the Dataverse organization id. CP04 recorded it; fall back to
         # the tenant's environment list for a lab state written before it did.
