@@ -39,7 +39,18 @@ $rules = @(
         required_status_checks=@(@{ context="build" }) } }
 ) | ConvertTo-Json -Depth 10
 $tmp = New-TemporaryFile; "{`"rules`":$rules}" | Set-Content $tmp -Encoding UTF8
-gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1 | Out-Null
+$updated = gh api -X PUT "repos/$repo/rulesets/$id" --input $tmp 2>&1
+if ($LASTEXITCODE -ne 0) {
+    if (($updated -join "`n") -notmatch 'HTTP 40[34]') { Write-Err "Ruleset update failed: $updated"; Remove-Item $tmp; exit 1 }
+    # Some sandboxes can't change repository settings - then you add the rule yourself.
+    Write-Warn2 "GitHub refused to change the ruleset from here: $updated"
+    Write-Warn2 "Add it yourself: https://github.com/$repo/settings/rules/$id → Require status checks to pass → add 'build'."
+    $deadline = (Get-Date).AddMinutes(30)
+    while ((gh api "repos/$repo/rulesets/$id" -q '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context] | index("build")' 2>$null) -in @($null, '', 'null')) {
+        if ((Get-Date) -gt $deadline) { Write-Err "The 'build' check is still not required on $repo - add it, then re-run this checkpoint."; Remove-Item $tmp; exit 1 }
+        Start-Sleep 15
+    }
+}
 Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
 Write-Ok "Ruleset now requires 'build' to pass"

@@ -64,12 +64,24 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
     $rulesetRecord = $existingRuleset | ConvertFrom-Json
     Write-Ok "Ruleset already exists — main already requires PRs"
 } else {
-    $createdRuleset = gh api -X POST "repos/$repo/rulesets" --input $tmp 2>$null
-    if ($LASTEXITCODE -eq 0 -and $createdRuleset) {
-        $rulesetRecord = $createdRuleset | ConvertFrom-Json
+    $createdRuleset = gh api -X POST "repos/$repo/rulesets" --input $tmp 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $rulesetRecord = ($createdRuleset -join "`n") | ConvertFrom-Json
         Write-Ok "Ruleset created — main now requires PRs"
+    } elseif (($createdRuleset -join "`n") -match 'HTTP 40[34]') {
+        # Some sandboxes can't change repository settings - then you create the ruleset yourself.
+        Write-Warn2 "GitHub refused to create the ruleset from here: $createdRuleset"
+        Write-Warn2 "Create it yourself: https://github.com/$repo/settings/rules/new?target=branch"
+        Write-Info "  Name '$rulesetName', Active, target the default branch, restrict deletions, require a pull request, block force pushes."
+        $deadline = (Get-Date).AddMinutes(30)
+        while (-not ($existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>$null)) {
+            if ((Get-Date) -gt $deadline) { Write-Err "Ruleset '$rulesetName' still not found on $repo - create it, then re-run this checkpoint."; exit 1 }
+            Start-Sleep 15
+        }
+        $rulesetRecord = $existingRuleset | ConvertFrom-Json
+        Write-Ok "Ruleset found — main now requires PRs"
     } else {
-        Write-Err "Ruleset creation failed"
+        Write-Err "Ruleset creation failed: $createdRuleset"
         Remove-Item $tmp -ErrorAction SilentlyContinue
         exit 1
     }

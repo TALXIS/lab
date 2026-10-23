@@ -54,7 +54,7 @@ fork** — say yes.
 | 02 | `CP02-create-repository-layout.ps1` | Monorepo layout (solution, src, NuGet) |
 | 03 | `CP03-setup-continuous-integration.ps1` | Branch protection — gated PRs into main |
 | 04 | `CP04-setup-runtime.ps1` | Create Dev + Test Dataverse environments |
-| 05 | `CP05-setup-continuous-deployment.ps1` | OIDC service principal + deploy workflow |
+| 05 | `CP05-setup-continuous-deployment.ps1` | OIDC service principal + deploy workflow (identifiers live in `deploy.yml`, no secrets) |
 | 06 | `CP06-implement-data-model.ps1` | Warehouse tables and columns |
 | 07 | `CP07-implement-backend.ps1` | Plugins + logic solution |
 | 08 | `CP08-implement-security.ps1` | Security roles |
