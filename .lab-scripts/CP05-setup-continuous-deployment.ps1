@@ -9,8 +9,9 @@
 #   1. Create an Entra app registration + service principal (your own).
 #   2. Add a federated credential trusting this repo's main branch.
 #   3. Add the SP as an application user in the Test environment.
-#   4. Store AZURE_CLIENT_ID / AZURE_TENANT_ID / DATAVERSE_TEST_URL as GitHub secrets.
-#   5. Install build.yml + deploy.yml workflows (package deploy via powerplatform-actions).
+#   4. Install build.yml + deploy.yml workflows, with AZURE_CLIENT_ID / AZURE_TENANT_ID /
+#      DATAVERSE_TEST_URL written into deploy.yml - identifiers, not secrets: the federated
+#      credential only trusts this repository's main branch.
 #
 # Run:  .lab-scripts/CP05-setup-continuous-deployment.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
