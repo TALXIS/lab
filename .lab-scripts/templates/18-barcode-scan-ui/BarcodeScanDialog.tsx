@@ -187,14 +187,18 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
       if (imageBytes) {
         try {
           // The generated services cover create/update/get but emit nothing for file columns -
-          // the runtime client does, and it takes the bytes directly.
-          await getClient(dataSourcesInfo).uploadFileToRecord(
+          // the runtime client does, and it takes the bytes directly. It reports failures as
+          // { success: false } rather than throwing, so the result has to be checked.
+          const upload = await getClient(dataSourcesInfo).uploadFileToRecord(
             "__PREFIX___products",
             productId,
             "__PREFIX___productimage",
             `${ean}.jpg`,
             imageBytes
           );
+          if (!upload.success) {
+            throw upload.error ?? new Error("upload rejected");
+          }
         } catch (err) {
           // The product is linked either way - only the photo failed to save, so this is a
           // warning, not a failure of the whole action.
