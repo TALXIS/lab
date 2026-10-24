@@ -99,7 +99,7 @@ Write-Host "  ✓ Feature scenario written: WarehousePicking.feature + custom st
 #       binary output directory (bin/Debug/<tfm>/) and are silently ignored by Playwright.
 #       Set TXC_STORAGE_STATE_PATH env var at test run time for a portable override.
 
-$envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { "https://yourenv.crm4.dynamics.com" }
+$envUrl = if ($env:TXC_ENVIRONMENT_URL) { $env:TXC_ENVIRONMENT_URL } else { "https://yourenv.crm.dynamics.com" }
 # Resolve to absolute path — works cross-platform (Windows, Linux/Codespaces, macOS)
 $authStatePath = [System.IO.Path]::GetFullPath("src/Tests.UI/auth-state.json").Replace('\', '/')
 # Full source: .lab-scripts/templates/11-tests-ui/appsettings.json

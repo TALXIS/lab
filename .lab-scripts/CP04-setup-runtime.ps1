@@ -68,6 +68,12 @@ Write-Ok "Authenticated as $auth"
 
 # Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
 $envs = [ordered]@{ dev = "wm-dev-$rid"; test = "wm-test-$rid" }
+
+# US region and USD by default. To use another region, set LAB_REGION / LAB_CURRENCY
+# (or the 'region' / 'currency' lab values) before running this checkpoint, e.g. europe / EUR.
+$region   = if ($env:LAB_REGION)   { $env:LAB_REGION }   else { Get-LabValue 'region'   'unitedstates' }
+$currency = if ($env:LAB_CURRENCY) { $env:LAB_CURRENCY } else { Get-LabValue 'currency' 'USD' }
+
 $connections = @(txc config connection list --format json | ConvertFrom-Json)
 $profiles    = @(txc config profile list --format json | ConvertFrom-Json)
 foreach ($key in $envs.Keys) {
@@ -75,11 +81,14 @@ foreach ($key in $envs.Keys) {
     $displayName = "Warehouse $key $rid"
     $url = Get-LabValue "${key}EnvUrl"
     if (-not $url) {
-        Write-Info "Creating $key environment ($domain)..."
+        Write-Info "Creating $key environment ($domain, region $region, currency $currency)..."
         txc env create --type Sandbox --name $displayName --domain $domain `
-            --region europe --currency EUR --language 1033 --wait
+            --region $region --currency $currency --language 1033 --wait
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key"; exit 1 }
-        $url = "https://$domain.crm4.dynamics.com"
+        # Read the real URL back: its host suffix depends on the region (crm for the US, crm4 for Europe, ...).
+        $created = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
+        $url = "$($created.environmentUrl)".TrimEnd('/')
+        if (-not $url) { Write-Err "Created $key but could not read its URL. Run: txc env list --filter $domain"; exit 1 }
     } else {
         Write-Ok "$key environment exists: $url"
     }
