@@ -72,7 +72,8 @@ jobs:
               if ($code -ne 0) { Write-Host "::error::$($cp.Name) exited with $code"; exit 1 }
           }
       - name: Re-run CP06 and CP09 - nothing under src/ may change
-        # Non-blocking until the re-run guards from #68 are on main; then drop continue-on-error.
+        # Non-blocking until every CP06/CP09 scaffold has its re-run guard (#68, and 05f's after
+        # #50); then drop continue-on-error.
         continue-on-error: true
         shell: pwsh
         run: |
