@@ -14,6 +14,16 @@
 
 Write-Host "`n── Main Forms ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'formsScaffolded') {
+    # 05d and 09 still need the form GUIDs when they run without this block.
+    $warehouselocationFormGuid = Get-LabValue 'warehouselocationFormGuid'
+    $warehouseitemFormGuid = Get-LabValue 'warehouseitemFormGuid'
+    $warehousetransactionFormGuid = Get-LabValue 'warehousetransactionFormGuid'
+    Write-Host "  ✓ Main forms (exist)" -ForegroundColor Green
+    return
+}
+
 # Generate GUIDs for forms (reused in tabs, cells, controls, subgrids, event handlers)
 $warehouselocationFormGuid = [guid]::NewGuid()
 $warehouseitemFormGuid = [guid]::NewGuid()
@@ -817,3 +827,9 @@ txc workspace component create pp-form-control `
     --param "EntitySchemaName=${PublisherPrefix}_warehousetransaction"
 
 Write-Host "  ✓ warehousetransaction controls: name, itemid, quantity, transactiontype, transactiondate, notes, totalvalue, isprocessed, processedby, referencenumber" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'warehouselocationFormGuid' "$warehouselocationFormGuid"
+Set-LabValue 'warehouseitemFormGuid' "$warehouseitemFormGuid"
+Set-LabValue 'warehousetransactionFormGuid' "$warehousetransactionFormGuid"
+Set-LabValue 'formsScaffolded' $true

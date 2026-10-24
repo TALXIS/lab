@@ -32,10 +32,10 @@ $checkpoints = @(
     @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
     @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
     @{ Id = "cp05"; Keys = @("appId") }
-    @{ Id = "cp06"; Keys = @() }
+    @{ Id = "cp06"; Keys = @("columnsScaffolded") }
     @{ Id = "cp07"; Keys = @() }
     @{ Id = "cp08"; Keys = @() }
-    @{ Id = "cp09"; Keys = @() }
+    @{ Id = "cp09"; Keys = @("sitemapScaffolded", "formsScaffolded", "viewsSubgridsScaffolded", "formScriptsScaffolded", "ribbonScaffolded", "gridControlScaffolded") }
     @{ Id = "cp10"; Keys = @() }
     @{ Id = "cp11"; Keys = @() }
     @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
