@@ -13,6 +13,12 @@
 
 Write-Host "`n── Views ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'viewsSubgridsScaffolded') {
+    Write-Host "  ✓ Views and subgrids (exist)" -ForegroundColor Green
+    return
+}
+
 # Helper: pp-entity-view generates a minimal lookup view (querytype=64) with only
 # the primary name column. After scaffolding, we patch the XML to add
 # entity-specific columns to both layoutxml and fetchxml.
@@ -154,3 +160,6 @@ txc workspace component create pp-form-subgrid `
     --param "RelationshipName=$itemTransactionsRelationship"
 
 Write-Host "  ✓ Subgrid: warehouseitem → Warehouse Transactions ($itemTransactionsRelationship)" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'viewsSubgridsScaffolded' $true

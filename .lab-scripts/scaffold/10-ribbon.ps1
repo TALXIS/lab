@@ -15,6 +15,12 @@
 
 Write-Host "`n── Ribbon Buttons ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'ribbonScaffolded') {
+    Write-Host "  ✓ Ribbon buttons (exist)" -ForegroundColor Green
+    return
+}
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                      Ribbon Button: Check Stock Levels (warehouseitem form)
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -42,3 +48,6 @@ txc workspace component create pp-ribbon-command-parameter `
     --param "ButtonLogicalName=checkstocklevels"
 
 Write-Host "  ✓ Ribbon command parameter: PrimaryControl" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'ribbonScaffolded' $true

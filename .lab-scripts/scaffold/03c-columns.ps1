@@ -11,6 +11,12 @@
 
 Write-Host "`n── Columns ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'columnsScaffolded') {
+    Write-Host "  ✓ Columns (exist)" -ForegroundColor Green
+    return
+}
+
 # --- warehouseitem columns ---
 
 txc workspace component create pp-entity-attribute `
@@ -295,3 +301,6 @@ txc workspace component create pp-entity-attribute `
     --param "DisplayName=Reference Number"
 
 Write-Host "  ✓ warehousetransaction.referencenumber (Text)" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'columnsScaffolded' $true
