@@ -1,9 +1,10 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║          08: Logic Solution — Plugin Assembly Registration and Steps                   ║
+# ║          08: Logic Solution — Plugin Assembly and SDK Message Processing Steps         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Creates Solutions.Logic with plugin assembly reference and SDK message processing steps.
+# Creates Solutions.Logic, references Plugins.Warehouse (the build registers the assembly)
+# and adds the SDK message processing steps.
 # Expects: $PublisherName, $PublisherPrefix from parent scope.
 # Expects: Plugins.Warehouse already built (07-plugins.ps1).
 #
@@ -37,26 +38,13 @@ cd ../..
 Write-Host "  ✓ ProjectReference: Plugins.Warehouse → Solutions.Logic" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                         Plugin Assembly Registration
-# ──────────────────────────────────────────────────────────────────────────────────────────
-
-Write-Host "`n── Plugin Assembly & Steps ──" -ForegroundColor Cyan
-
-# Must run before the first build: the build registers the assembly itself if none exists,
-# and the template would then append a second, orphaned PluginAssembly root component.
-$assemblyGuid = [guid]::NewGuid()
-
-txc workspace component create pp-plugin-assembly `
-    --output "src/Solutions.Logic" `
-    --param "AssemblyId=$assemblyGuid" `
-    --param "PluginProjectRootPath=../Plugins.Warehouse"
-
-Write-Host "  ✓ Plugin assembly registered" -ForegroundColor Green
-
-# ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Build Logic Solution
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
+# No pp-plugin-assembly call: pp-solution defaults to GeneratePluginAssembly=true, so this
+# first build registers the referenced plugin assembly in the solution itself. Scaffolding
+# the assembly by hand as well is only for GeneratePluginAssembly=false; after a generated
+# build it adds a second PluginAssembly root and the next build fails (#83).
 Write-Host "  → Building Solutions.Logic..." -ForegroundColor White
 cd src/Solutions.Logic
 dotnet build --nologo --verbosity quiet
@@ -99,8 +87,8 @@ txc workspace component create pp-plugin-assembly-step `
 Write-Host "  ✓ Step: SubtractQuantityPlugin (Post-operation, Create)" -ForegroundColor Green
 
 # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
-# re-run after a partial failure (e.g. solution created but assembly/step registration
-# didn't finish) retries everything rather than silently skipping the missing work.
+# re-run after a partial failure (e.g. solution created but step registration didn't
+# finish) retries everything rather than silently skipping the missing work.
 Set-LabValue 'logicSolutionScaffolded' $true
 
 } else {
