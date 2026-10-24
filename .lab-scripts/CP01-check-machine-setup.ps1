@@ -28,8 +28,20 @@ $ErrorActionPreference = "Stop"
 Write-Step "CP01 — Machine setup + sign-in"
 
 # ── 1. Tool check ────────────────────────────────────────────────────────────────────────
-# MinVersion is optional — set it when a tool's version, not just its presence, matters for
-# the lab's npm-based builds (Scripts.UI, code apps, PCF).
+# A Codespace brings its tools up to date on every start (agentbox prerequisite update, about
+# 90 s). While it swaps them, pac is missing for over a minute and others can be half-installed,
+# so first wait for that update to finish. Its lock file is never deleted: wait on the lock
+# with flock, not for the file to disappear. No lock file means no update to wait for.
+$updateLock = Join-Path $HOME ".agentbox/update.lock"
+if ((Test-Path $updateLock) -and (Get-Command flock -ErrorAction SilentlyContinue)) {
+    Write-Info "Waiting for the Codespace's tool update to finish (up to 3 minutes)..."
+    flock -w 180 $updateLock true
+    if ($LASTEXITCODE -ne 0) { Write-Warn2 "The tool update is still running after 3 minutes - checking the tools anyway." }
+}
+
+# Each tool is actually run, not just looked up on PATH: a tool mid-update can be on PATH and
+# still fail. MinVersion is optional — set it when a tool's version, not just its presence,
+# matters for the lab's npm-based builds (Scripts.UI, code apps, PCF).
 $tools = [ordered]@{
     "dotnet" = @{ Cmd = "dotnet --version" }     # .NET SDK — builds solutions, plugins, packages
     "git"    = @{ Cmd = "git --version" }        # version control
@@ -37,6 +49,7 @@ $tools = [ordered]@{
     "pac"    = @{ Cmd = "pac help" }             # Power Platform CLI
     "txc"    = @{ Cmd = "txc --version" }        # TALXIS CLI — scaffolding, env, deploy
     "az"     = @{ Cmd = "az version" }           # Azure CLI — app registration + OIDC
+    "pa"     = @{ Cmd = "pa --version" }         # Power Apps CLI — code app connections
     "node"   = @{ Cmd = "node --version"; MinVersion = "22.12" }  # Node.js — npm-based builds
 }
 
@@ -47,9 +60,14 @@ foreach ($name in $tools.Keys) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
         Write-Err "$name NOT found"; $missing += $name; continue
     }
+    $global:LASTEXITCODE = 0
+    $output = try { Invoke-Expression "$($tool.Cmd) 2>&1" } catch { $global:LASTEXITCODE = 1 }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "$name is installed but '$($tool.Cmd)' failed (exit $LASTEXITCODE)"; $missing += $name; continue
+    }
     if (-not $tool.MinVersion) { Write-Ok "$name available"; continue }
 
-    $rawVersion = (Invoke-Expression $tool.Cmd 2>$null | Select-String -Pattern '\d+\.\d+\.\d+' | Select-Object -First 1).Matches.Value
+    $rawVersion = ($output | Select-String -Pattern '\d+\.\d+\.\d+' | Select-Object -First 1).Matches.Value
     if ($rawVersion -and [version]$rawVersion -ge [version]$tool.MinVersion) {
         Write-Ok "$name $rawVersion (>= $($tool.MinVersion))"
     } else {
@@ -57,7 +75,8 @@ foreach ($name in $tools.Keys) {
     }
 }
 if ($missing.Count -gt 0) {
-    Write-Err "Missing or outdated tools: $($missing -join ', '). Open this repo in GitHub Codespaces."
+    Write-Err "Missing, failing or outdated tools: $($missing -join ', '). In a Codespace that was just"
+    Write-Err "  started, wait a minute and re-run this checkpoint; otherwise open this repo in GitHub Codespaces."
     exit 1
 }
 
@@ -72,7 +91,7 @@ Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.
 
 ## Changes
-- verify dotnet, git, gh, pac, txc, az, and node are available
+- wait for the Codespace's start-time tool update, then run dotnet, git, gh, pac, txc, az, pa and node
 - authenticate GitHub CLI, TALXIS CLI, and Azure CLI
 - persist the random identifier, tenant id, and auth profile references
 ## Testing
