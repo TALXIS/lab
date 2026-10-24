@@ -1,7 +1,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
-using TALXIS.DevKit.Plugins.StepAttributes;
+using TALXIS.DevKit.Build.Dataverse.Plugin;
 
 namespace Plugins.Warehouse
 {
