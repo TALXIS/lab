@@ -71,31 +71,6 @@ function Initialize-RandomIdentifier {
     return (Get-LabValue 'randomIdentifier')
 }
 
-# ── Code apps ───────────────────────────────────────────────────────────────────────────
-# Power Apps code apps are off by default on a new environment, and a code app doesn't run
-# there until an admin turns on "Enable code apps" (admin center → Settings → Product →
-# Features). The Warehouse Picking code app (CP09, CP11) depends on it, so CP04 turns it on
-# for Dev and Test. Idempotent: reads the setting, sets it only when needed, then re-reads.
-function Get-CodeAppsEnabled {
-    param([Parameter(Mandatory)][string]$Profile)
-    $json = txc env setting list --profile $Profile --filter PowerApps_AllowCodeApps --format json 2>$null
-    if ($LASTEXITCODE -ne 0) { return $null }
-    $setting = $json | ConvertFrom-Json | Where-Object { $_.name -eq 'PowerApps_AllowCodeApps' } | Select-Object -First 1
-    return [bool]($setting -and $setting.value -eq $true)
-}
-
-function Enable-CodeApps {
-    param([Parameter(Mandatory)][string]$Profile)
-    if ((Get-CodeAppsEnabled -Profile $Profile) -eq $true) { Write-Ok "$Profile`: code apps already enabled"; return $true }
-    txc env setting set PowerApps_AllowCodeApps true --profile $Profile 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0 -and (Get-CodeAppsEnabled -Profile $Profile) -eq $true) {
-        Write-Ok "$Profile`: code apps enabled"
-        return $true
-    }
-    Write-Warn2 "Could not enable code apps on $Profile — turn on 'Enable code apps' under Settings → Product → Features in the admin center."
-    return $false
-}
-
 # ── Template expansion ──────────────────────────────────────────────────────────────────
 # Renders a whole-file template from .lab-scripts/templates/ by replacing __TOKEN__
 # placeholders with literal values (plain string replace, no regex — so scaffold scripts

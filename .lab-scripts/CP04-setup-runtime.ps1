@@ -110,9 +110,9 @@ foreach ($key in $envs.Keys) {
     Set-LabValue "${key}Profile" $key
     Write-Ok "$key ready: $url"
 
-    # The Warehouse Picking code app (CP09) won't run until code apps are enabled here.
-    # Safe on re-run, so it also fixes an environment created before this step existed.
-    Enable-CodeApps -Profile $key | Out-Null
+    # Code apps are off by default; the Warehouse Picking code app won't run without them.
+    txc env setting set PowerApps_AllowCodeApps true --profile $key 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Warn2 "Enable code apps on $key in the admin center (Settings → Product → Features)" }
 }
 
 # Pin the dev profile as default for local deploys.
@@ -127,7 +127,7 @@ Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be bu
 ## Changes
 - provision Dev and Test sandbox environments with unique domains
 - create txc connections and profiles for both environments
-- enable Power Apps code apps (PowerApps_AllowCodeApps) on both, which is off by default and needed by the Warehouse Picking code app
+- enable code apps on both (off by default, needed by the Warehouse Picking app)
 - select the dev profile as the default local deployment target
 ## Testing
 - environment provisioning completes and txc can target the dev profile locally
