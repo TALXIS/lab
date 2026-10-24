@@ -55,8 +55,12 @@ jobs:
       - name: Bring the tools to their latest releases, as a Codespace start does
         run: agentbox prerequisite update
       - name: Put the checkout on a local main branch
+        # The container runs as a different user than the one that owns the checkout, and
+        # actions/checkout only marks it safe in a temporary HOME - mark it for the scripts' git.
         # Local mode commits on checkpoint branches and merges them into main locally.
-        run: git checkout -B main
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git checkout -B main
       - name: Run every checkpoint in local mode
         shell: pwsh
         run: |
