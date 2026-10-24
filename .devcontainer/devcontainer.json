@@ -7,12 +7,27 @@
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "customizations": {
+    // The first screen: the lab guide rendered (not as raw markdown) with Copilot Chat beside it.
+    // Copilot Chat already sees the TALXIS skills and the txc MCP server through the plugin the
+    // image installs (G0, #87), so there are no skills, MCP or extension settings here. The
+    // setting names below are untested until the rehearsal (#70).
     "codespaces": {
-      "openFiles": ["README.md"]
+      "openFiles": ["LAB-GUIDE.md"]
     },
     "vscode": {
       "extensions": ["ms-vscode.powershell"],
       "settings": {
+        "workbench.startupEditor": "none",
+        "workbench.editorAssociations": {
+          "**/LAB-GUIDE.md": "vscode.markdown.preview.editor",
+          "**/docs/design/*.md": "vscode.markdown.preview.editor"
+        },
+        "workbench.secondarySideBar.defaultVisibility": "visible",
+        // Let the agent run the lab's own scripts and builds without a confirmation per command.
+        "chat.tools.terminal.autoApprove": {
+          "/^(pwsh\\s+(-\\w+\\s+)*)?(\\./)?\\.lab-scripts\\//": true,
+          "dotnet build": true
+        },
         "terminal.integrated.defaultProfile.linux": "pwsh",
         "terminal.integrated.profiles.linux": {
           "pwsh": {
