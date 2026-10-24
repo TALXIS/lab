@@ -131,6 +131,5 @@ Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be bu
 - select the dev profile as the default local deployment target
 ## Testing
 - environment provisioning completes and txc can target the dev profile locally
-- txc env setting list --filter PowerApps_AllowCodeApps reports true for both environments
 '@
 Write-Host "`nNext: .lab-scripts/CP05-setup-continuous-deployment.ps1" -ForegroundColor Cyan
