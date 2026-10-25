@@ -153,7 +153,7 @@ The browser scenarios in specification 5 exercise only the fixed parts. Any desi
 |---|---|
 | Solution | `src/Solutions.UI` (publisher `TALXISLab`, prefix `lab`), referenced by `Packages.Main` |
 | Table references | `lab_warehouselocation`, `lab_warehouseitem`, `lab_warehousetransaction`, included as **existing** tables. The UI solution doesn't own them |
-| Model-driven app | Unique name `lab_warehouseapp`, containing the three tables and their main forms |
+| Model-driven app | Display name **Warehouse Management**, unique name `lab_warehouseapp`, containing the three tables and their main forms |
 | Sitemap | Area **Warehouse** → group **Management** → subareas **Warehouse Locations**, **Warehouse Items**, **Warehouse Transactions** |
 
 **Main forms**: one per table, each containing every column listed.
