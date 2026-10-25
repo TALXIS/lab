@@ -20,9 +20,9 @@ jobs:
           node-version: '22'
       - name: Build script bundle
         run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
-      # Jest directly: 'dotnet test' on .NET 10 skips the project's RunJest target and passes with no tests.
-      - name: Script unit tests (Jest)
+      # node_modules isn't committed; without it the RunJest target's npx fetches a bare jest and fails.
+      - name: Install Jest
         working-directory: src/Tests.Scripts
-        run: |
-          npm ci
-          npx jest --runInBand --ci
+        run: npm ci
+      - name: Script unit tests (Jest via dotnet test)
+        run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release
