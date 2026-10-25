@@ -32,13 +32,14 @@ from the spec matter here:
 - The app only checks that required fields are filled. It never compares stock itself, and
   the pick screen's stepper doesn't stop at the stock on hand.
 - Server errors are shown with the server's message unchanged.
-- A lookup comes back as `_lab_locationid_value` only: load the locations and map the id to
-  its name. There is no `lab_locationidname`.
+- A lookup comes back as `_lab_locationid_value`: load the locations and map the id to
+  its name. The model declares `lab_locationidname` and `lab_categoryname`, but they stay empty.
 - Keep the `data-testid`s the spec's Test hooks row lists.
 - The barcode scan comes later, so don't build it now.
 
 This is a lot of UI. Keep going until every screen above exists, and before you finish go
-through the list and tell me which items are done. If something is missing, do it before
+through the list and tell me which items are done, whether the lists use the base-controls
+`Grid`, and whether Location and Category are shown by name. If something is missing, do it before
 telling me to continue. Don't make up test records; CP12 loads the real data later.
 
 If you get stuck, .lab-scripts/CP09-implement-ui.ps1 does the whole UI step. The code app

@@ -18,11 +18,11 @@ Neither interface decides whether a stock movement is allowed. That is the serve
 | Fixed: must match this specification | Open: left to the design |
 |---|---|
 | App, sitemap, view and web resource names | Form layout, tabs, sections and field order |
-| Form script and ribbon behaviour, including message text | Colours and typography. Component library (the starter's Fluent UI and TALXIS base controls are the default) |
+| Form script and ribbon behaviour, including message text | Colours and typography |
 | Grid customization behaviour | Additional views, charts and dashboards |
-| Code app name, data sources and the outcomes in the user stories | Code app layout, navigation style and extra screens |
+| Code app name, data sources, screens and controls (the technical table) and the outcomes in the user stories | Extra code app screens, and the look of each screen |
 
-Any design that satisfies the user stories is acceptable.
+Any design that satisfies the user stories and the technical table is acceptable.
 
 ## User stories: Warehouse Management app (manager)
 
@@ -250,7 +250,7 @@ The low-stock highlight colour is `#FDE7E9`. Group headers and empty cells are n
 | Screens | `/` home with the four quick-action tiles (US-13); `/pick`, `/receive`, `/inventory`, `/find` (US-14 to US-17); `/items` and `/items/:id` (US-06, US-07, US-08, US-10); `/transactions` (US-11); `/locations` (US-12) |
 | Layout | Phone-first. A header with **Home**, **Items**, **Transactions** and **Locations** (tabs on a wide screen). Each quick-action screen is one column of big touch targets with a back arrow and a title, one step at a time: choose the item, enter the quantity, confirm, see the result |
 | Controls | TALXIS base controls where they fit: `Grid` for the Items, Transactions and Locations lists on a wide screen (cards on a phone), `Form`/`useForm` for the record forms and dialogs, `Lookup` for lookup fields. Fluent UI v9 for everything else, including a quantity stepper (big +/−, or type the number) |
-| Lookup names | A record from a generated service carries a lookup as `_lab_locationid_value` (the id) only. To show the location's name, load the locations once and map the id to its `lab_name`; there is no `lab_locationidname` field |
+| Lookup names | A record from a generated service carries a lookup as `_lab_locationid_value` (the id). The model also declares `lab_locationidname` and `lab_categoryname`, but the services leave them empty. To show the location's name, load the locations once and map the id to its `lab_name` |
 | Test hooks | CP14's browser tests find things by these `data-testid`s and names: tabs named **Home** and **Items**; tiles `tile-pick`, `tile-receive`, `tile-inventory`, `tile-find`; `pick-item-row` for an item in a chooser; `flow-confirm` and `flow-result` on the quick-action screens; on the item page `item-detail-qty`, `field-name`, `field-quantity`, `field-transactiontype`, `submit-transaction`; and for the barcode scan (specification 5) `scan-barcode-button`, `scan-ean-input`, `scan-lookup-button`, `scan-product-name`, `scan-link-button`, `linked-product-name` |
 | Data sources | `lab_warehouseitem`, `lab_warehousetransaction`, `lab_warehouselocation`, through generated typed services (for example `Lab_warehouseitemsService`) |
 | Local development | `npm run dev` → `http://localhost:5173` |
