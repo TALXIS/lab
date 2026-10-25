@@ -2,6 +2,8 @@
 
 A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab-scripts/`.
 
+- `LAB-GUIDE.md` is the step-by-step guide the person follows. When they ask what to do next
+  or where they are, point them to its matching part instead of re-explaining the lab.
 - When the person asks you to sign them in, run `.lab-scripts/lab-signin.ps1` in the terminal
   and walk them through it one tool at a time: tell them which link to open and which code
   to enter, then wait until they're done. Never start a sign-in on your own.
