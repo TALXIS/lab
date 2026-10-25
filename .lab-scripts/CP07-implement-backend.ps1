@@ -12,6 +12,10 @@
 # The assembly is a build artifact; where and when it runs is Dataverse configuration, and
 # each belongs to its own project.
 #
+# The steps themselves are declared in code: each plugin class carries a [PluginStep]
+# attribute (message, table, stage), and dotnet build of Solutions.Logic generates the
+# SdkMessageProcessingSteps XML from it. Change the attribute, rebuild, commit the XML.
+#
 # Stage choice matters: ValidateWarehouseTransaction runs in Pre-validation - before the
 # database transaction starts - the cheapest place to reject bad input with an
 # InvalidPluginExecutionException. SubtractQuantity runs in Post-operation: the record is
@@ -41,7 +45,7 @@ Introduce server-side inventory logic so warehouse transactions are validated an
 ## Changes
 - add src/Plugins.Warehouse with validation and quantity update plugins
 - add src/Solutions.Logic, which references the plugin project; the build registers the assembly
-- register pre-validation and post-operation steps for transaction creation
+- declare pre-validation and post-operation steps for transaction creation with [PluginStep] attributes, generated into the logic solution on build
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the new plugin and logic projects
 '@
