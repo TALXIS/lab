@@ -79,8 +79,10 @@ try {
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would build Solutions.Connectors (Release) and run"
-    Write-Info "  'txc env pkg import' to deploy it to Dev ($devUrl) on its own, independently"
-    Write-Info "  of the rest of the app - the same way the Grid PCF control deploys in CP10."
+    Write-Info "  'txc env sln import' on its zip to deploy it to Dev ($devUrl) on its own,"
+    Write-Info "  independently of the rest of the app."
+} elseif (Get-LabValue 'connectorDeployed') {
+    Write-Ok "Connectors.OpenFoodFacts already deployed to Dev"
 } else {
     Write-Info "Building Solutions.Connectors (Release)..."
     Push-Location "$LabRoot/src/Solutions.Connectors"
@@ -89,12 +91,18 @@ if ($env:LAB_LOCAL_MODE) {
         if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors build failed"; exit 1 }
     } finally { Pop-Location }
 
-    $connectorPkg = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Connectors/bin/Release") -Filter "Solutions.Connectors.zip" -Recurse | Select-Object -First 1
+    $connectorPkg = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Connectors/bin/Release") -Filter "Solutions.Connectors.zip" -Recurse |
+        Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
     if (-not $connectorPkg) { Write-Err "Solutions.Connectors.zip not found after build"; exit 1 }
 
+    # A plain solution zip, so 'sln import', not 'pkg import' (that one wants a Package Deployer
+    # package). Import the zip built above rather than the project folder: given the folder, txc
+    # rebuilds it and refuses the import over the packager's "root components are not defined"
+    # line, which is a false positive for connectors - the packed zip is complete.
     Write-Info "Deploying Solutions.Connectors to Dev environment ($devUrl)..."
-    txc env pkg import $connectorPkg.FullName --profile $devProfile
-    if ($LASTEXITCODE -ne 0) { Write-Err "Connector package import to Dev failed"; exit 1 }
+    txc env sln import $connectorPkg.FullName --wait --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors import to Dev failed"; exit 1 }
+    Set-LabValue 'connectorDeployed' $true
     Write-Ok "Connectors.OpenFoodFacts deployed to Dev - try it in the maker portal's connector test pane before wiring it into the code app."
 }
 
@@ -104,7 +112,7 @@ Add the Connectors.OpenFoodFacts custom connector project (GET /product/{barcode
 ## Changes
 - add Connectors.OpenFoodFacts (ProjectType=Connector): real apiDefinition.swagger.json + script.csx for the Open Food Facts API
 - add Solutions.Connectors, referencing Connectors.OpenFoodFacts
-- deploy Solutions.Connectors to Dev via txc env pkg import
+- deploy Solutions.Connectors to Dev via txc env sln import
 ## Testing
 - dotnet build succeeds for Solutions.Connectors
 - connector appears in the Dev environment and returns real data from the maker portal's test pane for a known EAN (e.g. 3017620422003)
