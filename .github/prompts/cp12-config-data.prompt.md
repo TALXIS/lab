@@ -24,7 +24,10 @@ real data:
 `txc data pkg import src/Packages.Main/Data --profile dev`
 
 If the import fails, tell me what it said and wait. Don't retry it with other options.
-Then save the checkpoint:
+
+When the import has worked, set `environmentId` in `src/Apps.WarehousePicking/power.config.json` to my Dev
+environment's id (the `environmentId` that `txc env list` shows for it). Without it,
+`npm run dev` can't open the app in Power Apps. Then save the checkpoint:
 
 `.lab-scripts/save-checkpoint.ps1 -Id cp12 -Message "Add configuration data package for environment promotion"`
 

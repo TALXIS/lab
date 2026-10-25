@@ -118,7 +118,7 @@ npm install
 npm run dev
 ```
 
-Open the local link it prints and sign in. Then check two things:
+It prints two links. Open the **Local Play** one, which starts with `https://apps.powerapps.com/play/`, and sign in. (The plain `http://localhost:5173/` one shows the app without its data.) Then check two things:
 
 1. Open **Office Laptop** (100 on hand) and create an **Outbound** transaction for a small quantity. It succeeds and the quantity on hand goes down.
 2. Try to pick more than 5 of **Wireless Mouse** (5 on hand). The server refuses it and the app shows the error.

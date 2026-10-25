@@ -81,11 +81,31 @@ try {
         # same "open it and try something" pattern as CP10's environment pause.
         # ──────────────────────────────────────────────────────────────────────────────────
 
+        # Without an environmentId in power.config.json, 'npm run dev' prints no Local Play link
+        # and the app can't sign in. Nothing earlier sets it, so point the app at Dev now.
+        $powerConfigPath = Join-Path $LabRoot "src/Apps.WarehousePicking/power.config.json"
+        if (Test-Path $powerConfigPath) {
+            $powerConfig = Get-Content $powerConfigPath -Raw | ConvertFrom-Json
+            if (-not $powerConfig.environmentId) {
+                $devEnvId = Get-LabValue 'devEnvId'
+                if (-not $devEnvId) {
+                    $devEnvUrl = "$(Get-LabValue 'devEnvUrl')".TrimEnd('/')
+                    $devEnvId = (@(txc env list --format json | ConvertFrom-Json) |
+                        Where-Object { "$($_.environmentUrl)".TrimEnd('/') -eq $devEnvUrl } | Select-Object -First 1).environmentId
+                }
+                if ($devEnvId) {
+                    $powerConfig.environmentId = $devEnvId
+                    $powerConfig | ConvertTo-Json -Depth 20 | Set-Content $powerConfigPath -Encoding utf8NoBOM
+                    Write-Ok "Warehouse Picking app points at Dev ($devEnvId)"
+                }
+            }
+        }
+
         $autoMode = $env:LAB_AUTO -eq '1'
         if (-not $autoMode) {
             Write-Ok "Real data is seeded in Dev — try the Warehouse Picking code app live."
             Write-Info "In a second terminal: cd src/Apps.WarehousePicking && npm install && npm run dev"
-            Write-Info "  Open the local URL it prints and sign in, then try:"
+            Write-Info "  Open the Local Play link it prints (https://apps.powerapps.com/play/...) and sign in, then try:"
             Write-Info "  1. Open Office Laptop (qty 100) and create an Outbound transaction for a small quantity - it succeeds and the quantity on hand updates."
             Write-Info "  2. Request more than 5 of Wireless Mouse (qty 5) - ValidateWarehouseTransactionPlugin rejects it and the app shows the error as a toast."
             Read-Host "`n  Try it in your browser, then press Enter to continue"
