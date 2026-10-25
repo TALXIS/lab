@@ -20,3 +20,11 @@ TestResults/
 Thumbs.db
 
 # Lab note: .lab-state.json is intentionally committed so progress survives crashes.
+
+# Secrets and sign-in state (UI test auth, local env files) - never commit these.
+auth-state.json
+*.auth-state.json
+playwright-auth-state*
+**/.auth/
+.env
+**/.env

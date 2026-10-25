@@ -1,0 +1,73 @@
+# CI for changes to this lab repository itself.
+#
+# Not to be confused with .lab-scripts/workflows/*.yml: those are templates the checkpoints
+# install into attendees' forks. This file only checks PRs to TALXIS/lab:
+#   lab-parse    - every .ps1 under .lab-scripts/ parses
+#   lab-dry-run  - CP01 → CP15 run end to end in local mode (LOCAL-DRY-RUN.md)
+#
+# Forks inherit this file, and CP05 enables Actions on them, so both jobs only run on
+# TALXIS/lab. The job names avoid "build": CP13 makes a check of that name required on the
+# fork's main.
+
+name: lab-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lab-parse:
+    if: github.repository == 'TALXIS/lab'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse every script under .lab-scripts/
+        shell: pwsh
+        run: |
+          $failed = 0
+          foreach ($file in Get-ChildItem .lab-scripts -Recurse -Filter *.ps1) {
+              $tokens = $null; $errors = $null
+              [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+              foreach ($e in $errors) {
+                  $failed++
+                  $path = [IO.Path]::GetRelativePath($PWD, $file.FullName)
+                  Write-Host "::error file=$path,line=$($e.Extent.StartLineNumber),col=$($e.Extent.StartColumnNumber)::$($e.Message)"
+              }
+          }
+          if ($failed) { Write-Host "$failed parse error(s)"; exit 1 }
+          Write-Host "All scripts parse."
+
+  lab-dry-run:
+    if: github.repository == 'TALXIS/lab'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container: ghcr.io/talxis/tools-agentbox/image:latest
+    env:
+      LAB_LOCAL_MODE: '1'
+      LAB_AUTO_MERGE: '1'
+      LAB_AUTO: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring the tools to their latest releases, as a Codespace start does
+        run: agentbox prerequisite update
+      - name: Put the checkout on a local main branch
+        # The container runs as a different user than the one that owns the checkout, and
+        # actions/checkout only marks it safe in a temporary HOME - mark it for the scripts' git.
+        # Local mode commits on checkpoint branches and merges them into main locally.
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git checkout -B main
+      - name: Run every checkpoint in local mode
+        shell: pwsh
+        run: |
+          foreach ($cp in Get-ChildItem .lab-scripts/CP*.ps1 | Sort-Object Name) {
+              Write-Host "::group::$($cp.Name)"
+              pwsh -NoProfile -File $cp.FullName
+              $code = $LASTEXITCODE
+              Write-Host "::endgroup::"
+              if ($code -ne 0) { Write-Host "::error::$($cp.Name) exited with $code"; exit 1 }
+          }
