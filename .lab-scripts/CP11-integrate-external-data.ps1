@@ -10,12 +10,14 @@
 # into a dedicated Product table and linked to the scanned Item.
 #
 # This checkpoint lands in stages, each its own reviewable update:
-#   1. Data model: the Product table and the Item -> Product lookup column.
+#   1. Data model: the Product table and the Item -> Product lookup column, deployed to Dev.
 #   2. The custom connector project, deployed to Dev.
 #   3. Wiring the connector and the Product table into the WarehousePicking code app.
 #   4. Barcode-scanning UI that ties the whole flow together.
 # All four run in this one script, each closed out by its own Save-Checkpoint - the PR/commit
 # history is what makes them individually reviewable, not separate files to run by hand.
+# Each save opens its own PR and moves the cp11 tag, so the tag always marks the last step
+# that landed; an interrupted run picks up at the first step whose work is missing.
 #
 # Run:  .lab-scripts/CP11-integrate-external-data.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -25,6 +27,10 @@ $ErrorActionPreference = "Stop"
 $PublisherName = Get-LabValue 'publisherName' $LabDefaultPublisherName
 $PublisherPrefix = Get-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
+$devUrl = Get-LabValue 'devEnvUrl'
+$devProfile = Get-LabValue 'devProfile'
+if (-not $devUrl -or -not $devProfile) { Write-Err "Dev environment not found in lab state. Run CP04 first."; exit 1 }
+
 Write-Step "CP11 — Integrate external data (step 1: data model)"
 Push-Location $LabRoot
 try {
@@ -33,14 +39,36 @@ try {
     if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
 } finally { Pop-Location }
 
+# CP10 deployed the whole package before the Product table existed; Dev has to learn about it
+# now, before the code app binds to it (step 3) and before CP12 seeds Product rows. This is the
+# per-solution counterpart of CP10's package deploy: 'txc env sln import' builds just
+# Solutions.DataModel in Debug, so unmanaged - the same flavour CP10 installed in Dev - and
+# imports it. Not 'txc env pkg import' again: every local build carries the same version
+# number, and Package Deployer skips a solution whose version is already installed, whereas a
+# plain solution import updates it in place - which also makes a re-run of this step harmless.
+if ($env:LAB_LOCAL_MODE) {
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env sln import src/Solutions.DataModel'"
+    Write-Info "  (Debug, unmanaged) to bring the Product table and the Item lookup into Dev ($devUrl)."
+} elseif (Get-LabValue 'productTableDeployed') {
+    Write-Ok "Product table and Item lookup already deployed to Dev"
+} else {
+    Write-Info "Deploying Solutions.DataModel to Dev environment ($devUrl)..."
+    txc env sln import (Join-Path $LabRoot "src/Solutions.DataModel") --wait --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.DataModel import to Dev failed"; exit 1 }
+    Set-LabValue 'productTableDeployed' $true
+    Write-Ok "Product table and Item lookup are live in Dev"
+}
+
 Save-Checkpoint -Id "cp11" -Message "Add Product table and Item lookup for external data integration" -Body @'
-Add the data model for external product-catalog integration: a dedicated Product table for barcode-sourced data (name, brand, quantity, image), and a lookup column linking Item to Product. No connector or UI yet - those land in follow-up checkpoint updates.
+Add the data model for external product-catalog integration: a dedicated Product table for barcode-sourced data (name, brand, quantity, image), and a lookup column linking Item to Product. That one solution is deployed to Dev right away, so the table exists before anything binds to it. No connector or UI yet - those land in follow-up checkpoint updates.
 
 ## Changes
 - add Product table (EAN, Brand, Quantity, Image URL, Last Synced On) to Solutions.DataModel
 - add Item.Product lookup column, pointing to Product
+- deploy Solutions.DataModel to Dev via txc env sln import (a same-version update, unlike a package re-import)
 ## Testing
 - dotnet build --nologo --verbosity quiet passes from the repository root
+- the Product table and the Item.Product column exist in the Dev environment
 '@
 
 Write-Step "CP11 — Integrate external data (step 2: connector)"
@@ -49,28 +77,18 @@ try {
     . "$PSScriptRoot/scaffold/16-connector.ps1"
 } finally { Pop-Location }
 
-$devUrl = Get-LabValue 'devEnvUrl'
-$devProfile = Get-LabValue 'devProfile'
-if (-not $devUrl -or -not $devProfile) { Write-Err "Dev environment not found in lab state. Run CP04 first."; exit 1 }
-
 if ($env:LAB_LOCAL_MODE) {
-    Write-Info "LAB_LOCAL_MODE: skipped — would build Solutions.Connectors (Release) and run"
-    Write-Info "  'txc env pkg import' to deploy it to Dev ($devUrl) on its own, independently"
-    Write-Info "  of the rest of the app - the same way the Grid PCF control deploys in CP10."
+    Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env sln import src/Solutions.Connectors'"
+    Write-Info "  (Debug, unmanaged) to deploy it to Dev ($devUrl) on its own, independently of the rest of the app."
+} elseif (Get-LabValue 'connectorDeployed') {
+    Write-Ok "Connectors.OpenFoodFacts already deployed to Dev"
 } else {
-    Write-Info "Building Solutions.Connectors (Release)..."
-    Push-Location "$LabRoot/src/Solutions.Connectors"
-    try {
-        dotnet build -c Release --nologo --verbosity quiet
-        if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors build failed"; exit 1 }
-    } finally { Pop-Location }
-
-    $connectorPkg = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Connectors/bin/Release") -Filter "Solutions.Connectors.zip" -Recurse | Select-Object -First 1
-    if (-not $connectorPkg) { Write-Err "Solutions.Connectors.zip not found after build"; exit 1 }
-
+    # Like step 1: txc builds the project in Debug (unmanaged, like the rest of Dev) and imports the
+    # solution zip it produced.
     Write-Info "Deploying Solutions.Connectors to Dev environment ($devUrl)..."
-    txc env pkg import $connectorPkg.FullName --profile $devProfile
-    if ($LASTEXITCODE -ne 0) { Write-Err "Connector package import to Dev failed"; exit 1 }
+    txc env sln import (Join-Path $LabRoot "src/Solutions.Connectors") --wait --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors import to Dev failed"; exit 1 }
+    Set-LabValue 'connectorDeployed' $true
     Write-Ok "Connectors.OpenFoodFacts deployed to Dev - try it in the maker portal's connector test pane before wiring it into the code app."
 }
 
@@ -80,7 +98,7 @@ Add the Connectors.OpenFoodFacts custom connector project (GET /product/{barcode
 ## Changes
 - add Connectors.OpenFoodFacts (ProjectType=Connector): real apiDefinition.swagger.json + script.csx for the Open Food Facts API
 - add Solutions.Connectors, referencing Connectors.OpenFoodFacts
-- deploy Solutions.Connectors to Dev via txc env pkg import
+- deploy Solutions.Connectors to Dev via txc env sln import
 ## Testing
 - dotnet build succeeds for Solutions.Connectors
 - connector appears in the Dev environment and returns real data from the maker portal's test pane for a known EAN (e.g. 3017620422003)

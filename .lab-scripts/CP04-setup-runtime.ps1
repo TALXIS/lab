@@ -5,7 +5,7 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Source control is our single source of truth, which lets Dev/Test environments be
-# ephemeral. We create two Dataverse sandbox environments — Dev and Test — using txc.
+# ephemeral. We create two Dataverse environments — Dev and Test — using txc.
 # Their domains include your random identifier so they won't clash in the shared tenant.
 #
 # Why two? Dev is your personal build-and-break space; Test is the stable target the CD
@@ -45,29 +45,34 @@ function Get-ConnectionByIdOrUrl {
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would sign in to Power Platform and provision real"
-    Write-Info "  Dev + Test Dataverse sandbox environments via 'txc env create'. Stubbing"
+    Write-Info "  Dev + Test Dataverse environments via 'txc env create'. Stubbing"
     Write-Info "  devEnvUrl/testEnvUrl with unreachable placeholder URLs so later checkpoints"
     Write-Info "  that only check for their presence can still run."
     foreach ($key in @('dev', 'test')) {
         Set-LabValue "${key}EnvUrl" "https://local-$key.stub.invalid"
+        Set-LabValue "${key}EnvId" "00000000-0000-0000-0000-00000000000$(if ($key -eq 'dev') { 1 } else { 2 })"
         Set-LabValue "${key}Profile" $key
     }
 } else {
 
-# Step 1: Verify Power Platform sign-in (done in CP01). Lab-state only remembers WHICH
-# auth profile to use — it can't guarantee that profile still exists in this machine's own
-# txc session (e.g. a fresh Codespace, or a .lab-state.json inherited from another machine),
-# so re-check live rather than trusting the cached value blindly.
-$auth = Get-LabValue 'txcAuth'
-$liveAuth = (txc config auth list --format json 2>$null | ConvertFrom-Json | Where-Object { $_.id -eq $auth } | Select-Object -First 1)
-if (-not $auth -or -not $liveAuth) {
-    Write-Err "Not signed in on this machine (lab-state auth '$auth' not found locally) — run .lab-scripts/lab-signin.ps1."
-    exit 1
-}
-Write-Ok "Authenticated as $auth"
+# Step 1: Verify Power Platform sign-in - the 'lab' credential created by lab-signin.ps1.
+txc config auth get lab *> $null
+if ($LASTEXITCODE -ne 0) { Write-Err "Not signed in to Power Platform — run .lab-scripts/lab-signin.ps1."; exit 1 }
+Write-Ok "Signed in to Power Platform"
 
-# Step 2: Create Dev + Test sandbox environments (unique domains via $rid).
+# Step 2: Create Dev + Test environments (unique domains via $rid).
 $envs = [ordered]@{ dev = "wm-dev-$rid"; test = "wm-test-$rid" }
+
+# US region and USD by default. To use another region, set LAB_REGION / LAB_CURRENCY
+# (or the 'region' / 'currency' lab values) before running this checkpoint, e.g. europe / EUR.
+$region   = if ($env:LAB_REGION)   { $env:LAB_REGION }   else { Get-LabValue 'region'   'unitedstates' }
+$currency = if ($env:LAB_CURRENCY) { $env:LAB_CURRENCY } else { Get-LabValue 'currency' 'USD' }
+
+# Developer environments by default: many tenants let only admins create Sandbox environments,
+# while any maker can create a Developer one (owned by the person who signs in). If you can
+# create sandboxes and want them, set LAB_ENV_TYPE=Sandbox (or the 'envType' lab value).
+$envType = if ($env:LAB_ENV_TYPE) { $env:LAB_ENV_TYPE } else { Get-LabValue 'envType' 'Developer' }
+
 $connections = @(txc config connection list --format json | ConvertFrom-Json)
 $profiles    = @(txc config profile list --format json | ConvertFrom-Json)
 foreach ($key in $envs.Keys) {
@@ -75,11 +80,14 @@ foreach ($key in $envs.Keys) {
     $displayName = "Warehouse $key $rid"
     $url = Get-LabValue "${key}EnvUrl"
     if (-not $url) {
-        Write-Info "Creating $key environment ($domain)..."
-        txc env create --type Sandbox --name $displayName --domain $domain `
-            --region europe --currency EUR --language 1033 --wait
+        Write-Info "Creating $key environment ($domain, type $envType, region $region, currency $currency)..."
+        txc env create --type $envType --name $displayName --domain $domain `
+            --region $region --currency $currency --language 1033 --wait
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key"; exit 1 }
-        $url = "https://$domain.crm4.dynamics.com"
+        # Read the real URL back: its host suffix depends on the region (crm for the US, crm4 for Europe, ...).
+        $created = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
+        $url = "$($created.environmentUrl)".TrimEnd('/')
+        if (-not $url) { Write-Err "Created $key but could not read its URL. Run: txc env list --filter $domain"; exit 1 }
     } else {
         Write-Ok "$key environment exists: $url"
     }
@@ -98,7 +106,7 @@ foreach ($key in $envs.Keys) {
     }
 
     if (-not ($profiles | Where-Object { $_.id -eq $key })) {
-        txc config profile create --name $key --auth $auth --connection $key 2>&1 | Out-Null
+        txc config profile create --name $key --auth lab --connection $key 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key profile"; exit 1 }
         $profiles = @(txc config profile list --format json | ConvertFrom-Json)
     } else {
@@ -121,11 +129,11 @@ Write-Ok "Active profile: dev"
 
 }
 
-Save-Checkpoint -Id "cp04" -Message "Provision Dev and Test Dataverse sandbox environments" -Body @'
-Create dedicated Dev and Test Dataverse sandboxes so the warehouse app can be built and validated in isolated environments. The script also wires local txc profiles to both environments for repeatable deployments.
+Save-Checkpoint -Id "cp04" -Message "Provision Dev and Test Dataverse environments" -Body @'
+Create dedicated Dev and Test Dataverse environments so the warehouse app can be built and validated in isolated environments. The script also wires local txc profiles to both environments for repeatable deployments.
 
 ## Changes
-- provision Dev and Test sandbox environments with unique domains
+- provision Dev and Test environments (Developer type unless LAB_ENV_TYPE says otherwise) with unique domains
 - create txc connections and profiles for both environments
 - enable code apps on both (off by default, needed by the Warehouse Picking app)
 - select the dev profile as the default local deployment target

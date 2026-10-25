@@ -64,26 +64,30 @@ if (-not (Get-LabValue 'securityScaffolded')) {
 
     Write-Host "  ✓ Worker → warehouseitem (RWCA)" -ForegroundColor Green
 
-    # Warehouse worker — warehouselocation: Read (Global)
+    # Warehouse worker — warehouselocation: Read, AppendTo (Global)
+    # AppendTo lets a worker point an item at a location (the code app's Add item dialog sets
+    # the item's location lookup); a lookup needs Append on the record being saved and
+    # AppendTo on the record it points at.
     txc workspace component create pp-security-role-privilege `
         --output "src/Solutions.Security" `
         --param "RoleName=Warehouse worker" `
-        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }]" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: AppendTo, Level: Global }]" `
         --param "EntityLogicalName=${PublisherPrefix}_warehouselocation"
 
-    Write-Host "  ✓ Worker → warehouselocation (R)" -ForegroundColor Green
+    Write-Host "  ✓ Worker → warehouselocation (R/AppendTo)" -ForegroundColor Green
 
-    # Warehouse worker — warehousetransaction: Read (Global), Write (Basic), Create (Basic)
+    # Warehouse worker — warehousetransaction: Read (Global), Write/Create/Append (Basic)
     # Create is what lets a worker actually "pick" — creating an Outbound transaction record is
     # the pick action itself (see Plugins.Warehouse), so without it the code app's core workflow
-    # would be unusable by the persona it's built for.
+    # would be unusable by the persona it's built for. Append lets that transaction carry its
+    # item lookup; Basic, like Create and Write, because workers only touch their own.
     txc workspace component create pp-security-role-privilege `
         --output "src/Solutions.Security" `
         --param "RoleName=Warehouse worker" `
-        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }, { PrivilegeType: Create, Level: Basic }]" `
+        --param "PrivilegeTypeAndLevel=[{ PrivilegeType: Read, Level: Global }, { PrivilegeType: Write, Level: Basic }, { PrivilegeType: Create, Level: Basic }, { PrivilegeType: Append, Level: Basic }]" `
         --param "EntityLogicalName=${PublisherPrefix}_warehousetransaction"
 
-    Write-Host "  ✓ Worker → warehousetransaction (R/W/C)" -ForegroundColor Green
+    Write-Host "  ✓ Worker → warehousetransaction (R/W/C/Append)" -ForegroundColor Green
 
     # Warehouse manager — warehouseitem: Full CRUD (Global)
     txc workspace component create pp-security-role-privilege `

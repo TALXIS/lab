@@ -1,11 +1,10 @@
 #
 # ╔════════════════════════════════════════════════════════════════════════════════════════╗
-# ║          08: Logic Solution — Plugin Registration via Build                            ║
+# ║          08: Logic Solution — Plugin Assembly and SDK Message Processing Steps         ║
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
-# Creates Solutions.Logic and references Plugins.Warehouse from it. Nothing about the plugin
-# is scaffolded: dotnet build of the solution writes the plugin assembly (PluginAssemblies/)
-# and the steps declared by [PluginStep] attributes (SdkMessageProcessingSteps/) into it.
+# Creates Solutions.Logic, references Plugins.Warehouse (the build registers the assembly)
+# and adds the SDK message processing steps.
 # Expects: $PublisherName, $PublisherPrefix from parent scope.
 # Expects: Plugins.Warehouse already built (07-plugins.ps1).
 #
@@ -38,12 +37,14 @@ cd ../..
 
 Write-Host "  ✓ ProjectReference: Plugins.Warehouse → Solutions.Logic" -ForegroundColor Green
 
-
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Build Logic Solution
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-# Generates PluginAssemblies/ and SdkMessageProcessingSteps/ from the referenced plugin project.
+# No pp-plugin-assembly call: pp-solution defaults to GeneratePluginAssembly=true, so this
+# first build registers the referenced plugin assembly in the solution itself. Scaffolding
+# the assembly by hand as well is only for GeneratePluginAssembly=false; after a generated
+# build it adds a second PluginAssembly root and the next build fails (#83).
 Write-Host "  → Building Solutions.Logic..." -ForegroundColor White
 cd src/Solutions.Logic
 dotnet build --nologo --verbosity quiet
@@ -55,8 +56,8 @@ if ($LASTEXITCODE -eq 0) {
 cd ../..
 
 # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
-# re-run after a partial failure (e.g. solution created but the reference or build
-# didn't finish) retries everything rather than silently skipping the missing work.
+# re-run after a partial failure (e.g. solution created but step registration didn't
+# finish) retries everything rather than silently skipping the missing work.
 Set-LabValue 'logicSolutionScaffolded' $true
 
 } else {

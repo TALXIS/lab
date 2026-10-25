@@ -53,7 +53,10 @@ if ($env:LAB_LOCAL_MODE) {
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 1: Build the full Package Deployer package and deploy to Dev.
-# This mirrors what the CD pipeline does for Test, but locally for the Dev environment.
+# This mirrors what the CD pipeline does for Test, but locally for the Dev environment - with
+# one difference: Dev gets the Debug build, whose solutions are unmanaged, so they can be
+# edited in Dev and pulled back to source in step 3. The pipeline builds Release (managed)
+# for Test.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Info "Building the deployment package..."
@@ -65,14 +68,23 @@ $pkgProj = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
 # defaults PublishOnBuild=true), redirecting its output away from its own bin/<Config>/
 # <TFM>/publish/ folder and breaking EnsurePluginAssemblyDataXml downstream.
 # See: https://github.com/TALXIS/tools-devkit-build/issues/109
-dotnet publish $pkgProj -c Release --nologo --verbosity quiet
+dotnet publish $pkgProj -c Debug --nologo --verbosity quiet
 if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
 
 # Locate the pdpkg.zip (Package Deployer package archive) at its natural output location —
 # no need to stage/copy it anywhere, bin/ is gitignored either way.
-$pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Release") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
+$pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Debug") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
 if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
 Write-Ok "Package built: $($pdpkg.Name)"
+
+# The role step 2 asks you to edit, as CP08 created it. Checked here rather than in step 2 so the
+# local dry run also catches a role renamed in CP08 without this checkpoint being updated.
+$roleFile = Join-Path $LabRoot "src/Solutions.Security/Roles/Warehouse worker.xml"
+if (-not (Test-Path $roleFile)) {
+    Write-Err "CP10 asks you to edit the Warehouse worker role, but $roleFile does not exist. Run CP08 first, or update this checkpoint if CP08 renamed the role."
+    exit 1
+}
+$roleName = ([xml](Get-Content $roleFile -Raw)).Role.name
 
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import' to deploy the built"
@@ -106,35 +118,31 @@ Write-Ok "Package deployed to Dev environment"
 
 $autoMode = $env:LAB_AUTO -eq '1'
 if (-not $autoMode) {
-    Write-Host ""
-    Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "║  Your app is now live in the Dev environment!                        ║" -ForegroundColor Yellow
-    Write-Host "║                                                                      ║" -ForegroundColor Yellow
-    Write-Host "║  Open $devUrl" -ForegroundColor Yellow
-    Write-Host "║  Try: Settings → Security Roles → modify the Warehouse Operator role ║" -ForegroundColor Yellow
-    Write-Host "║                                                                      ║" -ForegroundColor Yellow
-    Write-Host "║  Press ENTER when you're done making changes...                      ║" -ForegroundColor Yellow
-    Write-Host "╚══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
-    Write-Host ""
-    Read-Host "Press ENTER to continue"
+    # txc builds the maker-portal link: the role editor, found from the role's source file (its
+    # GUID is in there) and opened inside the security solution. Without a link, say where to click.
+    $roleUrl = txc env component url get --file $roleFile --param solution=SolutionsSecurity --profile $devProfile --format text 2>$null |
+        Where-Object { $_ -match '^https://' } | Select-Object -First 1
+    Write-Ok "Your app is live in Dev: $devUrl"
+    Write-Info "Change a security role in Dev, then this checkpoint pulls the change back to source."
+    if ($roleUrl) {
+        Write-Info "  Open the $roleName role: $roleUrl"
+    } else {
+        Write-Info "  Open https://make.powerapps.com, pick your Dev environment, then Solutions → Solutions.Security → Security roles → $roleName."
+    }
+    Write-Info "  Let workers delete their own transactions: on the Warehouse Transaction table set Delete to User, then Save."
+    Read-Host "`n  Make the change in your browser, then press Enter to pull it back to source"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 3: Pull environment changes back to source.
-# txc env solution pull downloads the unmanaged solution(s) from Dev into the source tree.
+# txc env solution pull downloads the unmanaged solution from Dev into the source tree.
 # This is how manual customizations in the maker portal get committed as source.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Info "Pulling solution changes from Dev back to source..."
-$solutions = @("Solutions.Security")  # The one we asked them to modify
-foreach ($sol in $solutions) {
-    $solPath = Join-Path $LabRoot "src/$sol"
-    if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile $devProfile
-        if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
-    }
-}
-Write-Ok "Solution pull complete"
+Write-Info "Pulling Solutions.Security from Dev back to source..."
+txc env solution pull (Join-Path $LabRoot "src/Solutions.Security") --profile $devProfile
+if ($LASTEXITCODE -ne 0) { Write-Err "Pulling Solutions.Security from Dev failed"; exit 1 }
+Write-Ok "Solutions.Security pulled from Dev"
 
 # Show what changed (if anything).
 $changes = git -C $LabRoot status --short -- src/
@@ -151,7 +159,7 @@ Save-Checkpoint -Id "cp10" -Message "Deploy package to Dev and sync environment 
 Deploy the full solution package to the Dev environment and demonstrate the bidirectional inner loop: push source to environment, make manual changes, then pull them back with txc env solution pull.
 
 ## Changes
-- deploy the built package (all 4 solutions) to the Dev Dataverse environment
+- deploy the Debug build of the package (all 4 solutions, unmanaged) to the Dev Dataverse environment
 - pull any manual security role changes back to src/Solutions.Security
 ## Testing
 - warehouse app is accessible in the Dev environment

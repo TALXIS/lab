@@ -10,6 +10,12 @@
 
 Write-Host "`n── Sitemap Navigation ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'sitemapScaffolded') {
+    Write-Host "  ✓ Sitemap navigation (exist)" -ForegroundColor Green
+    return
+}
+
 txc workspace component create pp-sitemap-area `
     --output "src/Solutions.UI" `
     --param "AreaTitle=Warehouse" `
@@ -55,3 +61,6 @@ txc workspace component create pp-sitemap-subarea `
     --param "AppName=${PublisherPrefix}_warehouseapp"
 
 Write-Host "  ✓ Sitemap subarea: Warehouse Transactions" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'sitemapScaffolded' $true

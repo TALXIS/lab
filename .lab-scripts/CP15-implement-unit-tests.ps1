@@ -43,7 +43,9 @@ try {
         if ($LASTEXITCODE -ne 0) { Write-Err "Scripts.UI build failed"; exit 1 }
     }
     Write-Info "Running script unit tests (dotnet test → Jest)..."
-    dotnet test src/Tests.Scripts/Tests.Scripts.csproj --nologo
+    # --tl:off: the terminal logger hides Jest's output and only reports .NET tests ("total: 0"),
+    # although Jest runs and a failing or empty suite fails dotnet test.
+    dotnet test src/Tests.Scripts/Tests.Scripts.csproj --nologo --tl:off
     if ($LASTEXITCODE -ne 0) { Write-Err "Script tests failed"; exit 1 }
     Write-Ok "Script unit tests passed"
 

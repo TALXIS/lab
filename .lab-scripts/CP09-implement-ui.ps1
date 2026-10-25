@@ -28,6 +28,10 @@ $PublisherPrefix = Get-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
 Write-Step "CP09 — UI"
 Push-Location $LabRoot
+# A failed txc call must stop the scaffolds: each one sets its *Scaffolded flag on its last line,
+# and a re-run skips it once that is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
 try {
     . "$PSScriptRoot/scaffold/05a-ui-solution.ps1"
     . "$PSScriptRoot/scaffold/05b-sitemap.ps1"
@@ -47,7 +51,7 @@ try {
         Copy-Item "$PSScriptRoot/workflows/build.yml" ".github/workflows/build.yml" -Force
         Write-Ok "build.yml refreshed (Node setup for the code app)"
     }
-} finally { Pop-Location }
+} finally { Pop-Location; $PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref }
 
 Save-Checkpoint -Id "cp09" -Message "Add warehouse model-driven app, code app, views, forms, ribbon, and TALXIS Grid" -Body @'
 Build the model-driven warehouse experience so users can navigate inventory data from a complete Dataverse app. This adds the app shell along with the core forms, views, scripts, and command surface, swaps the stock items subgrid for the TALXIS Grid PCF customized from our own script library through the control's Client API, and adds a code app for warehouse-floor picking — two UI styles for two personas, shipped from the same solution.

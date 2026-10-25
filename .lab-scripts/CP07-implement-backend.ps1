@@ -44,8 +44,8 @@ Introduce server-side inventory logic so warehouse transactions are validated an
 
 ## Changes
 - add src/Plugins.Warehouse with validation and quantity update plugins
-- add src/Solutions.Logic, the plugin assembly registration is generated into it on build
-- declare pre-validation and post-operation steps for transaction creation with [PluginStep] attributes, generated into the logic solution on build
+- add src/Solutions.Logic, which references the plugin project; the build registers the assembly
+- register pre-validation and post-operation steps for transaction creation
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the new plugin and logic projects
 '@

@@ -15,7 +15,14 @@ jobs:
           dotnet-version: '10.x'
       - name: Plugin unit tests (FakeXrmEasy)
         run: dotnet test src/Tests.Plugins/Tests.Plugins.csproj --configuration Release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Build script bundle
         run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
+      # node_modules isn't committed; without it the RunJest target's npx fetches a bare jest and fails.
+      - name: Install Jest
+        working-directory: src/Tests.Scripts
+        run: npm ci
       - name: Script unit tests (Jest via dotnet test)
         run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release
