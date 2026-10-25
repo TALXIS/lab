@@ -39,6 +39,7 @@ Every checkpoint ends the same way: a **pull request** on your fork that you rev
 ## Before you start
 
 - Use a **fork** of this repository on your own GitHub account, and open the Codespace **from your fork**, not from `TALXIS/lab`.
+- **Before you create the Codespace**, go to [github.com/settings/codespaces](https://github.com/settings/codespaces), set **Default idle timeout** to **240 minutes** and save. The default is 30 minutes: during a talk or a break your Codespace would stop, and a checkpoint waiting for you with it. The setting only applies to Codespaces created after you change it.
 - You'll sign in to GitHub, Power Platform, Azure and Power Apps. **Use the same Microsoft account for the last three.** It needs to be able to create a Power Platform environment.
 - When the Codespace opens, its tools are still updating. **Wait until the terminal goes quiet** (about a minute) before you start.
 
@@ -157,5 +158,6 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | CP04 can't create an environment | Your account may not be allowed to, or it already has 3 Developer environments (the limit per user; CP04 creates 2, and one the facilitators made for you counts too). Delete one you no longer need in the [Power Platform admin center](https://admin.powerplatform.microsoft.com/environments), or ask a facilitator |
 | CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
+| Your Codespace stopped (idle too long) | Open it again from your fork (**Code → Codespaces**), wait until the terminal goes quiet, then ask *Where am I in the lab?* and run that checkpoint again. Your files and progress are kept. If a sign-in is gone, ask *Sign me in* |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

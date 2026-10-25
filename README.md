@@ -7,7 +7,7 @@ environments, trunk-based development, PR quality gates and GitHub Actions deplo
 > **Workshop attendees:** open [LAB-GUIDE.md](LAB-GUIDE.md) (right-click → **Open Preview**) and follow it with Copilot Chat. This README is the reference for running the scripts yourself.
 
 1. **Fork** this repo to your personal GitHub account (top-right **Fork** button).
-2. On **your fork** (`https://github.com/<you>/lab`), click **Code → Codespaces → Create codespace on main**.
+2. First set your Codespaces **Default idle timeout** to 240 minutes at [github.com/settings/codespaces](https://github.com/settings/codespaces) (the default, 30 minutes, stops the Codespace during any longer pause; the setting only applies to Codespaces created afterwards). Then, on **your fork** (`https://github.com/<you>/lab`), click **Code → Codespaces → Create codespace on main**.
    All tools are preinstalled. The Codespace and free GitHub Actions minutes run on *your* account.
 
    > ⚠️ Don't use a "one-click" badge that points at `TALXIS/lab` — that starts the Codespace on the parent repo, where you can't push and your free minutes won't apply. Always launch from your own fork.
