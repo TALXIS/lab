@@ -32,6 +32,7 @@ export interface Lab_warehouseitemsBase {
   lab_isperishable?: string;
   "lab_locationid@odata.bind"?: string;
   lab_name: string;
+  "lab_productid@odata.bind"?: string;
   lab_reorderpoint?: string;
   lab_sku: string;
   lab_unitprice?: string;
@@ -54,6 +55,7 @@ export interface Lab_warehouseitems extends Lab_warehouseitemsBase {
   createdonbehalfbyyominame: string;
   lab_categoryname?: string;
   lab_locationidname?: string;
+  lab_productidname?: string;
   modifiedbyname?: string;
   modifiedbyyominame: string;
   modifiedon?: string;
@@ -72,6 +74,8 @@ export interface Lab_warehouseitems extends Lab_warehouseitemsBase {
   _createdonbehalfby_value?: string;
   lab_locationid?: object;
   _lab_locationid_value?: string;
+  lab_productid?: object;
+  _lab_productid_value?: string;
   modifiedby?: object;
   _modifiedby_value?: string;
   modifiedonbehalfby?: object;
