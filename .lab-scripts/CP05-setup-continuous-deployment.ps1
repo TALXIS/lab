@@ -69,48 +69,25 @@ if (-not (az ad sp show --id $appId --query id -o tsv 2>$null)) {
     az ad sp create --id $appId | Out-Null
 }
 
-# Step 3: Federated credentials trusting main of this repo.
-# GitHub's OIDC subject is name-based by default (repo:<owner>/<repo>:ref:...), but a repo can use
-# the ID-based form (repo:<owner>@<id>/<repo>@<id>:ref:...), and Entra compares subjects exactly -
-# a mismatch fails every deploy with AADSTS700213. So register the name-based subject, plus the
-# repo's actual prefix when it differs; either setting works, and re-running CP05 repairs a fork.
-function Get-GitHubOidcSubjects {
-    param([Parameter(Mandatory)][string]$Repo)
-    $subjects = [ordered]@{ 'github-main' = "repo:$Repo`:ref:refs/heads/main" }
-    $raw = gh api "repos/$Repo/actions/oidc/customization/sub" 2>$null
-    if ($LASTEXITCODE -ne 0 -or -not $raw) {
-        Write-Warn2 "Could not read the repo's OIDC subject settings - registering the default (name-based) subject only."
-        return $subjects
-    }
-    $settings = ($raw -join "`n") | ConvertFrom-Json
-    if ($settings.use_default -eq $false) {
-        Write-Warn2 "This repo uses a custom OIDC subject template; deploys may be refused with AADSTS700213 (https://github.com/$Repo/settings/actions)."
-    }
-    # Case-sensitive: Entra matches the subject exactly, and lab state may hold the repo in another case.
-    if ($settings.sub_claim_prefix -and "$($settings.sub_claim_prefix)" -cne "repo:$Repo") {
-        $subjects['github-main-id'] = "$($settings.sub_claim_prefix):ref:refs/heads/main"
-    }
-    return $subjects
-}
+# Step 3: Federated credential trusting this repo's main branch.
+# A workflow on main gets a token whose subject names this repo; Entra trusts tokens with exactly
+# this subject. GitHub repos created since July 2026 include the owner and repo IDs in it, so the
+# trust can't pass to another repo that later takes the same name.
+$ghRepo = gh api "repos/$repo" | ConvertFrom-Json
+if (-not $ghRepo.id) { Write-Err "Could not read repo $repo from GitHub"; exit 1 }
+$subject = "repo:$($ghRepo.owner.login)@$($ghRepo.owner.id)/$($ghRepo.name)@$($ghRepo.id):ref:refs/heads/main"
 
-function Set-FederatedCredential {
-    param([Parameter(Mandatory)][string]$AppId, [Parameter(Mandatory)][string]$Name, [Parameter(Mandatory)][string]$Subject)
-    $current = az ad app federated-credential list --id $AppId --query "[?name=='$Name'] | [0].subject" -o tsv 2>$null
-    if ($LASTEXITCODE -ne 0) { Write-Err "Could not list the federated credentials of app $AppId"; exit 1 }
-    if ($current -ceq $Subject) { Write-Ok "Federated credential $Name exists ($Subject)"; return }
-    $tmp = New-TemporaryFile
-    try {
-        @{ name=$Name; issuer="https://token.actions.githubusercontent.com"; subject=$Subject; audiences=@("api://AzureADTokenExchange") } |
-            ConvertTo-Json | Set-Content $tmp -Encoding UTF8
-        $out = if ($current) { az ad app federated-credential update --id $AppId --federated-credential-id $Name --parameters "@$tmp" 2>&1 }
-               else          { az ad app federated-credential create --id $AppId --parameters "@$tmp" 2>&1 }
-        if ($LASTEXITCODE -ne 0) { Write-Err "Could not register federated credential $Name ($Subject): $out"; exit 1 }
-    } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
-    Write-Ok "Federated credential $Name $(if ($current) { "corrected from $current to" } else { 'created' }) ($Subject)"
+$tmp = New-TemporaryFile
+@{ name="github-main"; issuer="https://token.actions.githubusercontent.com"; subject=$subject; audiences=@("api://AzureADTokenExchange") } |
+    ConvertTo-Json | Set-Content $tmp -Encoding UTF8
+if (az ad app federated-credential list --id $appId --query "[?name=='github-main'].name" -o tsv) {
+    az ad app federated-credential update --id $appId --federated-credential-id github-main --parameters "@$tmp" | Out-Null
+} else {
+    az ad app federated-credential create --id $appId --parameters "@$tmp" | Out-Null
 }
-
-$oidcSubjects = Get-GitHubOidcSubjects -Repo $repo
-foreach ($name in $oidcSubjects.Keys) { Set-FederatedCredential -AppId $appId -Name $name -Subject $oidcSubjects[$name] }
+if ($LASTEXITCODE -ne 0) { Write-Err "Could not register the federated credential"; exit 1 }
+Remove-Item $tmp
+Write-Ok "Federated credential: $subject"
 
 # Step 4: Add SP as application user with System Administrator role in Test env.
 # We use the Dataverse OData API directly (pac admin assign-user requires a pac
