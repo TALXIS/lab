@@ -97,7 +97,13 @@ foreach ($key in $envs.Keys) {
     # Bind the existing credential to a connection+profile (no extra sign-in).
     $connection = Get-ConnectionByIdOrUrl -Connections $connections -Name $key -Url $url
     if (-not $connection) {
-        txc config connection create $key --provider Dataverse --url $url 2>&1 | Out-Null
+        # Give the connection the environment's ids too: txc builds maker-portal links from them
+        # (CP10's link to the security role), and doesn't look them up later by itself.
+        $listed = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
+        $ids = @()
+        if ($listed.environmentId)  { $ids += '--environment-id', $listed.environmentId }
+        if ($listed.organizationId) { $ids += '--organization-id', $listed.organizationId }
+        txc config connection create $key --provider Dataverse --url $url @ids 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key connection"; exit 1 }
         $connections = @(txc config connection list --format json | ConvertFrom-Json)
         $connection = Get-ConnectionByIdOrUrl -Connections $connections -Name $key -Url $url
