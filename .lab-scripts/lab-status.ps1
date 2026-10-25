@@ -37,7 +37,7 @@ $checkpoints = @(
     @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded") }
     @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
     @{ Id = "cp08"; Keys = @("securityScaffolded") }
-    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded") }
+    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "codeAppScaffolded") }
     @{ Id = "cp10"; Keys = @() }
     # CP11 saves four times under one tag; its scaffold flags tell which of the four steps landed.
     @{ Id = "cp11"; Keys = @("productTableScaffolded", "connectorScaffolded", "productDataSourceScaffolded", "connectorDataSourceScaffolded", "barcodeScanUiScaffolded") }

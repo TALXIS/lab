@@ -42,6 +42,14 @@
 
 Write-Host "`n── Code App: Warehouse Picking ──" -ForegroundColor Cyan
 
+# Scaffolded once. Everything below rewrites the app's sources, and CP11 and your own work edit
+# them afterwards, so a re-run of CP09 must leave the app alone. The flag is set only at the end,
+# so a run that failed part-way retries the whole block.
+if (Get-LabValue 'codeAppScaffolded') {
+    Write-Host "  ✓ Apps.WarehousePicking (exists, left as is)" -ForegroundColor Green
+    return
+}
+
 # Pin AppName so the CanvasApp schema name doesn't depend on the project folder name.
 $appName = "warehousepicking"
 
@@ -224,5 +232,7 @@ if (-not (Get-ChildItem "$appSrc/assets" -ErrorAction SilentlyContinue)) { Remov
 New-Item -ItemType Directory -Force "$appSrc/styles" | Out-Null
 Move-Item "$appSrc/pages/not-found.styles.ts" "$appSrc/styles/not-found.styles.ts" -Force -ErrorAction SilentlyContinue
 (Get-Content "$appSrc/pages/not-found.tsx" -Raw) -replace 'from "\./not-found\.styles"', 'from "@/styles/not-found.styles"' | Set-Content "$appSrc/pages/not-found.tsx" -NoNewline
+
+Set-LabValue 'codeAppScaffolded' $true
 
 Write-Host "  ℹ Local preview: cd src/Apps.WarehousePicking && npm run dev" -ForegroundColor DarkGray
