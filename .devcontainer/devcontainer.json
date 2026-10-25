@@ -7,12 +7,25 @@
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "customizations": {
+    // The first screen LAB-GUIDE.md describes: the guide rendered on the left, Copilot Chat on the
+    // right, and the specs in docs/design opening as readable pages.
     "codespaces": {
-      "openFiles": ["README.md", "LAB-GUIDE.md"]
+      "openFiles": ["LAB-GUIDE.md"]
     },
     "vscode": {
       "extensions": ["ms-vscode.powershell"],
       "settings": {
+        "workbench.startupEditor": "none",
+        "workbench.editorAssociations": {
+          "**/LAB-GUIDE.md": "vscode.markdown.preview.editor",
+          "**/docs/design/*.md": "vscode.markdown.preview.editor"
+        },
+        "workbench.secondarySideBar.defaultVisibility": "visible",
+        // Let Copilot run the lab's own scripts and builds without asking each time.
+        "chat.tools.terminal.autoApprove": {
+          "/^(pwsh\\s+(-\\w+\\s+)*)?(\\./)?\\.lab-scripts\\//": true,
+          "dotnet build": true
+        },
         "terminal.integrated.defaultProfile.linux": "pwsh",
         "terminal.integrated.profiles.linux": {
           "pwsh": {
@@ -23,8 +36,11 @@
       }
     }
   },
+  // 4 cores: the code app's Vite build, MSBuild, VS Code and Copilot share the machine, and on
+  // 2 cores the lab crawled and a build was killed. A free account's 120 core-hours a month
+  // still give about 30 hours on 4 cores.
   "hostRequirements": {
-    "cpus": 2,
-    "memory": "8gb"
+    "cpus": 4,
+    "memory": "16gb"
   }
 }

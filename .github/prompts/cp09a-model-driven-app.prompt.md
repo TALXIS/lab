@@ -3,7 +3,7 @@ agent: agent
 description: CP09a - implement the Warehouse model-driven app (Lab 4)
 ---
 
-Please implement the manager's Warehouse app from docs/design/lab-4-user-interface.md,
+Please implement the manager's Warehouse Management app from docs/design/lab-4-user-interface.md,
 using the TALXIS skills. That's user stories US-01 to US-05 and the technical
 specification sections "Solution and model-driven app", "Script library" and "TALXIS Grid
 on the Location form": the UI solution, the model-driven app with its sitemap, the forms,

@@ -24,4 +24,5 @@ reports. Then save the checkpoint:
 `.lab-scripts/save-checkpoint.ps1 -Id cp06 -Message "Add warehouse data model schema and column definitions"`
 
 It opens a pull request on the fork and waits. Give me the PR link and tell me to review it and
-merge it on GitHub (Files changed, Merge pull request, Confirm). Don't merge it yourself.
+merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows "press Enter
+to merge", also tell me to press Enter there once I've merged. Don't merge it yourself.

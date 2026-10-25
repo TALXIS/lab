@@ -73,7 +73,7 @@ flowchart TB
 
   subgraph pp["Power Platform environment (Dev, Test)"]
     direction TB
-    mda["<b>Warehouse app</b><br/><i>[Model-driven app]</i><br/>Forms, views, TALXIS Grid,<br/>form scripts, ribbon"]
+    mda["<b>Warehouse Management</b><br/><i>[Model-driven app]</i><br/>Forms, views, TALXIS Grid,<br/>form scripts, ribbon"]
     code["<b>Warehouse Picking</b><br/><i>[Code app: React, TypeScript]</i><br/>Items, pick and restock,<br/>transactions, locations, barcode scan"]
     conn["<b>Open Food Facts connector</b><br/><i>[Custom connector, C# custom code]</i><br/>GetProductByBarcode, GetProductImage"]
     flow["<b>Process transactions</b><br/><i>[Scheduled cloud flow]</i><br/>Marks new transactions processed"]
@@ -103,7 +103,7 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-  apps["<b>Warehouse app</b> and <b>Warehouse Picking</b><br/><i>[Model-driven app, code app]</i>"]
+  apps["<b>Warehouse Management</b> and <b>Warehouse Picking</b><br/><i>[Model-driven app, code app]</i>"]
 
   subgraph dv["Dataverse"]
     direction TB

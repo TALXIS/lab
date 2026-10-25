@@ -12,10 +12,12 @@ because the build and deploy steps look for them, and keep
 the table, column and choice names exactly as the spec has them.
 
 Keep the plugin code in its own project, and register the steps in a separate logic
-solution. Create the steps after the first build of the logic solution, since the
-build registers the assembly. Don't scaffold the assembly with `pp-plugin-assembly` as
-well: a second registration makes the next build fail. Follow the stages in the spec's
-step registrations.
+solution. Declare each step with a `[PluginStep]` attribute (from
+`TALXIS.DevKit.Build.Dataverse.Plugin`) on the plugin class, with the message, table and
+stage from the spec's step registrations: building the logic solution registers the
+assembly and generates the steps. Don't scaffold `pp-plugin-assembly` or
+`pp-plugin-assembly-step` as well: a second assembly registration makes the next build
+fail, and a second step makes the plugin run twice.
 
 If you get stuck, .lab-scripts/CP07-implement-backend.ps1 does this same step
 and is a good example to read.
@@ -26,4 +28,5 @@ reports. Then save the checkpoint:
 `.lab-scripts/save-checkpoint.ps1 -Id cp07 -Message "Add inventory transaction plugin and logic solution steps"`
 
 It opens a pull request on the fork and waits. Give me the PR link and tell me to review it and
-merge it on GitHub (Files changed, Merge pull request, Confirm). Don't merge it yourself.
+merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows "press Enter
+to merge", also tell me to press Enter there once I've merged. Don't merge it yourself.
