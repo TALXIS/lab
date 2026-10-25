@@ -109,35 +109,32 @@ Write-Ok "Package deployed to Dev environment"
 
 $autoMode = $env:LAB_AUTO -eq '1'
 if (-not $autoMode) {
-    Write-Host ""
-    Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "║  Your app is now live in the Dev environment!                        ║" -ForegroundColor Yellow
-    Write-Host "║                                                                      ║" -ForegroundColor Yellow
-    Write-Host "║  Open $devUrl" -ForegroundColor Yellow
-    Write-Host "║  Try: Settings → Security Roles → modify the Warehouse Operator role ║" -ForegroundColor Yellow
-    Write-Host "║                                                                      ║" -ForegroundColor Yellow
-    Write-Host "║  Press ENTER when you're done making changes...                      ║" -ForegroundColor Yellow
-    Write-Host "╚══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
-    Write-Host ""
-    Read-Host "Press ENTER to continue"
+    # txc builds the maker-portal link: the role editor, found from the role's source file (its
+    # GUID is in there) and opened inside the security solution. Without a link, say where to click.
+    $roleFile = Join-Path $LabRoot "src/Solutions.Security/Roles/Warehouse worker.xml"
+    $roleUrl = txc env component url get --file $roleFile --param solution=SolutionsSecurity --profile $devProfile --format text 2>$null |
+        Where-Object { $_ -match '^https://' } | Select-Object -First 1
+    Write-Ok "Your app is live in Dev: $devUrl"
+    Write-Info "Change a security role in Dev, then this checkpoint pulls the change back to source."
+    if ($roleUrl) {
+        Write-Info "  Open the Warehouse worker role: $roleUrl"
+    } else {
+        Write-Info "  Open https://make.powerapps.com, pick your Dev environment, then Solutions → Solutions.Security → Security roles → Warehouse worker."
+    }
+    Write-Info "  Let workers delete their own transactions: on the Warehouse Transaction table set Delete to User, then Save."
+    Read-Host "`n  Make the change in your browser, then press Enter to pull it back to source"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 3: Pull environment changes back to source.
-# txc env solution pull downloads the unmanaged solution(s) from Dev into the source tree.
+# txc env solution pull downloads the unmanaged solution from Dev into the source tree.
 # This is how manual customizations in the maker portal get committed as source.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Info "Pulling solution changes from Dev back to source..."
-$solutions = @("Solutions.Security")  # The one we asked them to modify
-foreach ($sol in $solutions) {
-    $solPath = Join-Path $LabRoot "src/$sol"
-    if (Test-Path $solPath) {
-        txc env solution pull --folder $solPath --profile $devProfile
-        if ($LASTEXITCODE -ne 0) { Write-Warn2 "Pull for $sol returned non-zero (may be OK if no changes)" }
-    }
-}
-Write-Ok "Solution pull complete"
+Write-Info "Pulling Solutions.Security from Dev back to source..."
+txc env solution pull (Join-Path $LabRoot "src/Solutions.Security") --profile $devProfile
+if ($LASTEXITCODE -ne 0) { Write-Err "Pulling Solutions.Security from Dev failed"; exit 1 }
+Write-Ok "Solutions.Security pulled from Dev"
 
 # Show what changed (if anything).
 $changes = git -C $LabRoot status --short -- src/
