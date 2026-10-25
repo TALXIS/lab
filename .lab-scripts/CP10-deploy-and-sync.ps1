@@ -53,7 +53,10 @@ if ($env:LAB_LOCAL_MODE) {
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 # Step 1: Build the full Package Deployer package and deploy to Dev.
-# This mirrors what the CD pipeline does for Test, but locally for the Dev environment.
+# This mirrors what the CD pipeline does for Test, but locally for the Dev environment - with
+# one difference: Dev gets the Debug build, whose solutions are unmanaged, so they can be
+# edited in Dev and pulled back to source in step 3. The pipeline builds Release (managed)
+# for Test.
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
 Write-Info "Building the deployment package..."
@@ -65,12 +68,12 @@ $pkgProj = Join-Path $LabRoot "src/Packages.Main/Packages.Main.csproj"
 # defaults PublishOnBuild=true), redirecting its output away from its own bin/<Config>/
 # <TFM>/publish/ folder and breaking EnsurePluginAssemblyDataXml downstream.
 # See: https://github.com/TALXIS/tools-devkit-build/issues/109
-dotnet publish $pkgProj -c Release --nologo --verbosity quiet
+dotnet publish $pkgProj -c Debug --nologo --verbosity quiet
 if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
 
 # Locate the pdpkg.zip (Package Deployer package archive) at its natural output location —
 # no need to stage/copy it anywhere, bin/ is gitignored either way.
-$pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Release") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
+$pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Debug") -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
 if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
 Write-Ok "Package built: $($pdpkg.Name)"
 
@@ -151,7 +154,7 @@ Save-Checkpoint -Id "cp10" -Message "Deploy package to Dev and sync environment 
 Deploy the full solution package to the Dev environment and demonstrate the bidirectional inner loop: push source to environment, make manual changes, then pull them back with txc env solution pull.
 
 ## Changes
-- deploy the built package (all 4 solutions) to the Dev Dataverse environment
+- deploy the Debug build of the package (all 4 solutions, unmanaged) to the Dev Dataverse environment
 - pull any manual security role changes back to src/Solutions.Security
 ## Testing
 - warehouse app is accessible in the Dev environment
