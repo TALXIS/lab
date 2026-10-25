@@ -28,13 +28,17 @@ $PublisherPrefix = Get-LabValue 'publisherPrefix' $LabDefaultPublisherPrefix
 
 Write-Step "CP06 — Data model"
 Push-Location $LabRoot
+# A failed txc call must stop the scaffolds: each one sets its *Scaffolded flag on its last line,
+# and a re-run skips it once that is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
 try {
     . "$PSScriptRoot/scaffold/03a-package-deployer.ps1"
     . "$PSScriptRoot/scaffold/03b-data-model.ps1"
     . "$PSScriptRoot/scaffold/03c-columns.ps1"
     dotnet build --nologo --verbosity quiet
     if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
-} finally { Pop-Location }
+} finally { Pop-Location; $PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref }
 
 Save-Checkpoint -Id "cp06" -Message "Add warehouse data model schema and column definitions" -Body @'
 Scaffold the core warehouse data model so inventory data can be stored and deployed from source. This introduces the package deployer, the data model solution, and the initial table and column definitions.

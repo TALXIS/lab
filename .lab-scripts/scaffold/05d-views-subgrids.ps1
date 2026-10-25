@@ -19,11 +19,6 @@ if (Get-LabValue 'viewsSubgridsScaffolded') {
     return
 }
 
-# A failed txc call must stop the script: the flag set at the end means "fully done",
-# and a re-run skips the script once it is set.
-$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
-$PSNativeCommandUseErrorActionPreference = $true
-
 # Helper: pp-entity-view generates a minimal lookup view (querytype=64) with only
 # the primary name column. After scaffolding, we patch the XML to add
 # entity-specific columns to both layoutxml and fetchxml.
@@ -165,8 +160,6 @@ txc workspace component create pp-form-subgrid `
     --param "RelationshipName=$itemTransactionsRelationship"
 
 Write-Host "  ✓ Subgrid: warehouseitem → Warehouse Transactions ($itemTransactionsRelationship)" -ForegroundColor Green
-
-$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'viewsSubgridsScaffolded' $true
