@@ -98,7 +98,7 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 .lab-scripts/CP10-deploy-and-sync.ps1
 ```
 
-It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
+It takes about 10 minutes, and the terminal can sit on *Importing the solution Solutions.DataModel* for two minutes: that's normal. A build warning about `talxis_TALXIS.PCF.Grid` (`TALXISPCF001`) is expected; the Grid was imported in the step before. It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1. In the pull request, your change is the line `prvDeletelab_warehousetransaction` in *Warehouse worker.xml*; the other changes (SharePoint privileges, `Solution.xml`, `Relationships.xml`, the picking app's version file) are Dataverse's and the build's own formatting.
 
 **Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again isn't a reliable way to get a later change into Dev, because the package version doesn't change between builds. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
 
@@ -109,7 +109,7 @@ It deploys the app to your Dev environment. To open the apps, go to [make.powera
 | `/cp11-external-data` | [Lab 5](docs/design/lab-5-external-data-and-background-processing.md) | A Product table, the Open Food Facts connector, and a barcode scan in the picking app |
 | `/cp12-config-data` | [Lab 1](docs/design/lab-1-data-model.md) | Locations and items that every environment starts with |
 
-`/cp11-external-data` opens **four** pull requests, one after each part. Merge each one before Copilot starts the next. It also imports the Product table and the connector into your Dev environment, which it tells you about.
+`/cp11-external-data` opens **four** pull requests, one after each part. Merge each one, and wait until the terminal shows **✓ Merged + tagged** before Copilot starts the next part: if it starts editing files while a pull request is still waiting, the next save fails (re-running it fixes that). It also imports the Product table and the connector into your Dev environment, which it tells you about.
 
 `/cp12-config-data` also loads the records into your Dev environment. After it, **try the picking app yourself**. In a second terminal:
 
