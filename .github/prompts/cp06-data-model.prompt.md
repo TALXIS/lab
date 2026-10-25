@@ -13,7 +13,10 @@ the table, column and choice names exactly as the spec has them, because later
 checkpoints read them by name.
 
 Put the tables in their own Dataverse solution, and add a Package Deployer project
-that references it, so one `dotnet build` produces the single package we deploy.
+that references it, so one `dotnet build` produces the single package we deploy. Make sure
+both projects are in `WarehouseManagement.slnx` (`dotnet sln list`, then `dotnet sln add`
+what's missing): the package template doesn't add itself, and the build check publishes
+`src/Packages.Main`.
 
 If you get stuck, .lab-scripts/CP06-implement-data-model.ps1 does this same step
 and is a good example to read.

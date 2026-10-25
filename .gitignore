@@ -23,3 +23,7 @@ Thumbs.db
 
 # playwright-cli (browser automation) scratch files
 .playwright-cli/
+
+# txc template post-action leftovers (normally cleaned up; left behind when a call fails)
+.template.scripts/
+.template.temp/
