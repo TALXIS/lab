@@ -8,7 +8,7 @@ Each persona gets an interface suited to their work, and both ship in one soluti
 
 | Persona | Interface | Character |
 |---|---|---|
-| Warehouse manager (office) | **Warehouse app**, a model-driven app | Complete: every table, form and view, plus productivity aids |
+| Warehouse manager (office) | **Warehouse Management**, a model-driven app | Complete: every table, form and view, plus productivity aids |
 | Warehouse worker (floor) | **Warehouse Picking**, a Power Apps code app | Narrow and fast: find an item, pick or restock it |
 
 Neither interface decides whether a stock movement is allowed. That is the server's rule (specification 2); the interfaces show its outcome.
@@ -24,7 +24,7 @@ Neither interface decides whether a stock movement is allowed. That is the serve
 
 Any design that satisfies the user stories is acceptable.
 
-## User stories: Warehouse app (manager)
+## User stories: Warehouse Management app (manager)
 
 ### US-01 Find warehouse data
 
@@ -32,7 +32,7 @@ Any design that satisfies the user stories is acceptable.
 
 | # | Given | When | Then |
 |---|---|---|---|
-| 1 | I open the Warehouse app | The app loads | The sitemap shows area **Warehouse**, group **Management**, with **Warehouse Locations**, **Warehouse Items** and **Warehouse Transactions** |
+| 1 | I open the Warehouse Management app | The app loads | The sitemap shows area **Warehouse**, group **Management**, with **Warehouse Locations**, **Warehouse Items** and **Warehouse Transactions** |
 | 2 | The app is open | I select **Warehouse Items** | The **Active Warehouse Items** view lists items with SKU, Category, Available Quantity, Unit Price, Location and Reorder Point |
 | 3 | The app is open | I select **Warehouse Locations** or **Warehouse Transactions** | The **Active Warehouse Locations** or **Active Warehouse Transactions** view is shown |
 

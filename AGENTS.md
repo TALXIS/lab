@@ -15,10 +15,18 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   every 20 seconds or so. As soon as `PR opened:` or `Reusing the open PR:` appears, give the person
   that link; don't wait for the command to finish first. Once they've merged, the script finishes by
   itself within a minute. Don't start it again while it's waiting.
+- If the output says `press Enter to merge` instead, the script is waiting for a key press in that
+  terminal. Tell the person to merge on GitHub and then press Enter there: it notices the PR is
+  already merged and finishes.
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
-- To run a checkpoint, run its script from `.lab-scripts/`; `lab-status.ps1` says which is next. Pass on
-  any link or code it prints, and wait for the person.
-- CP10 waits for a key press, so ask the person to run it in their own terminal.
+- To run a setup checkpoint (CP01–CP05, CP10, CP13–CP15), run its script from `.lab-scripts/`;
+  `lab-status.ps1` says which is next. Pass on any link or code it prints, and wait for the person.
+- When the next checkpoint is a build checkpoint (CP06–CP09, CP11, CP12), don't run its script: tell
+  the person which command to type (`/cp06-data-model`, `/cp07-backend`, `/cp08-security`,
+  `/cp09a-model-driven-app` then `/cp09b-code-app`, `/cp11-external-data`, `/cp12-config-data`),
+  unless they ask for the script.
+- CP10, and CP12 when run as a script, wait for a key press, so ask the person to run them in their
+  own terminal.
 - Read `.lab-scripts/` as working examples, but don't edit it.
 - Use the `txc` discovery commands to scaffold, not `dotnet new`.
 - Ignore the build warning that PDPackage targets aren't verified against the .NET SDK.

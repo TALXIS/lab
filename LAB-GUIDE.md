@@ -34,7 +34,7 @@ Every checkpoint ends the same way: a **pull request** on your fork that you rev
 - **This guide**, on the left.
 - **Copilot Chat**, on the right. This is where you do the lab.
 - **The terminal**, at the bottom (**Ctrl+`** shows it). You only need it if Copilot asks you to use it, or as a backup.
-- **The specs** are in `docs/design/`. Each one opens as a readable page.
+- **The specs** are in `docs/design/`. To read one (or this guide) as a formatted page, right-click it and choose **Open Preview**.
 
 ## Before you start
 
@@ -56,20 +56,17 @@ Ask Copilot to run each setup checkpoint, one after the other. For example:
 
 > Run checkpoint 1 and sign me in.
 
-or, later, just *What's next?* or *Run the next checkpoint.* Copilot finds the next one and runs it.
+or, later, just *What's next?* or *Run the next checkpoint.* Copilot finds the next setup checkpoint and runs it. From CP06 on, it tells you which `/cp…` command to type instead (Part 2).
 
-- **CP01** checks the tools and signs you in. Copilot walks you through it one service at a time: it gives you a link and a code, you open the link, enter the code and approve, and it moves on to the next. When GitHub asks, allow the `workflow` permission.
+- **CP01** checks the tools and signs you in. Copilot walks you through it one service at a time: it gives you a link and a code, you open the link, enter the code and approve, and it moves on to the next. When GitHub asks, allow the `workflow` permission. If Copilot doesn't show you the code, look in the terminal panel: the link and the code are printed there.
 - **CP02** creates the solution file and the `src/` folder.
 - **CP03** blocks direct pushes to `main`.
-- **CP04** creates your Dev and Test environments. It takes a few minutes.
-- **CP05** creates the deployment identity and the build and deploy workflows. The build check on its pull request will probably show a red ✗. That's expected: the project it builds is added in CP06. You can still merge.
+- **CP04** creates your Dev and Test environments. It takes a few minutes. They're Developer environments in the US region by default; a facilitator tells you if the workshop uses something else.
+- **CP05** creates the deployment identity and the build and deploy workflows. The build check on its pull request will probably show a red ✗. That's expected: the project it builds is added in CP06. You can still merge. On a first run it may wait up to 4 minutes for the new app registration ("Waiting for the new app registration…"); that's normal.
 
-**Each checkpoint ends with a pull request link.** Open it and click **Files changed** to see what changed. Then do **one** of these, depending on what Copilot says:
+**Each checkpoint ends with a pull request link.** Open it and click **Files changed** to see what changed. Then merge it: click **Merge pull request** and **Confirm merge** on GitHub, and come back here. Copilot carries on by itself.
 
-- **"I'll carry on when you've merged it":** click **Merge pull request** and **Confirm merge** on GitHub, then come back here. Copilot carries on by itself.
-- **"I'm waiting for Enter in the terminal":** don't merge on GitHub. Check the pull request, then click into the terminal and press **Enter**. The script merges it for you.
-
-You only need one of the two. Copilot never merges for you.
+**If the terminal shows "press Enter to merge"**, the script is waiting for a key press: click into the terminal and press **Enter** as well. That's safe after merging on GitHub (the script notices and just finishes), and if you haven't merged yet, Enter merges it for you. Copilot never merges for you.
 
 ## Part 2: Build the app
 
@@ -101,6 +98,8 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 
 It deploys the app to your Dev environment and gives you a link to open it. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
 
+**Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again later doesn't update Dev, because the package version stays the same. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
+
 ## Part 4: External data and reference data
 
 | Command | Spec | You get |
@@ -122,6 +121,8 @@ It prints two links. Open the **Local Play** one, which starts with `https://app
 
 1. Open **Office Laptop** (100 on hand) and create an **Outbound** transaction for a small quantity. It succeeds and the quantity on hand goes down.
 2. Try to pick more than 5 of **Wireless Mouse** (5 on hand). The server refuses it and the app shows the error.
+
+If the Local Play page stays blank or can't load the app (this can happen when the Codespace runs in your browser), use the copy CP10 deployed instead: open https://make.powerapps.com, pick your **Dev** environment, go to **Apps**, and play **Warehouse Picking**.
 
 ## Part 5: Protect `main`
 
@@ -149,11 +150,12 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 |---|---|
 | You're not sure where you are | Ask *Where am I in the lab?* It runs `lab-status` and tells you |
 | Sign-in errors, or a new Codespace | Ask *Sign me in* |
-| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. When it asks you to press **Enter** to merge, check the pull request first, and don't also merge it on GitHub |
+| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. When it asks you to press **Enter** to merge, check the pull request first. Merging it on GitHub before you press Enter is fine too |
 | VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
-| CP04 can't create an environment | Your account may not be allowed to. Ask a facilitator |
+| CP04 can't create an environment | Your account may not be allowed to, or it already has the maximum number of Developer environments. Delete an old one, or ask a facilitator whether to use Sandbox (`$env:LAB_ENV_TYPE='Sandbox'` in the same terminal, then run CP04 again) |
+| CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

@@ -29,9 +29,10 @@ part is scaffold/05f-code-app.ps1 and the files under .lab-scripts/templates/05f
 which are a good working example.
 
 When you're done, run `dotnet build WarehouseManagement.slnx`. It also builds the code
-app, which takes a couple of minutes. Fix anything it reports, Then save the checkpoint:
+app, which takes a couple of minutes. Fix anything it reports. Then save the checkpoint:
 
 `.lab-scripts/save-checkpoint.ps1 -Id cp09 -Message "Add warehouse model-driven app, code app, views, forms, ribbon, and TALXIS Grid"`
 
 It opens a pull request on the fork and waits. Give me the PR link and tell me to review it and
-merge it on GitHub (Files changed, Merge pull request, Confirm). Don't merge it yourself.
+merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows "press Enter
+to merge", also tell me to press Enter there once I've merged. Don't merge it yourself.
