@@ -34,7 +34,7 @@ const transactionColumns: IColumn[] = [
     visualSizeFactor: 130,
     metadata: { OptionSet: transactionTypeOptionMetadata } as IColumn["metadata"],
   },
-  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateAndTime", visualSizeFactor: 120 },
 ];
 
 // The New Transaction form for this item (the item itself is bound on create): name, quantity of at

@@ -29,7 +29,7 @@ const columns: IColumn[] = [
   { name: "__PREFIX___quantity", displayName: "Quantity", dataType: "Whole.None", visualSizeFactor: 110 },
   { name: "__PREFIX___transactiontype", displayName: "Type", dataType: "OptionSet", visualSizeFactor: 130, metadata: transactionTypeMetadata },
   { name: "item", displayName: "Item", dataType: "SingleLine.Text", visualSizeFactor: 200 },
-  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateOnly", visualSizeFactor: 120 },
+  { name: "__PREFIX___transactiondate", displayName: "Date", dataType: "DateAndTime.DateAndTime", visualSizeFactor: 120 },
 ];
 
 // The New Transaction form: every field is required, and a quantity must be at least 1 - the

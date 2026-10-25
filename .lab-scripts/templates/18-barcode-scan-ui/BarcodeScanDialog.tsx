@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
-import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
+import { getClient } from "@microsoft/power-apps/data";
+import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
 import {
   Button,
   Card,
