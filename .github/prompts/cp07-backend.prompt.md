@@ -13,7 +13,9 @@ the table, column and choice names exactly as the spec has them.
 
 Keep the plugin code in its own project, and register the steps in a separate logic
 solution. Create the steps after the first build of the logic solution, since the
-build registers the assembly. Follow the stages in the spec's step registrations.
+build registers the assembly. Don't scaffold the assembly with `pp-plugin-assembly` as
+well: a second registration makes the next build fail. Follow the stages in the spec's
+step registrations.
 
 If you get stuck, .lab-scripts/CP07-implement-backend.ps1 does this same step
 and is a good example to read.
