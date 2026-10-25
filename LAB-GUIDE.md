@@ -162,5 +162,6 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
 | Your Codespace stopped (idle too long) | Open it again from your fork (**Code → Codespaces**), wait until the terminal goes quiet, then ask *Where am I in the lab?* and run that checkpoint again. Your files and progress are kept. If a sign-in is gone, ask *Sign me in* |
+| After CP11 the **Check Stock Levels** button is gone from the manager app, or importing Solutions.UI fails with *The component that you are trying to update has been deleted* | The data model import replaced the ribbon. In [make.powerapps.com](https://make.powerapps.com) pick your Dev environment, open **Solutions** and click **Publish all customizations**, then ask Copilot to run `txc env sln import src/Solutions.UI --wait --profile dev` |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

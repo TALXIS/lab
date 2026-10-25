@@ -27,6 +27,8 @@ if (-not (Get-LabValue 'productTableScaffolded')) {
         --param "DisplayNamePlural=Products"
 
     Write-Host "  ✓ Entity: Product" -ForegroundColor Green
+    # No ribbon file in the data model: see scaffold/03b-data-model.ps1.
+    Remove-Item "src/Solutions.DataModel/Entities/${PublisherPrefix}_product/RibbonDiff.xml" -ErrorAction SilentlyContinue
 
     # ──────────────────────────────────────────────────────────────────────────────────────
     #                                  Product columns
