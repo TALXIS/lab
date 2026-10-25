@@ -73,21 +73,10 @@ if (-not (Get-LabValue 'uiSolutionScaffolded')) {
     txc workspace component create pp-app-model `
         --output "src/Solutions.UI" `
         --param "PublisherPrefix=$PublisherPrefix" `
-        --param "LogicalName=warehouseapp"
+        --param "LogicalName=warehouseapp" `
+        --param "DisplayName=Warehouse Management"
 
-    # The template names the app (and its sitemap) after its logical name and has no
-    # display-name parameter, so set the name people see in the app list here. The unique
-    # name stays ${PublisherPrefix}_warehouseapp — that's what the sitemap, forms and tests use.
-    # A text replace, not an [xml] round-trip, so the rest of the file (BOM, CRLF, the empty
-    # <OptimizedFor></OptimizedFor>) stays exactly as the template wrote it.
-    foreach ($appFile in "src/Solutions.UI/AppModules/${PublisherPrefix}_warehouseapp/AppModule.xml",
-                        "src/Solutions.UI/AppModuleSiteMaps/${PublisherPrefix}_warehouseapp/AppModuleSiteMap.xml") {
-        $appFilePath = (Resolve-Path $appFile).Path
-        $text = [System.IO.File]::ReadAllText($appFilePath).Replace('description="warehouseapp"', 'description="Warehouse Management"')
-        [System.IO.File]::WriteAllText($appFilePath, $text, [System.Text.UTF8Encoding]::new($true))
-    }
-
-    Write-Host "  ✓ App: warehouseapp (Warehouse Management)" -ForegroundColor Green
+    Write-Host "  ✓ App: Warehouse Management" -ForegroundColor Green
 
     # ──────────────────────────────────────────────────────────────────────────────────────
     #                                  App Components
