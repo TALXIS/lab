@@ -13,7 +13,7 @@ if ($env:LAB_LOCAL_MODE) { Write-Info "LAB_LOCAL_MODE: skipped sign-in"; return 
 # redirected), so only a sign-in that is actually needed stops here: tools that are already signed
 # in pass, and CP01 run by an agent completes once the person has signed in themselves.
 function Assert-Terminal {
-    if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab-scripts/lab-signin.ps1 in your terminal."; exit 1 }
+    if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: in your terminal, run this whole line:  ./.lab-scripts/lab-signin.ps1"; exit 1 }
 }
 
 # ── 1. GitHub ─────────────────────────────────────────────────────────────────────────────

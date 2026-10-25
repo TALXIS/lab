@@ -50,4 +50,4 @@ Scaffold the core warehouse data model so inventory data can be stored and deplo
 ## Testing
 - dotnet build --nologo --verbosity quiet passes from the repository root
 '@
-Write-Host "`nNext: .lab-scripts/CP07-implement-backend.ps1" -ForegroundColor Cyan
+Write-Next cp07

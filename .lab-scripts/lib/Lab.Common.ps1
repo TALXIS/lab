@@ -58,6 +58,23 @@ if ($injectedToken -and -not (gh auth token 2>$null)) { $env:GITHUB_TOKEN = $inj
 # ── Logging ────────────────────────────────────────────────────────────────────────────────
 function Write-Step  { param([string]$m) Write-Host "`n── $m ──" -ForegroundColor Cyan }
 function Write-Ok    { param([string]$m) Write-Host "  ✓ $m" -ForegroundColor Green }
+
+# The build checkpoints are done through Copilot Chat; their scripts are the fallback. Say so in
+# every "Next:" line, or the last line of a script sends people to the next script by habit.
+$Global:LabCopilotCommands = @{
+    cp06 = '/cp06-data-model'; cp07 = '/cp07-backend'; cp08 = '/cp08-security'
+    cp09 = '/cp09a-model-driven-app (then /cp09b-code-app)'; cp11 = '/cp11-external-data'; cp12 = '/cp12-config-data'
+}
+function Write-Next {
+    param([Parameter(Mandatory)][string]$Id)
+    # Checkpoint ids are lower case, the scripts upper case (CP12-...), and Linux paths are
+    # case-sensitive: name the actual file so the command can be copied as is.
+    $script = Get-ChildItem (Join-Path $PSScriptRoot '..') -Filter "$($Id.ToUpper())-*.ps1" | Select-Object -First 1
+    $path = if ($script) { ".lab-scripts/$($script.Name)" } else { ".lab-scripts/$($Id.ToUpper())-*.ps1" }
+    $command = $Global:LabCopilotCommands[$Id]
+    if ($command) { Write-Host "`nNext: type $command in Copilot Chat (or run $path yourself)" -ForegroundColor Cyan }
+    else { Write-Host "`nNext: $path" -ForegroundColor Cyan }
+}
 function Write-Warn2 { param([string]$m) Write-Host "  ⚠ $m" -ForegroundColor Yellow }
 function Write-Err   { param([string]$m) Write-Host "  ✗ $m" -ForegroundColor Red }
 function Write-Info  { param([string]$m) Write-Host "  $m" -ForegroundColor Gray }
@@ -245,21 +262,23 @@ function Save-Checkpoint {
             Write-Ok "PR opened: $($pr.html_url)"
         }
         $url = $pr.html_url
-        if ([Console]::IsInputRedirected -and -not $env:LAB_AUTO_MERGE) {
-            # No terminal (e.g. an agent runs this): a person reviews and merges on GitHub.
+        if ($env:LAB_AUTO_MERGE) {
+            Merge-CheckpointPullRequest -Repo $forkRepo -Number $pr.number -Url $url
+        } else {
+            # The person reviews and merges on GitHub, whether a person or an agent ran this script:
+            # one rule, no key press to find. Check every 15 seconds; a PR closed without a merge, or
+            # GitHub not answering ten checks in a row, stops the checkpoint with a message.
             Write-Info "Review and merge the PR on GitHub: $url"
+            Write-Info "  Waiting for the merge (checking every 15 seconds)..."
             $failures = 0
             do {
                 Start-Sleep 15
                 $state = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .state 2>$null
-                if ($LASTEXITCODE -ne 0) { if (++$failures -ge 10) { Write-Err "Lost contact with GitHub while waiting for $url - re-run this checkpoint once it is back."; exit 1 } }
+                if ($LASTEXITCODE -ne 0) { if (++$failures -ge 10) { Write-Err "Lost contact with GitHub while waiting for $url (10 checks failed) - re-run this checkpoint once it is back."; exit 1 } }
                 else { $failures = 0 }
             } while ($state -ne 'closed')
             $merged = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null
-            if ($LASTEXITCODE -ne 0 -or $merged -ne 'true') { Write-Err "PR was closed without merging: $url"; exit 1 }
-        } else {
-            if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
-            Merge-CheckpointPullRequest -Repo $forkRepo -Number $pr.number -Url $url
+            if ($LASTEXITCODE -ne 0 -or $merged -ne 'true') { Write-Err "PR was closed without merging: $url - open it again (or re-run this checkpoint for a new one) and merge it."; exit 1 }
         }
 
         Complete-Checkpoint -Id $Id -Branch $branch -Repo $forkRepo
@@ -270,7 +289,18 @@ function Save-Checkpoint {
 # move the tag. Also the whole job when a re-run finds the merge already done.
 function Complete-Checkpoint {
     param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$Branch, [Parameter(Mandatory)][string]$Repo)
+    # Edits made while the PR waited (an agent carrying on with the next part, a person reading
+    # ahead) would make 'git switch' refuse. Park them, switch, bring main up to date, bring them back.
+    $parked = $false
+    if (git status --porcelain) {
+        git stash push --include-untracked --quiet -m "lab: edits made while $Id waited for its merge" 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { $parked = $true }
+    }
     git switch main --quiet 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "Could not switch to main after the merge. Check 'git status', then re-run this checkpoint - it only finishes the tag."
+        exit 1
+    }
     git pull --ff-only --quiet 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "Could not fast-forward main to the merged PR. Check 'git status', then re-run this checkpoint - it only finishes the tag."
@@ -280,6 +310,11 @@ function Complete-Checkpoint {
     gh api -X DELETE "repos/$Repo/git/refs/heads/$Branch" 2>&1 | Out-Null   # merged; keep the fork tidy
     git tag -f $Id 2>&1 | Out-Null
     Publish-CheckpointTag $Id
+    if ($parked) {
+        git stash pop --quiet 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { Write-Info "Kept the edits made while the PR waited." }
+        else { Write-Warn2 "The edits made while the PR waited didn't apply cleanly on the merged main: they are in 'git stash' - run 'git stash pop' and resolve." }
+    }
     Write-Ok "Merged + tagged $Id (rollback: git reset --hard $Id)"
 }
 

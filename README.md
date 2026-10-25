@@ -42,12 +42,10 @@ Checkpoints don't push straight to `main` — they teach the real ALM loop. Each
 1. Creates a `checkpoint/cpNN` branch and commits its changes.
 2. Opens a **Pull Request** and prints the link.
 3. **Pauses** — open the PR in your browser, review the diff and the running build check.
-4. Press **Enter** to continue: it squash-merges, deletes the branch, and moves the `cpNN` tag
-   to the merged commit for rollback. You can also click **Merge pull request** on GitHub first;
-   pressing Enter afterwards just finishes the save. (Run without a terminal, for example by an
-   agent, the script says "Review and merge the PR on GitHub" and carries on once you merge.) Once CP13 makes the build check required, the merge
-   waits for it to pass — before that, GitHub accepts the merge right away, which is the point
-   CP13 makes.
+4. **Merge it on GitHub** (Merge pull request, Confirm). The script notices within 15 seconds,
+   deletes the branch, and moves the `cpNN` tag to the merged commit for rollback. Once CP13
+   makes the build check required, GitHub's merge button waits for it to pass — before that,
+   GitHub accepts the merge right away, which is the point CP13 makes.
 
 This is the slow, deliberate part — read the PR, watch the build go green, then merge. The
 first time a checkpoint enables GitHub Actions you may be asked to **approve workflows on your

@@ -49,4 +49,4 @@ Introduce server-side inventory logic so warehouse transactions are validated an
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the new plugin and logic projects
 '@
-Write-Host "`nNext: .lab-scripts/CP08-implement-security.ps1" -ForegroundColor Cyan
+Write-Next cp08

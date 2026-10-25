@@ -105,7 +105,7 @@ if (-not $devProfileFound) {
     exit 1
 }
 
-Write-Info "Deploying package to Dev environment ($devUrl)..."
+Write-Info "Deploying package to Dev environment ($devUrl)... This takes a few minutes; importing a solution can stay quiet for two of them."
 txc env pkg import $pdpkg.FullName --profile $devProfile
 if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
 Write-Ok "Package deployed to Dev environment"
@@ -148,8 +148,8 @@ Write-Ok "Solutions.Security pulled from Dev"
 # Show what changed (if anything).
 $changes = git -C $LabRoot status --short -- src/
 if ($changes) {
-    Write-Info "Changes pulled from environment:"
-    Write-Host $changes
+    Write-Info "Changes pulled from environment (your change is in Roles/$roleName.xml; the rest is Dataverse's own formatting):"
+    $changes | ForEach-Object { Write-Host "    $_" }
 } else {
     Write-Info "No environment changes detected (expected in auto mode)."
 }
@@ -166,4 +166,4 @@ Deploy the full solution package to the Dev environment and demonstrate the bidi
 - warehouse app is accessible in the Dev environment
 - txc env solution pull completes without error
 '@
-Write-Host "`nNext: .lab-scripts/CP11-integrate-external-data.ps1" -ForegroundColor Cyan
+Write-Next cp11

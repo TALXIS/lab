@@ -68,7 +68,7 @@ or, later, just *What's next?* or *Run the next checkpoint.* Copilot finds the n
 
 **Each checkpoint ends with a pull request link.** Open it and click **Files changed** to see what changed. Then merge it: click **Merge pull request** and **Confirm merge** on GitHub, and come back here. Copilot carries on by itself.
 
-**If the terminal shows "press Enter to merge"**, the script is waiting for a key press: click into the terminal and press **Enter** as well. That's safe after merging on GitHub (the script notices and just finishes), and if you haven't merged yet, Enter merges it for you. Copilot never merges for you.
+The script in the terminal waits until you've merged (it checks every 15 seconds), then carries on by itself. There's nothing to press in the terminal for a merge. Copilot never merges for you.
 
 ## Part 2: Build the app
 
@@ -98,7 +98,7 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 .lab-scripts/CP10-deploy-and-sync.ps1
 ```
 
-It takes about 10 minutes, and the terminal can sit on *Importing the solution Solutions.DataModel* for two minutes: that's normal. A build warning about `talxis_TALXIS.PCF.Grid` (`TALXISPCF001`) is expected; the Grid was imported in the step before. It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1. In the pull request, your change is the line `prvDeletelab_warehousetransaction` in *Warehouse worker.xml*; the other changes (SharePoint privileges, `Solution.xml`, `Relationships.xml`, the picking app's version file) are Dataverse's and the build's own formatting.
+It takes about 10 minutes, and the terminal can sit on *Importing the solution Solutions.DataModel* for two minutes: that's normal. A build warning about `talxis_TALXIS.PCF.Grid` (`TALXISPCF001`) is expected; the Grid was imported in the step before. It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review and merge it on GitHub, as in Part 1. In the pull request, your change is the line `prvDeletelab_warehousetransaction` in *Warehouse worker.xml*; the other changes (SharePoint privileges, `Solution.xml`, `Relationships.xml`, the picking app's version file) are Dataverse's and the build's own formatting.
 
 **Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again isn't a reliable way to get a later change into Dev, because the package version doesn't change between builds. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
 
@@ -152,7 +152,7 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 |---|---|
 | You're not sure where you are | Ask *Where am I in the lab?* It runs `lab-status` and tells you |
 | Sign-in errors, or a new Codespace | Ask *Sign me in* |
-| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. When it asks you to press **Enter** to merge, check the pull request first. Merging it on GitHub before you press Enter is fine too |
+| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. It opens the pull request for you to merge on GitHub, exactly as when Copilot runs it |
 | VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
