@@ -20,5 +20,6 @@
   "dataModelScaffolded": true,
   "columnsScaffolded": true,
   "pluginsScaffolded": true,
-  "logicSolutionScaffolded": true
+  "logicSolutionScaffolded": true,
+  "securityScaffolded": true
 }
