@@ -19,30 +19,32 @@ if (Get-LabValue 'viewsSubgridsScaffolded') {
     return
 }
 
-# Helper: pp-entity-view generates a minimal lookup view (querytype=64) with only
-# the primary name column. After scaffolding, we patch the XML to add
-# entity-specific columns to both layoutxml and fetchxml.
+# The app opens each table on the data model's default public view ("Active Warehouse …",
+# querytype 0), which the entity template made with Name and Created On only. Add the spec's
+# columns to those views, where every table component lives (Solutions.DataModel). The
+# pp-entity-view template would make a *lookup* view with a new name instead, which the app
+# never shows.
 function Add-ViewColumns {
     param(
-        [string]$EntityDir,
         [string]$EntityLogicalName,
-        [string]$PrimaryIdName,
         [string[]]$Columns  # logical names of columns to add
     )
-
-    $prefix = $PublisherPrefix
-    $viewDir = "src/Solutions.UI/Entities/${EntityLogicalName}/SavedQueries"
-    if (-not (Test-Path $viewDir)) { return }
-
-    # Find the most recently created XML (the one just scaffolded)
-    $viewFile = Get-ChildItem "$viewDir/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if (-not $viewFile) { return }
+    $viewDir = "src/Solutions.DataModel/Entities/${EntityLogicalName}/SavedQueries"
+    $viewFile = Get-ChildItem "$viewDir/*.xml" | Where-Object {
+        ([xml](Get-Content $_.FullName -Raw)).SelectSingleNode("//querytype").InnerText -eq '0'
+    } | Select-Object -First 1
+    if (-not $viewFile) {
+        Write-Host "  ✗ Default view of $EntityLogicalName not found in Solutions.DataModel — run CP06 first" -ForegroundColor Red
+        throw "Default view of $EntityLogicalName not found"
+    }
 
     $xml = [xml](Get-Content $viewFile.FullName -Raw)
     $row = $xml.SelectSingleNode("//row")
     $fetchEntity = $xml.SelectSingleNode("//entity")
 
     foreach ($col in $Columns) {
+        if ($xml.SelectSingleNode("//cell[@name='$col']")) { continue }   # re-run: already there
+
         # Add cell to layoutxml
         $cell = $xml.CreateElement("cell")
         $cell.SetAttribute("name", $col)
@@ -56,58 +58,26 @@ function Add-ViewColumns {
     }
 
     $xml.Save($viewFile.FullName)
+    return $viewFile
 }
 
-txc workspace component create pp-entity-view `
-    --output "src/Solutions.UI" `
-    --param "EntitySchemaName=${PublisherPrefix}_warehouselocation" `
-    --param "DisplayName=Active Warehouse Locations" `
-    --param "PublisherPrefix=$PublisherPrefix"
-
-Add-ViewColumns `
+$warehouselocationViewFile = Add-ViewColumns `
     -EntityLogicalName "${PublisherPrefix}_warehouselocation" `
-    -PrimaryIdName "${PublisherPrefix}_warehouselocationid" `
     -Columns @("${PublisherPrefix}_address", "${PublisherPrefix}_capacity", "${PublisherPrefix}_isactive")
-
-# Capture the generated view GUID (filename without extension, strip braces)
-$warehouselocationViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehouselocation/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehouselocationViewGuid = $warehouselocationViewFile.BaseName.Trim('{}')
+Write-Host "  ✓ View: Active Warehouse Locations (spec columns added) — GUID: $warehouselocationViewGuid" -ForegroundColor Green
 
-Write-Host "  ✓ View: Active Warehouse Locations (with columns) — GUID: $warehouselocationViewGuid" -ForegroundColor Green
-
-txc workspace component create pp-entity-view `
-    --output "src/Solutions.UI" `
-    --param "EntitySchemaName=${PublisherPrefix}_warehouseitem" `
-    --param "DisplayName=Active Warehouse Items" `
-    --param "PublisherPrefix=$PublisherPrefix"
-
-Add-ViewColumns `
+$warehouseitemViewFile = Add-ViewColumns `
     -EntityLogicalName "${PublisherPrefix}_warehouseitem" `
-    -PrimaryIdName "${PublisherPrefix}_warehouseitemid" `
-    -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid")
-
-# Capture the generated view GUID
-$warehouseitemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    -Columns @("${PublisherPrefix}_sku", "${PublisherPrefix}_category", "${PublisherPrefix}_availablequantity", "${PublisherPrefix}_unitprice", "${PublisherPrefix}_locationid", "${PublisherPrefix}_reorderpoint")
 $warehouseitemViewGuid = $warehouseitemViewFile.BaseName.Trim('{}')
+Write-Host "  ✓ View: Active Warehouse Items (spec columns added) — GUID: $warehouseitemViewGuid" -ForegroundColor Green
 
-Write-Host "  ✓ View: Active Warehouse Items (with columns) — GUID: $warehouseitemViewGuid" -ForegroundColor Green
-
-txc workspace component create pp-entity-view `
-    --output "src/Solutions.UI" `
-    --param "EntitySchemaName=${PublisherPrefix}_warehousetransaction" `
-    --param "DisplayName=Active Warehouse Transactions" `
-    --param "PublisherPrefix=$PublisherPrefix"
-
-Add-ViewColumns `
+$warehousetransactionViewFile = Add-ViewColumns `
     -EntityLogicalName "${PublisherPrefix}_warehousetransaction" `
-    -PrimaryIdName "${PublisherPrefix}_warehousetransactionid" `
     -Columns @("${PublisherPrefix}_transactiontype", "${PublisherPrefix}_itemid", "${PublisherPrefix}_quantity", "${PublisherPrefix}_transactiondate", "${PublisherPrefix}_totalvalue")
-
-# Capture the generated view GUID
-$warehousetransactionViewFile = Get-ChildItem "src/Solutions.UI/Entities/${PublisherPrefix}_warehousetransaction/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 $warehousetransactionViewGuid = $warehousetransactionViewFile.BaseName.Trim('{}')
-
-Write-Host "  ✓ View: Active Warehouse Transactions (with columns) — GUID: $warehousetransactionViewGuid" -ForegroundColor Green
+Write-Host "  ✓ View: Active Warehouse Transactions (spec columns added) — GUID: $warehousetransactionViewGuid" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                                  Subgrids

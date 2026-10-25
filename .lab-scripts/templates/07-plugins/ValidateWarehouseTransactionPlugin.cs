@@ -1,9 +1,12 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using TALXIS.DevKit.Build.Dataverse.Plugin;
 
 namespace Plugins.Warehouse
 {
+    // Pre-validation runs before the DB transaction starts: the cheapest place to reject invalid input.
+    [PluginStep("Create", "__PREFIX___warehousetransaction", PluginStage.PreValidation)]
     public class ValidateWarehouseTransactionPlugin : PluginBase
     {
         public ValidateWarehouseTransactionPlugin(string unsecureConfiguration, string secureConfiguration)

@@ -40,4 +40,4 @@ Define security boundaries for the warehouse app so workers and managers get the
 ## Testing
 - dotnet build --nologo --verbosity quiet passes after adding the security solution
 '@
-Write-Host "`nNext: .lab-scripts/CP09-implement-ui.ps1" -ForegroundColor Cyan
+Write-Next cp09

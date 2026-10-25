@@ -39,6 +39,7 @@ Every checkpoint ends the same way: a **pull request** on your fork that you rev
 ## Before you start
 
 - Use a **fork** of this repository on your own GitHub account, and open the Codespace **from your fork**, not from `TALXIS/lab`.
+- **Created your Codespace before today?** Type `nproc` in its terminal. It must say 4; if it says 2, change the machine type (the table at the end says how).
 - **Before you create the Codespace**, go to [github.com/settings/codespaces](https://github.com/settings/codespaces), set **Default idle timeout** to **240 minutes** and save. The default is 30 minutes: during a talk or a break your Codespace would stop, and a checkpoint waiting for you with it. The setting only applies to Codespaces created after you change it.
 - You'll sign in to GitHub, Power Platform, Azure and Power Apps. **Use the same Microsoft account for the last three.** It needs to be able to create a Power Platform environment.
 - When the Codespace opens, its tools are still updating. **Wait until the terminal goes quiet** (about a minute) before you start.
@@ -67,7 +68,7 @@ or, later, just *What's next?* or *Run the next checkpoint.* Copilot finds the n
 
 **Each checkpoint ends with a pull request link.** Open it and click **Files changed** to see what changed. Then merge it: click **Merge pull request** and **Confirm merge** on GitHub, and come back here. Copilot carries on by itself.
 
-**If the terminal shows "press Enter to merge"**, the script is waiting for a key press: click into the terminal and press **Enter** as well. That's safe after merging on GitHub (the script notices and just finishes), and if you haven't merged yet, Enter merges it for you. Copilot never merges for you.
+The script in the terminal waits until you've merged (it checks every 15 seconds), then carries on by itself. There's nothing to press in the terminal for a merge. Copilot never merges for you.
 
 ## Part 2: Build the app
 
@@ -97,7 +98,7 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 .lab-scripts/CP10-deploy-and-sync.ps1
 ```
 
-It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
+It takes about 10 minutes, and the terminal can sit on *Importing the solution Solutions.DataModel* for two minutes: that's normal. A build warning about `talxis_TALXIS.PCF.Grid` (`TALXISPCF001`) is expected; the Grid was imported in the step before. It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review and merge it on GitHub, as in Part 1. In the pull request, your change is the line `prvDeletelab_warehousetransaction` in *Warehouse worker.xml*; the other changes (SharePoint privileges, `Solution.xml`, `Relationships.xml`, the picking app's version file) are Dataverse's and the build's own formatting.
 
 **Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again isn't a reliable way to get a later change into Dev, because the package version doesn't change between builds. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
 
@@ -108,7 +109,7 @@ It deploys the app to your Dev environment. To open the apps, go to [make.powera
 | `/cp11-external-data` | [Lab 5](docs/design/lab-5-external-data-and-background-processing.md) | A Product table, the Open Food Facts connector, and a barcode scan in the picking app |
 | `/cp12-config-data` | [Lab 1](docs/design/lab-1-data-model.md) | Locations and items that every environment starts with |
 
-`/cp11-external-data` opens **four** pull requests, one after each part. Merge each one before Copilot starts the next. It also imports the Product table and the connector into your Dev environment, which it tells you about.
+`/cp11-external-data` opens **four** pull requests, one after each part. Merge each one, and wait until the terminal shows **✓ Merged + tagged** before Copilot starts the next part: if it starts editing files while a pull request is still waiting, the next save fails (re-running it fixes that). It also imports the Product table and the connector into your Dev environment, which it tells you about.
 
 `/cp12-config-data` also loads the records into your Dev environment. After it, **try the picking app yourself**. In a second terminal:
 
@@ -151,13 +152,16 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 |---|---|
 | You're not sure where you are | Ask *Where am I in the lab?* It runs `lab-status` and tells you |
 | Sign-in errors, or a new Codespace | Ask *Sign me in* |
-| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. When it asks you to press **Enter** to merge, check the pull request first. Merging it on GitHub before you press Enter is fine too |
+| Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. It opens the pull request for you to merge on GitHub, exactly as when Copilot runs it |
 | VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
+| A build ends with `exited with code 143` or `Terminated` | Your Codespace is too small (2 cores, 8 GB). On [github.com/codespaces](https://github.com/codespaces) click **…** next to it → **Change machine type** → **4-core**, and let it restart. `nproc` in the terminal should then say 4 |
+| Copilot stops in the middle of a build checkpoint, or asks *Continue?* | Click **Continue** or type *continue*. When it says it's done, ask it: *Go through the spec and tell me which items are still missing* |
 | CP04 can't create an environment | Your account may not be allowed to, or it already has 3 Developer environments (the limit per user; CP04 creates 2, and one the facilitators made for you counts too). Delete one you no longer need in the [Power Platform admin center](https://admin.powerplatform.microsoft.com/environments), or ask a facilitator |
 | CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
 | Your Codespace stopped (idle too long) | Open it again from your fork (**Code → Codespaces**), wait until the terminal goes quiet, then ask *Where am I in the lab?* and run that checkpoint again. Your files and progress are kept. If a sign-in is gone, ask *Sign me in* |
+| After CP11 the **Check Stock Levels** button is gone from the manager app, or importing Solutions.UI fails with *The component that you are trying to update has been deleted* | The data model import replaced the ribbon. In [make.powerapps.com](https://make.powerapps.com) pick your Dev environment, open **Solutions** and click **Publish all customizations**, then ask Copilot to run `txc env sln import src/Solutions.UI --wait --profile dev` |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

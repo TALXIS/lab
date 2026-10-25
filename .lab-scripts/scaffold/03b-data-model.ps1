@@ -70,6 +70,11 @@ if (-not (Get-LabValue 'dataModelScaffolded')) {
 
     Write-Host "  ✓ Entity: Warehouse Transaction" -ForegroundColor Green
 
+    # The entity template also writes an empty RibbonDiff.xml. Ribbon buttons belong to
+    # Solutions.UI (CP09), and an empty ribbon here removes them from Dev whenever this
+    # solution is imported on its own (CP11).
+    Get-ChildItem "src/Solutions.DataModel/Entities" -Recurse -Filter RibbonDiff.xml | Remove-Item
+
     # Marks the whole block done — checked instead of Test-Path on the solution csproj so a
     # re-run after a partial failure (e.g. solution created but an entity create failed)
     # retries everything rather than silently skipping the missing entities.
