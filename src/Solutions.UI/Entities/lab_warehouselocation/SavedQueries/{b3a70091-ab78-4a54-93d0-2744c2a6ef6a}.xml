@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries>
+  <savedquery>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>0</isdefault>
+    <savedqueryid>{b3a70091-ab78-4a54-93d0-2744c2a6ef6a}</savedqueryid>
+    <queryapi>
+    </queryapi>
+    <layoutxml>
+      <grid name="resultset" jump="name" select="1" preview="0" icon="1">
+        <row name="result" id="lab_warehouselocationid">
+          <cell name="lab_name" width="125" />
+          <cell name="lab_address" width="125" />
+          <cell name="lab_capacity" width="125" />
+          <cell name="lab_isactive" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>64</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lab_warehouselocation">
+          <attribute name="lab_name" />
+          <order attribute="lab_name" descending="false" />
+          <attribute name="lab_address" />
+          <attribute name="lab_capacity" />
+          <attribute name="lab_isactive" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Warehouse Locations Lookup View" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
