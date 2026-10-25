@@ -26,12 +26,19 @@
 $prefix = $PublisherPrefix
 $gridPackage = "TALXIS.Controls.Grid.Package"
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'gridControlScaffolded') {
+    Write-Host "  ✓ TALXIS Grid on the Warehouse Items subgrid (exist)" -ForegroundColor Green
+    return
+}
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                     Recover generated artifacts (form, view)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-# Form GUIDs are generated fresh in 05c and not persisted — recover them from the
-# FormXml file names, the same way 05d recovers view GUIDs.
+# Recover the form GUID from the FormXml file name, the same way 05d recovers view GUIDs.
+# (05c also records it in lab-state, but the file name holds for any tree, including
+# one scaffolded before that.)
 $locationFormFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouselocation/FormXml/main/*.xml" | Select-Object -First 1
 if (-not $locationFormFile) { Write-Host "  ✗ Warehouse Location form not found — run CP09 first" -ForegroundColor Red; throw "Warehouse Location form not found" }
 $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
@@ -136,3 +143,5 @@ txc workspace control attach `
 if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; throw "txc workspace control attach failed" }
 Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
 
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'gridControlScaffolded' $true

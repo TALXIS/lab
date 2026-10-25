@@ -258,13 +258,15 @@ function Complete-Checkpoint {
 # Squash-merges the checkpoint's PR through the REST API. GitHub answers 405 while a required
 # check is still running (CP13 onwards) - that is the gate working, so keep trying while the
 # PR's own state says the checks are pending. A conflict, a failed check or anything but a
-# 405 needs a person: say so and stop, the re-run reuses the same PR.
+# 405 needs a person: say so and stop, the re-run reuses the same PR. A PR already merged on
+# GitHub (the person clicked Merge before pressing Enter) also answers 405, so check that first.
 function Merge-CheckpointPullRequest {
     param([Parameter(Mandatory)][string]$Repo, [Parameter(Mandatory)]$Number, [Parameter(Mandatory)][string]$Url)
     Write-Info "Merging..."
     $deadline = (Get-Date).AddMinutes(30)
     $waiting = $false
     while ($true) {
+        if ((gh api "repos/$Repo/pulls/$Number" -q .merged 2>$null) -eq 'true') { Write-Ok "Already merged on GitHub"; return }
         $result = gh api -X PUT "repos/$Repo/pulls/$Number/merge" -f merge_method=squash 2>&1
         if ($LASTEXITCODE -eq 0) { return }
         $text = $result -join "`n"

@@ -27,17 +27,18 @@ Write-Step "Lab status"
 # lab-state keys that checkpoint is expected to have populated: values later checkpoints
 # read, and the *Scaffolded flags each scaffold block sets once it has fully run. A tag
 # without its flags means the checkpoint stopped partway (or its work was lost), so it is
-# the one to re-run next.
+# the one to re-run next - unless save-checkpoint.ps1 saved it (<id>HandBuilt): then it was
+# built by hand and never had those flags.
 $checkpoints = @(
     @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
     @{ Id = "cp02"; Keys = @("slnxName", "publisherName", "publisherPrefix") }
     @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
     @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
     @{ Id = "cp05"; Keys = @("appId") }
-    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded") }
+    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded", "columnsScaffolded") }
     @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
     @{ Id = "cp08"; Keys = @("securityScaffolded") }
-    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "codeAppScaffolded") }
+    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "sitemapScaffolded", "formsScaffolded", "viewsSubgridsScaffolded", "codeAppScaffolded", "formScriptsScaffolded", "ribbonScaffolded", "gridControlScaffolded") }
     @{ Id = "cp10"; Keys = @() }
     # CP11 saves four times under one tag; its scaffold flags tell which of the four steps landed.
     @{ Id = "cp11"; Keys = @("productTableScaffolded", "connectorScaffolded", "productDataSourceScaffolded", "connectorDataSourceScaffolded", "barcodeScanUiScaffolded") }
@@ -53,7 +54,7 @@ $firstMissing = $null
 Write-Host "`n── Checkpoints ──" -ForegroundColor Cyan
 foreach ($cp in $checkpoints) {
     $tagged = $cp.Id -in $tags
-    $missingKeys = @($cp.Keys | Where-Object { -not (Get-LabValue $_) })
+    $missingKeys = if (Get-LabValue "$($cp.Id)HandBuilt") { @() } else { @($cp.Keys | Where-Object { -not (Get-LabValue $_) }) }
 
     if ($tagged -and $missingKeys.Count -eq 0) {
         Write-Ok "$($cp.Id) — done"
