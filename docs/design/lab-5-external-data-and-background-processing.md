@@ -93,7 +93,7 @@ A `Script : ScriptBase` class that routes on `Context.OperationId`:
 | Product data source | `lab_product`, as a generated typed service (`Lab_productsService`) |
 | Item data source | Regenerated so its model includes `lab_productid` |
 | Connector data source | Named `OpenFoodFacts`, operations `GetProductByBarcode(barcode)` and `GetProductImage(imageUrl)`, exposed as a typed `OpenFoodFactsService` |
-| Connection | Created per environment: `pa connection create --connector lab_connectorsopenfoodfacts --display-name "Open Food Facts" --json`, then bound with `pa app add data-source --connector lab_connectorsopenfoodfacts --connection-id <id>` |
+| Connection | Created per environment: `pa connection create --connector <connector id> --display-name "Open Food Facts" --json`, then bound with `pa app add data-source --connector <connector id> --connection-id <id>`. The connector id is the `name` that `pa connector list --search "Open Food Facts" --json` returns for the deployed connector (like `shared_lab-5fopen-20food-20facts-5f…`), not its Dataverse schema name `lab_connectorsopenfoodfacts`, which `pa` rejects. Pass `--environment-id` with the Dev environment id to each `pa` command while `power.config.json` has none |
 | Camera decoding | `@zxing/browser` |
 
 ## Part D: Barcode scan
