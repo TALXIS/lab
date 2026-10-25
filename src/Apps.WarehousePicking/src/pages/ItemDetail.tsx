@@ -3,6 +3,7 @@ import { Body1, Card, MessageBar, MessageBarBody, Spinner, Subtitle1, Title2 } f
 import { useItem, useTransactions } from "@/hooks/use-warehouse"
 import { TransactionForm } from "@/components/TransactionForm"
 import { TransactionTable } from "@/components/TransactionTable"
+import { LinkedProduct } from "@/components/LinkedProduct"
 import { errorText } from "@/utils/service"
 
 export default function ItemDetailPage() {
@@ -26,6 +27,7 @@ export default function ItemDetailPage() {
         <Body1><b>Location:</b> {i.lab_locationidname ?? "—"}</Body1>
         <Body1><b>SKU:</b> {i.lab_sku}</Body1>
       </Card>
+      <LinkedProduct productId={i._lab_productid_value} productName={i.lab_productidname} />
       <Subtitle1>Pick or restock</Subtitle1>
       <TransactionForm itemId={id} itemName={i.lab_name} />
       <Subtitle1>Transactions</Subtitle1>
