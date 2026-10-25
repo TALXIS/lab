@@ -35,5 +35,6 @@
   "connectorScaffolded": true,
   "connectorDeployed": true,
   "productDataSourceScaffolded": true,
-  "connectorDataSourceScaffolded": true
+  "connectorDataSourceScaffolded": true,
+  "barcodeScanUiScaffolded": true
 }

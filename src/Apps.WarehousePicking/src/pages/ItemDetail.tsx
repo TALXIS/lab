@@ -4,6 +4,7 @@ import { useItem, useTransactions } from "@/hooks/use-warehouse"
 import { TransactionForm } from "@/components/TransactionForm"
 import { TransactionTable } from "@/components/TransactionTable"
 import { LinkedProduct } from "@/components/LinkedProduct"
+import { BarcodeScanDialog } from "@/components/BarcodeScanDialog"
 import { errorText } from "@/utils/service"
 
 export default function ItemDetailPage() {
@@ -28,6 +29,7 @@ export default function ItemDetailPage() {
         <Body1><b>SKU:</b> {i.lab_sku}</Body1>
       </Card>
       <LinkedProduct productId={i._lab_productid_value} productName={i.lab_productidname} />
+      <div><BarcodeScanDialog itemId={id} hasProduct={!!i._lab_productid_value} /></div>
       <Subtitle1>Pick or restock</Subtitle1>
       <TransactionForm itemId={id} itemName={i.lab_name} />
       <Subtitle1>Transactions</Subtitle1>
