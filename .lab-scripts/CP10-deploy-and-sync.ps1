@@ -77,6 +77,15 @@ $pdpkg = Get-ChildItem (Join-Path $LabRoot "src/Packages.Main/bin/Debug") -Filte
 if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
 Write-Ok "Package built: $($pdpkg.Name)"
 
+# The role step 2 asks you to edit, as CP08 created it. Checked here rather than in step 2 so the
+# local dry run also catches a role renamed in CP08 without this checkpoint being updated.
+$roleFile = Join-Path $LabRoot "src/Solutions.Security/Roles/Warehouse worker.xml"
+if (-not (Test-Path $roleFile)) {
+    Write-Err "CP10 asks you to edit the Warehouse worker role, but $roleFile does not exist. Run CP08 first, or update this checkpoint if CP08 renamed the role."
+    exit 1
+}
+$roleName = ([xml](Get-Content $roleFile -Raw)).Role.name
+
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'txc env pkg import' to deploy the built"
     Write-Info "  package to Dev ($devUrl), then 'txc env solution pull' to sync manual"
@@ -111,15 +120,14 @@ $autoMode = $env:LAB_AUTO -eq '1'
 if (-not $autoMode) {
     # txc builds the maker-portal link: the role editor, found from the role's source file (its
     # GUID is in there) and opened inside the security solution. Without a link, say where to click.
-    $roleFile = Join-Path $LabRoot "src/Solutions.Security/Roles/Warehouse worker.xml"
     $roleUrl = txc env component url get --file $roleFile --param solution=SolutionsSecurity --profile $devProfile --format text 2>$null |
         Where-Object { $_ -match '^https://' } | Select-Object -First 1
     Write-Ok "Your app is live in Dev: $devUrl"
     Write-Info "Change a security role in Dev, then this checkpoint pulls the change back to source."
     if ($roleUrl) {
-        Write-Info "  Open the Warehouse worker role: $roleUrl"
+        Write-Info "  Open the $roleName role: $roleUrl"
     } else {
-        Write-Info "  Open https://make.powerapps.com, pick your Dev environment, then Solutions → Solutions.Security → Security roles → Warehouse worker."
+        Write-Info "  Open https://make.powerapps.com, pick your Dev environment, then Solutions → Solutions.Security → Security roles → $roleName."
     }
     Write-Info "  Let workers delete their own transactions: on the Warehouse Transaction table set Delete to User, then Save."
     Read-Host "`n  Make the change in your browser, then press Enter to pull it back to source"
