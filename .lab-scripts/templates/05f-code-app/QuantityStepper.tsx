@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Body1, Button, Input, Label } from "@fluentui/react-components";
 import { AddRegular, SubtractRegular } from "@fluentui/react-icons";
 import { useStyles } from "@/styles/QuantityStepper.styles";
@@ -23,6 +24,17 @@ type QuantityStepperProps = {
 export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint, error, variant = "stepper" }: QuantityStepperProps) {
   const styles = useStyles();
   const current = value ?? min;
+  // What was typed, kept as typed: "1.5" or "-2" must not turn into 15 or 2. Anything but a whole
+  // number counts as no quantity (so it can't be confirmed) and says so.
+  const [typed, setTyped] = useState<string | null>(null);
+  // The typed text stands while it is what the value came from; a value set from outside replaces it
+  const showTyped = typed !== null && (value === null || Number(typed) === value);
+  const invalid = showTyped && typed !== "" && !/^\d+$/.test(typed);
+  const message = invalid ? "Enter a whole number" : error;
+  const step = (next: number) => {
+    setTyped(null);
+    onChange(next);
+  };
 
   const input = (
     <Input
@@ -31,12 +43,10 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
       size="large"
       inputMode="numeric"
       pattern="[0-9]*"
-      value={value === null ? "" : String(value)}
-      // Whole numbers only: other input is refused rather than turned into a different number
-      // (dropping the "." of 1.5 or the "-" of -2 would book 15 or 2)
+      value={showTyped ? typed : value === null ? "" : String(value)}
       onChange={(_, data) => {
-        if (!/^\d*$/.test(data.value)) return;
-        onChange(data.value === "" ? null : Number(data.value));
+        setTyped(data.value);
+        onChange(/^\d+$/.test(data.value) ? Number(data.value) : null);
       }}
     />
   );
@@ -54,7 +64,7 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
             appearance="primary"
             size="large"
             aria-label="Increase"
-            onClick={() => onChange(current + 1)}
+            onClick={() => step(current + 1)}
           >
             +1
           </Button>
@@ -64,10 +74,10 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
             icon={<SubtractRegular />}
             aria-label="Decrease"
             disabled={current <= min}
-            onClick={() => onChange(Math.max(min, current - 1))}
+            onClick={() => step(Math.max(min, current - 1))}
           />
         </div>
-        {(error || hint) && <Body1 className={error ? styles.error : styles.hint}>{error ?? hint}</Body1>}
+        {(message || hint) && <Body1 className={message ? styles.error : styles.hint}>{message ?? hint}</Body1>}
       </div>
     );
   }
@@ -84,7 +94,7 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
           icon={<SubtractRegular />}
           aria-label="Decrease"
           disabled={current <= min}
-          onClick={() => onChange(Math.max(min, current - 1))}
+          onClick={() => step(Math.max(min, current - 1))}
         />
         {input}
         <Button
@@ -93,10 +103,10 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
           icon={<AddRegular />}
           aria-label="Increase"
           disabled={max !== undefined && current >= max}
-          onClick={() => onChange(max === undefined ? current + 1 : Math.min(max, current + 1))}
+          onClick={() => step(max === undefined ? current + 1 : Math.min(max, current + 1))}
         />
       </div>
-      {(error || hint) && <Body1 className={error ? styles.error : styles.hint}>{error ?? hint}</Body1>}
+      {(message || hint) && <Body1 className={message ? styles.error : styles.hint}>{message ?? hint}</Body1>}
     </div>
   );
 }
