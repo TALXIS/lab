@@ -34,7 +34,7 @@ Every checkpoint ends the same way: a **pull request** on your fork that you rev
 - **This guide**, on the left.
 - **Copilot Chat**, on the right. This is where you do the lab.
 - **The terminal**, at the bottom (**Ctrl+`** shows it). You only need it if Copilot asks you to use it, or as a backup.
-- **The specs** are in `docs/design/`. To read one (or this guide) as a formatted page, right-click it and choose **Open Preview**.
+- **The specs** are in `docs/design/`. Each one opens as a readable page (if one opens as raw text, right-click it and choose **Open Preview**).
 
 ## Before you start
 
@@ -96,9 +96,9 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 .lab-scripts/CP10-deploy-and-sync.ps1
 ```
 
-It deploys the app to your Dev environment and gives you a link to open it. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
+It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
 
-**Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again later doesn't update Dev, because the package version stays the same. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
+**Make your own changes before CP10.** CP10 deploys everything you've built so far, including any extra changes you asked Copilot for in the picking app. Running CP10 again isn't a reliable way to get a later change into Dev, because the package version doesn't change between builds. To deploy a later change, ask Copilot to import that solution, for example `txc env sln import src/Solutions.UI --wait --profile dev`.
 
 ## Part 4: External data and reference data
 
@@ -117,7 +117,7 @@ npm install
 npm run dev
 ```
 
-It prints two links. Open the **Local Play** one, which starts with `https://apps.powerapps.com/play/`, and sign in. (The plain `http://localhost:5173/` one shows the app without its data.) Then check two things:
+It prints two links. Open the **Local Play** one, which starts with `https://apps.powerapps.com/play/`, and sign in. (The plain `http://localhost:5173/` one shows the app without its data.) If it asks to allow Warehouse Picking to access your data, click **Allow**. Then check two things:
 
 1. Open **Office Laptop** (100 on hand) and create an **Outbound** transaction for a small quantity. It succeeds and the quantity on hand goes down.
 2. Try to pick more than 5 of **Wireless Mouse** (5 on hand). The server refuses it and the app shows the error.
@@ -154,7 +154,7 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
-| CP04 can't create an environment | Your account may not be allowed to, or it already has the maximum number of Developer environments. Delete an old one, or ask a facilitator whether to use Sandbox (`$env:LAB_ENV_TYPE='Sandbox'` in the same terminal, then run CP04 again) |
+| CP04 can't create an environment | Your account may not be allowed to, or it already has 3 Developer environments (the limit per user; CP04 creates 2, and one the facilitators made for you counts too). Delete one you no longer need in the [Power Platform admin center](https://admin.powerplatform.microsoft.com/environments), or ask a facilitator |
 | CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
 
