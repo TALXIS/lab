@@ -9,10 +9,15 @@
     <RolePrivilege name="prvAppendTolab_warehouselocation" level="Global" />
     <RolePrivilege name="prvCreatelab_warehouseitem" level="Global" />
     <RolePrivilege name="prvCreatelab_warehousetransaction" level="Basic" />
+    <RolePrivilege name="prvCreateSharePointData" level="Global" />
+    <RolePrivilege name="prvDeletelab_warehousetransaction" level="Basic" />
     <RolePrivilege name="prvReadlab_warehouseitem" level="Global" />
     <RolePrivilege name="prvReadlab_warehouselocation" level="Global" />
     <RolePrivilege name="prvReadlab_warehousetransaction" level="Global" />
+    <RolePrivilege name="prvReadSharePointData" level="Global" />
+    <RolePrivilege name="prvReadSharePointDocument" level="Global" />
     <RolePrivilege name="prvWritelab_warehouseitem" level="Global" />
     <RolePrivilege name="prvWritelab_warehousetransaction" level="Basic" />
+    <RolePrivilege name="prvWriteSharePointData" level="Global" />
   </RolePrivileges>
 </Role>
