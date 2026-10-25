@@ -17,7 +17,7 @@ import { RecordFormDialog } from "@/components/RecordFormDialog";
 import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/WarehouseItems.styles";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 import { toNumber } from "@/utils/RecordValues";
 
 const columns: IColumn[] = [
@@ -49,7 +49,7 @@ export default function WarehouseItemsPage() {
   const { data: items, error } = useQuery({
     queryKey: ["warehouseItems"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouseitemsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouseitemsService.getAll({
         select: [
           "__PREFIX___warehouseitemid",
           "__PREFIX___name",
@@ -61,7 +61,7 @@ export default function WarehouseItemsPage() {
           "statecode",
         ],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -69,10 +69,10 @@ export default function WarehouseItemsPage() {
   const { data: locations } = useQuery({
     queryKey: ["warehouseLocations"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouselocationsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouselocationsService.getAll({
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -101,7 +101,7 @@ export default function WarehouseItemsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
-      return __PASCAL___warehouseitemsService.create(servicePayload({
+      return serviceResult(__PASCAL___warehouseitemsService.create(servicePayload({
         __PREFIX___name: values.__PREFIX___name,
         __PREFIX___sku: values.__PREFIX___sku,
         __PREFIX___availablequantity: String(values.__PREFIX___availablequantity),
@@ -110,7 +110,7 @@ export default function WarehouseItemsPage() {
         ...(values.__PREFIX___locationid
           ? { "__PREFIX___locationid@odata.bind": `/__PREFIX___warehouselocations(${values.__PREFIX___locationid})` }
           : {}),
-      }));
+      })));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseItems"] });

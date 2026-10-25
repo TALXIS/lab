@@ -4,6 +4,7 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import { __PASCAL___warehouselocationsService } from "@/generated/services/__PASCAL___warehouselocationsService";
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
+import { serviceResult } from "@/utils/ServicePayload";
 
 /** An active item as the quick-action screens list it. */
 export type PickItem = {
@@ -38,7 +39,7 @@ export function usePickItems() {
   const itemsQuery = useQuery({
     queryKey: PICK_ITEMS_KEY,
     queryFn: async () => {
-      const result = await __PASCAL___warehouseitemsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouseitemsService.getAll({
         select: [
           "__PREFIX___warehouseitemid",
           "__PREFIX___name",
@@ -49,7 +50,7 @@ export function usePickItems() {
         ],
         filter: "statecode eq 0",
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -58,10 +59,10 @@ export function usePickItems() {
   const { data: locations } = useQuery({
     queryKey: LOCATIONS_KEY,
     queryFn: async () => {
-      const result = await __PASCAL___warehouselocationsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouselocationsService.getAll({
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });

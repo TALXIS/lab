@@ -3,7 +3,7 @@ import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL_
 import type { __PASCAL___warehouseitems } from "@/generated/models/__PASCAL___warehouseitemsModel";
 import type { __PASCAL___warehouselocations } from "@/generated/models/__PASCAL___warehouselocationsModel";
 import { LOCATIONS_KEY, PICK_ITEMS_KEY, toPickItems, type PickItem } from "@/hooks/UsePickItems";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 
 type CreateItemInput = {
   /** The New item form's values. */
@@ -21,7 +21,7 @@ export function useCreateItem() {
   return useMutation({
     mutationFn: async ({ values, ensureProductId }: CreateItemInput): Promise<PickItem> => {
       const productId = await ensureProductId?.();
-      await __PASCAL___warehouseitemsService.create(
+      await serviceResult(__PASCAL___warehouseitemsService.create(
         servicePayload({
           __PREFIX___name: values.__PREFIX___name,
           __PREFIX___sku: values.__PREFIX___sku,
@@ -33,7 +33,7 @@ export function useCreateItem() {
             : {}),
           ...(productId ? { "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})` } : {}),
         })
-      );
+      ));
 
       await queryClient.refetchQueries({ queryKey: PICK_ITEMS_KEY });
       const items = queryClient.getQueryData<__PASCAL___warehouseitems[]>(PICK_ITEMS_KEY) ?? [];

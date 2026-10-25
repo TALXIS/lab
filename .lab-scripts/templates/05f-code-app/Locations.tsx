@@ -17,7 +17,7 @@ import { RecordGrid } from "@/components/RecordGrid";
 import { statusOptions } from "@/utils/OptionSets";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Locations.styles";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 import { toNumber } from "@/utils/RecordValues";
 
 const columns: IColumn[] = [
@@ -44,7 +44,7 @@ export default function LocationsPage() {
   const { data: locations, error } = useQuery({
     queryKey: ["warehouseLocationsList"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouselocationsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouselocationsService.getAll({
         select: [
           "__PREFIX___warehouselocationid",
           "__PREFIX___name",
@@ -54,7 +54,7 @@ export default function LocationsPage() {
           "statecode",
         ],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -62,9 +62,9 @@ export default function LocationsPage() {
   const { data: items } = useQuery({
     queryKey: ["itemsByLocation"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouseitemsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouseitemsService.getAll({
         select: ["__PREFIX___warehouseitemid", "___PREFIX___locationid_value"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -87,12 +87,12 @@ export default function LocationsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
-      return __PASCAL___warehouselocationsService.create(servicePayload({
+      return serviceResult(__PASCAL___warehouselocationsService.create(servicePayload({
         __PREFIX___name: values.__PREFIX___name,
         __PREFIX___address: values.__PREFIX___address,
         __PREFIX___capacity: values.__PREFIX___capacity != null ? String(values.__PREFIX___capacity) : undefined,
         __PREFIX___isactive: true,
-      }));
+      })));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseLocationsList"] });

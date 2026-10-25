@@ -9,6 +9,7 @@ import { ResultPanel } from "@/components/mobile/ResultPanel";
 import type { PickItem } from "@/hooks/UsePickItems";
 import { errorText, useStockTransaction } from "@/utils/StockTransactions";
 import { useStyles } from "@/styles/QuickTransaction.styles";
+import { serviceResult } from "@/utils/ServicePayload";
 
 // Take inventory: the worker counts what is on the shelf, starting from 0 like a tally counter (big Add,
 // small minus, or type the total), and the app books the difference to what is on record as an Inbound
@@ -63,7 +64,7 @@ export default function StockCountPage() {
     setFailure(null);
     try {
       // The quantity shown may be stale: another worker may have moved stock since this item was picked
-      const live = Number((await __PASCAL___warehouseitemsService.get(item.id)).data?.__PREFIX___availablequantity);
+      const live = Number((await serviceResult(__PASCAL___warehouseitemsService.get(item.id))).data?.__PREFIX___availablequantity);
       if (live !== item.quantity) {
         setItem({ ...item, quantity: live });
         // No numbers: the count should stay blind. Say it and let the worker check

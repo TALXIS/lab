@@ -17,7 +17,7 @@ import { RecordFormDialog } from "@/components/RecordFormDialog";
 import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Transactions.styles";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 import { toNumber } from "@/utils/RecordValues";
 
 const transactionTypeMetadata = {
@@ -50,7 +50,7 @@ export default function TransactionsPage() {
   const { data: transactions, error } = useQuery({
     queryKey: ["allTransactions"],
     queryFn: async () => {
-      const result = await __PASCAL___warehousetransactionsService.getAll({
+      const result = await serviceResult(__PASCAL___warehousetransactionsService.getAll({
         select: [
           "__PREFIX___warehousetransactionid",
           "__PREFIX___name",
@@ -60,7 +60,7 @@ export default function TransactionsPage() {
           "___PREFIX___itemid_value",
         ],
         orderBy: ["__PREFIX___transactiondate desc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -68,11 +68,11 @@ export default function TransactionsPage() {
   const { data: items } = useQuery({
     queryKey: ["warehouseItemsLookup"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouseitemsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouseitemsService.getAll({
         // All items, inactive ones too: the grid names the item of every transaction
         select: ["__PREFIX___warehouseitemid", "__PREFIX___name", "statecode"],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -108,14 +108,14 @@ export default function TransactionsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
-      return __PASCAL___warehousetransactionsService.create(servicePayload({
+      return serviceResult(__PASCAL___warehousetransactionsService.create(servicePayload({
         __PREFIX___name: values.__PREFIX___name,
         __PREFIX___quantity: String(values.__PREFIX___quantity),
         // Option set values come out of the form as strings
         __PREFIX___transactiontype: Number(values.__PREFIX___transactiontype),
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${values.__PREFIX___itemid})`,
-      }));
+      })));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["allTransactions"] });

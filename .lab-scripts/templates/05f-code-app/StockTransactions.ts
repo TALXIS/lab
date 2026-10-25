@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { __PASCAL___warehousetransactionsService } from "@/generated/services/__PASCAL___warehousetransactionsService";
 import { PICK_ITEMS_KEY } from "@/hooks/UsePickItems";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 
 // The transaction type option values; the server adds Inbound to an item's quantity and subtracts
 // Outbound (and refuses an Outbound larger than what is on hand).
@@ -28,13 +28,13 @@ export function useStockTransaction() {
 
   return useMutation({
     mutationFn: async ({ itemId, itemName, type, quantity, label }: StockTransactionInput) => {
-      return __PASCAL___warehousetransactionsService.create(servicePayload({
+      return serviceResult(__PASCAL___warehousetransactionsService.create(servicePayload({
         __PREFIX___name: `${label} - ${itemName}`,
         __PREFIX___quantity: String(quantity),
         __PREFIX___transactiontype: TRANSACTION_TYPE[type],
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${itemId})`,
-      }));
+      })));
     },
     onSuccess: async (_result, { itemId }) => {
       await Promise.all([

@@ -21,7 +21,7 @@ import type { FormField } from "@/components/RecordFormFields";
 import { RecordGrid } from "@/components/RecordGrid";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/WarehouseItemDetail.styles";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 import { toNumber } from "@/utils/RecordValues";
 
 const transactionColumns: IColumn[] = [
@@ -68,7 +68,7 @@ export default function WarehouseItemDetailPage() {
   const { data: item, isLoading: itemLoading } = useQuery({
     queryKey: ["warehouseItem", id],
     queryFn: async () => {
-      const result = await __PASCAL___warehouseitemsService.get(id!);
+      const result = await serviceResult(__PASCAL___warehouseitemsService.get(id!));
       return result.data;
     },
     enabled: !!id,
@@ -77,7 +77,7 @@ export default function WarehouseItemDetailPage() {
   const { data: transactions } = useQuery({
     queryKey: ["itemTransactions", id],
     queryFn: async () => {
-      const result = await __PASCAL___warehousetransactionsService.getAll({
+      const result = await serviceResult(__PASCAL___warehousetransactionsService.getAll({
         select: [
           "__PREFIX___warehousetransactionid",
           "__PREFIX___name",
@@ -87,7 +87,7 @@ export default function WarehouseItemDetailPage() {
         ],
         filter: `___PREFIX___itemid_value eq '${id}'`,
         orderBy: ["__PREFIX___transactiondate desc"],
-      });
+      }));
       return result.data ?? [];
     },
     enabled: !!id,
@@ -96,10 +96,10 @@ export default function WarehouseItemDetailPage() {
   const { data: locations } = useQuery({
     queryKey: ["warehouseLocations"],
     queryFn: async () => {
-      const result = await __PASCAL___warehouselocationsService.getAll({
+      const result = await serviceResult(__PASCAL___warehouselocationsService.getAll({
         select: ["__PREFIX___warehouselocationid", "__PREFIX___name"],
         orderBy: ["__PREFIX___name asc"],
-      });
+      }));
       return result.data ?? [];
     },
   });
@@ -156,7 +156,7 @@ export default function WarehouseItemDetailPage() {
           : null;
       }
       if (Object.keys(payload).length === 0) return;
-      return __PASCAL___warehouseitemsService.update(id!, servicePayload(payload));
+      return serviceResult(__PASCAL___warehouseitemsService.update(id!, servicePayload(payload)));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["warehouseItem", id] });
@@ -170,14 +170,14 @@ export default function WarehouseItemDetailPage() {
 
   const createTxMutation = useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
-      return __PASCAL___warehousetransactionsService.create(servicePayload({
+      return serviceResult(__PASCAL___warehousetransactionsService.create(servicePayload({
         __PREFIX___name: values.__PREFIX___name,
         __PREFIX___quantity: String(values.__PREFIX___quantity),
         // Option set values come out of the form as strings
         __PREFIX___transactiontype: Number(values.__PREFIX___transactiontype),
         __PREFIX___transactiondate: new Date().toISOString(),
         "__PREFIX___itemid@odata.bind": `/__PREFIX___warehouseitems(${id})`,
-      }));
+      })));
     },
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ["itemTransactions", id] });

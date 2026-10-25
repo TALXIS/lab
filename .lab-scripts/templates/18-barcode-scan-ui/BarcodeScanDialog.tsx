@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { toBytes, bytesToDataUrl } from "@/utils/Binary";
 import { eanError } from "@/utils/Barcode";
 import { ensureProductRecord } from "@/utils/BarcodeLookup";
-import { servicePayload } from "@/utils/ServicePayload";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
 import { useStyles } from "@/styles/BarcodeScanDialog.styles";
 
 type BarcodeScanDialogProps = {
@@ -141,11 +141,11 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
         return;
       }
 
-      await __PASCAL___warehouseitemsService.update(itemId, servicePayload({
+      await serviceResult(__PASCAL___warehouseitemsService.update(itemId, servicePayload({
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
         // So the Receive screen finds this item by the same barcode next time
         __PREFIX___barcode: ean,
-      }));
+      })));
 
       if (imageBytes) {
         try {
