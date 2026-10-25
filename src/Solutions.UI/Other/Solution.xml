@@ -134,6 +134,7 @@
       <RootComponent type="80" schemaName="lab_warehouseapp" behavior="0" />
       <RootComponent type="62" schemaName="lab_warehouseapp" behavior="0" />
       <RootComponent type="61" schemaName="lab_main.js" behavior="0" />
+      <RootComponent type="300" schemaName="lab_warehousepicking" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>

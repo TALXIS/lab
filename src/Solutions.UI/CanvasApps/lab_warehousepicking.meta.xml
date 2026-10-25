@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>lab_warehousepicking</Name>
+  <AppVersion>2026-10-25T20:09:22Z</AppVersion>
+  <Status>Ready</Status>
+  <CreatedByClientVersion>0.0.0.0</CreatedByClientVersion>
+  <MinClientVersion>0.0.0.0</MinClientVersion>
+  <Tags>{}</Tags>
+  <IsCdsUpgraded>0</IsCdsUpgraded>
+  <GalleryItemId xsi:nil="true"></GalleryItemId>
+  <BackgroundColor>RGBA(255,255,255,1)</BackgroundColor>
+  <DisplayName>Warehouse Picking</DisplayName>
+  <Description xsi:nil="true"></Description>
+  <CommitMessage xsi:nil="true"></CommitMessage>
+  <Publisher xsi:nil="true"></Publisher>
+  <AuthorizationReferences>[]</AuthorizationReferences>
+  <ConnectionReferences>{}</ConnectionReferences>
+  <DatabaseReferences>{"default.cds":{"databaseDetails":{"referenceType":"Environmental","environmentName":"default.cds","overrideValues":{"status":"NotSpecified","environmentVariableName":""}},"dataSources":{"warehouseitems":{"entitySetName":"lab_warehouseitems","logicalName":"lab_warehouseitem"},"warehousetransactions":{"entitySetName":"lab_warehousetransactions","logicalName":"lab_warehousetransaction"},"warehouselocations":{"entitySetName":"lab_warehouselocations","logicalName":"lab_warehouselocation"}}}}</DatabaseReferences>
+  <AppComponents>[]</AppComponents>
+  <AppComponentDependencies>[]</AppComponentDependencies>
+  <CanConsumeAppPass>1</CanConsumeAppPass>
+  <CanvasAppType>4</CanvasAppType>
+  <BypassConsent>0</BypassConsent>
+  <AdminControlBypassConsent>0</AdminControlBypassConsent>
+  <EmbeddedApp xsi:nil="true"></EmbeddedApp>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <CdsDependencies>{"cdsdependencies":[{"logicalname":"lab_warehouseitem","componenttype":1},{"logicalname":"lab_warehousetransaction","componenttype":1},{"logicalname":"lab_warehouselocation","componenttype":1}]}</CdsDependencies>
+  <IsCustomizable>1</IsCustomizable>
+  <CodeAppPackageUris>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/index.html_ContentType_text/html</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/assets/index-BAE1VuKF.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/assets/index-DkhqlnE_.css_ContentType_text/css</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-0-467ee27f.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-1-4d521695.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-10-c4ded8e4.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-11-2a8393d6.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-12-7e945a1e.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-13-c3989a02.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-14-5cf58db8.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-15-3807251b.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-16-9cf93f3b.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-17-0c4ed701.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-2-63c99abf.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-3-089e217a.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-4-a656cc0a.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-5-f95ba260.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-6-ef6fd590.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-7-2b97bb99.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-8-6fdf1528.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-9-c6162b42.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/fonts/fabric-icons-a13498cf.woff_ContentType_font/woff</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/lab_warehousepicking_CodeAppPackages/power-apps.svg_ContentType_image/svg+xml</CodeAppPackageUri>
+  </CodeAppPackageUris>
+</CanvasApp>
