@@ -150,6 +150,7 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | You're not sure where you are | Ask *Where am I in the lab?* It runs `lab-status` and tells you |
 | Sign-in errors, or a new Codespace | Ask *Sign me in* |
 | Copilot says it can't run something | Run the script yourself in the terminal, for example `.lab-scripts/CP02-create-repository-layout.ps1`. When it asks you to press **Enter** to merge, check the pull request first, and don't also merge it on GitHub |
+| VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
 | CP04 can't create an environment | Your account may not be allowed to. Ask a facilitator |

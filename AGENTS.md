@@ -10,6 +10,11 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
 - The person may be new to Git, so explain in plain words.
 - When a script prints a PR link, give it to the person with the three clicks (Files changed,
   Merge pull request, Confirm) and wait. Never merge it yourself.
+- Checkpoint scripts and `save-checkpoint.ps1` open a PR and then wait until it's merged, so they
+  don't finish until the person merges. Run them in the background and read the terminal output
+  every 20 seconds or so. As soon as `PR opened:` or `Reusing the open PR:` appears, give the person
+  that link; don't wait for the command to finish first. Once they've merged, the script finishes by
+  itself within a minute. Don't start it again while it's waiting.
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
 - To run a checkpoint, run its script from `.lab-scripts/`; `lab-status.ps1` says which is next. Pass on
   any link or code it prints, and wait for the person.
