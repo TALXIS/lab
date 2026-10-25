@@ -22,6 +22,34 @@ $Global:LabStateFile = Join-Path $LabRoot ".lab-state.json"
 $Global:LabDefaultPublisherName   = "TALXISLab"
 $Global:LabDefaultPublisherPrefix = "lab"
 
+# The lab-state keys each checkpoint leaves behind: values later checkpoints read, and the
+# *Scaffolded flags each scaffold block sets once it has fully run. lab-status.ps1 checks them
+# against the tags; save-checkpoint.ps1 sets the *Scaffolded ones for a checkpoint built by hand.
+# CP11 saves four times under one tag, so its flags are split by step.
+$cp11Steps = @(
+    @('productTableScaffolded'),
+    @('connectorScaffolded'),
+    @('productDataSourceScaffolded', 'connectorDataSourceScaffolded'),
+    @('barcodeScanUiScaffolded')
+)
+$Global:LabCheckpoints = @(
+    @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
+    @{ Id = "cp02"; Keys = @("slnxName", "publisherName", "publisherPrefix") }
+    @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
+    @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
+    @{ Id = "cp05"; Keys = @("appId") }
+    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded", "columnsScaffolded") }
+    @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
+    @{ Id = "cp08"; Keys = @("securityScaffolded") }
+    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "sitemapScaffolded", "formsScaffolded", "viewsSubgridsScaffolded", "codeAppScaffolded", "formScriptsScaffolded", "ribbonScaffolded", "gridControlScaffolded") }
+    @{ Id = "cp10"; Keys = @() }
+    @{ Id = "cp11"; Keys = @($cp11Steps | ForEach-Object { $_ }); Steps = $cp11Steps }
+    @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
+    @{ Id = "cp13"; Keys = @("mainRulesetId") }
+    @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
+    @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
+)
+
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
 # Once you've signed in with lab-signin.ps1, use your login instead.
 $injectedToken = $env:GITHUB_TOKEN; $env:GITHUB_TOKEN = $null

@@ -21,11 +21,11 @@ The system runs on Microsoft Power Platform, with Dataverse as its data store. I
 
 | Specification | Covers |
 |---|---|
-| [1 · Data model and security](lab-1-data-model-and-security.md) | Tables, columns, relationships, security roles, reference data |
+| [1 · Data model](lab-1-data-model.md) | Tables, columns, relationships, reference data |
 | [2 · Server-side business logic](lab-2-server-side-business-logic.md) | Stock validation and stock movement rules |
-| [3 · User interface](lab-3-user-interface.md) | Back-office model-driven app and the floor worker's picking app |
-| [4 · External data and background processing](lab-4-external-data-and-background-processing.md) | Product lookup by barcode, transaction processing job |
-| [5 · Testing](lab-5-testing.md) | Unit tests, browser scenarios, quality gates |
+| [3 · Security](lab-3-security.md) | Security roles and their privileges |
+| [4 · User interface](lab-4-user-interface.md) | Back-office model-driven app and the floor worker's picking app |
+| [5 · External data and background processing](lab-5-external-data-and-background-processing.md) | Product lookup by barcode, transaction processing job |
 
 ## Conventions
 
@@ -137,32 +137,27 @@ flowchart LR
     UI["Solutions.UI<br/>app, forms, views"]
     DATA["Data/<br/>reference data"]
   end
-  PW["Plugins.Warehouse<br/>C#, net462"] --> LG
+  PW["Plugins.Warehouse<br/>C#, net472"] --> LG
   SU["Scripts.UI<br/>TypeScript → lab_main.js"] --> UI
   CA["Apps.WarehousePicking<br/>code app"] --> UI
   subgraph conn["Solutions.Connectors (deployed on its own)"]
     OFF["Connectors.OpenFoodFacts"]
   end
   GRID["TALXIS.Controls.Grid.Package<br/>from nuget.org"]
-  TP["Tests.Plugins"] -. tests .-> PW
-  TS["Tests.Scripts"] -. tests .-> SU
-  TU["Tests.UI"] -. tests .-> CA
-  TU -. tests .-> UI
 ```
 
 | Project | Kind | Specified in | Belongs to |
 |---|---|---|---|
 | `Packages.Main` | Package Deployer package (`.pdpkg.zip`) | 1 | Deploys everything below except connectors |
 | `Solutions.DataModel` | Solution | 1 | Owns every table definition |
-| `Solutions.Security` | Solution | 1 | Security roles |
-| `Plugins.Warehouse` | Plugin assembly (.NET Framework 4.6.2) | 2 | Referenced by `Solutions.Logic` |
-| `Solutions.Logic` | Solution | 2, 4 | Plugin assembly and steps; the cloud flow |
-| `Solutions.UI` | Solution | 3 | References the tables; app, forms, views, ribbon |
-| `Scripts.UI` | Script library → web resource `lab_main.js` | 3 | Referenced by `Solutions.UI` |
-| `Apps.WarehousePicking` | Power Apps code app | 3 | Referenced by `Solutions.UI` |
-| `Connectors.OpenFoodFacts` | Custom connector | 4 | Referenced by `Solutions.Connectors` |
-| `Solutions.Connectors` | Solution | 4 | Deployed separately, before the code app uses it |
-| `Tests.Plugins`, `Tests.Scripts`, `Tests.UI` | Test projects | 5 | Not deployed |
+| `Solutions.Security` | Solution | 3 | Security roles |
+| `Plugins.Warehouse` | Plugin assembly (.NET Framework 4.7.2) | 2 | Referenced by `Solutions.Logic` |
+| `Solutions.Logic` | Solution | 2, 5 | Plugin assembly and steps; the cloud flow |
+| `Solutions.UI` | Solution | 4 | References the tables; app, forms, views, ribbon |
+| `Scripts.UI` | Script library → web resource `lab_main.js` | 4 | Referenced by `Solutions.UI` |
+| `Apps.WarehousePicking` | Power Apps code app | 4 | Referenced by `Solutions.UI` |
+| `Connectors.OpenFoodFacts` | Custom connector | 5 | Referenced by `Solutions.Connectors` |
+| `Solutions.Connectors` | Solution | 5 | Deployed separately, before the code app uses it |
 
 `Packages.Main` references `Solutions.DataModel`, `Solutions.Security`, `Solutions.Logic` and `Solutions.UI`, and bundles them into one deployment artifact.
 
@@ -189,8 +184,6 @@ Add `--profile <environment profile>` to each `txc` command when more than one e
 | Gate | What it checks | Where |
 |---|---|---|
 | Build | `dotnet build WarehouseManagement.slnx` | `build.yml` on pull requests and pushes to `main` (also publishes the `.pdpkg.zip`) |
-| Unit tests | Plugin tests (FakeXrmEasy), script tests (Jest) | `unit-tests.yml` on pull requests and pushes to `main` |
-| Browser scenarios | Reqnroll and Playwright against Dev | `test.yml`, run on demand |
 | Deploy to Test | Grid package, then the main package | `deploy.yml`, after a green build on `main` |
 
 ## Responsibilities by area
@@ -199,6 +192,6 @@ Add `--profile <environment profile>` to each `txc` command when more than one e
 |---|---|---|
 | Data model | Solution architect | Data dictionary review |
 | Security | Solution architect | Privilege matrix review |
-| Business rules | Product owner | Plugin unit tests, browser scenarios |
-| User interface | Product owner and designer | User stories and browser scenarios |
-| Integrations | Solution architect | Connector tests, browser scenario |
+| Business rules | Product owner | Acceptance criteria review |
+| User interface | Product owner and designer | User stories |
+| Integrations | Solution architect | Acceptance criteria review |

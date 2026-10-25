@@ -1,10 +1,10 @@
-# Lab 1: Data Model and Security
+# Lab 1: Data Model
 
-See [solution-architecture.md](solution-architecture.md) for conventions.
+See [00-solution-architecture.md](00-solution-architecture.md) for conventions.
 
 ## Scope
 
-This specification defines the warehouse data model, the security roles that govern access to it, and the reference data every environment starts with. Specifications 2 to 5 depend on the exact schema names, types and choice values below.
+This specification defines the warehouse data model and the reference data every environment starts with. Specifications 2 to 5 depend on the exact schema names, types and choice values below.
 
 ## Deliverables
 
@@ -12,7 +12,6 @@ This specification defines the warehouse data model, the security roles that gov
 |---|---|---|
 | `src/Packages.Main` | Package Deployer package | Included in `WarehouseManagement.slnx` |
 | `src/Solutions.DataModel` | Solution (publisher `TALXISLab`, prefix `lab`) | Referenced by `Packages.Main` |
-| `src/Solutions.Security` | Solution (publisher `TALXISLab`, prefix `lab`) | Referenced by `Packages.Main` |
 | `src/Packages.Main/Data/` | Configuration Migration (CMT) package | `data_schema.xml`, `data.xml`, `[Content_Types].xml` |
 
 ## Data dictionary
@@ -50,7 +49,7 @@ A stock-keeping unit held at a location. Plural display name **Warehouse Items**
 | Barcode | `lab_barcode` | Text | No | |
 | Reorder Point | `lab_reorderpoint` | Whole number | No | Stock at or below this level is low |
 
-Specification 4 adds one more column to this table (`lab_productid`).
+Specification 5 adds one more column to this table (`lab_productid`).
 
 ### Warehouse Transaction (`lab_warehousetransaction`)
 
@@ -65,7 +64,7 @@ One stock movement: a pick (**Outbound**) or a restock (**Inbound**). Plural dis
 | Transaction Date | `lab_transactiondate` | Date and time | **Yes** | |
 | Notes | `lab_notes` | Multiline text | No | |
 | Total Value | `lab_totalvalue` | Currency | No | Precision 2. Quantity × the item's unit price |
-| Is Processed | `lab_isprocessed` | Yes/No | No | True **Yes**, false **No**. Set by the processing job (specification 4) |
+| Is Processed | `lab_isprocessed` | Yes/No | No | True **Yes**, false **No**. Set by the processing job (specification 5) |
 | Processed By | `lab_processedby` | Text | No | Set by the processing job |
 | Reference Number | `lab_referencenumber` | Text | No | For example a purchase or sales order number |
 
@@ -97,33 +96,6 @@ erDiagram
 ```
 
 No alternate keys, business rules or other relationships are defined.
-
-## Security roles
-
-Two roles in `Solutions.Security`. Depth **Basic** means records the user owns; **Global** means the whole organization.
-
-| Table | Privilege | Warehouse worker | Warehouse manager |
-|---|---|---|---|
-| `lab_warehouselocation` | Read | Global | Global |
-| | Create, Write, Delete | None | Global |
-| | Append, Append To | None | Global |
-| `lab_warehouseitem` | Read, Create, Write | Global | Global |
-| | Delete | None | Global |
-| | Append, Append To | Global | Global |
-| `lab_warehousetransaction` | Read | Global | Global |
-| | Create | **Basic** | Global |
-| | Write | **Basic** | Global |
-| | Delete | None | Global |
-| | Append, Append To | None | Global |
-
-Role names are exactly **Warehouse worker** and **Warehouse manager**.
-
-Rationale:
-
-- **Create on transactions** is the pick itself; a worker records every pick and restock as a transaction.
-- **Write (Global) on items** is required because the stock rule updates the item as the user who saved the transaction.
-- **Write (Basic) on transactions** lets workers correct only their own transactions.
-- **No Delete for workers.** Stock history is never removed by a worker.
 
 ## Reference data
 
@@ -159,16 +131,15 @@ Fields included: Location `lab_name`, `lab_address`, `lab_capacity`, `lab_isacti
 | `a0cdb965-1279-4f0a-a5db-58f335b9863e` | TRX-0001 | Office Laptop | 20 | 100000000 (Inbound) | PO-2026-001 |
 | `cc2d0547-3872-4f50-8db9-0cbb5407e535` | TRX-0002 | Wireless Mouse | 5 | 100000001 (Outbound) | SO-2026-014 |
 
-Specification 4 extends this package with products.
+Specification 5 extends this package with products.
 
 ## Acceptance criteria
 
 - [ ] `dotnet build WarehouseManagement.slnx` succeeds.
 - [ ] Every table, column, type, required level and choice value matches the data dictionary.
 - [ ] Both relationships exist, and `lab_itemid` is business required.
-- [ ] Both roles' privileges match the matrix exactly, including **Basic** Create and Write on transactions for the worker.
 - [ ] The reference data package contains the 9 records above with their GUIDs.
-- [ ] `Packages.Main` references `Solutions.DataModel` and `Solutions.Security`.
+- [ ] `Packages.Main` references `Solutions.DataModel`.
 
 ## Design rationale
 

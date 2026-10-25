@@ -23,30 +23,13 @@
 Write-Step "Lab status"
 
 # ── 1. Checkpoint tags vs lab-state keys ────────────────────────────────────────────────
-# Each entry: the checkpoint id, the git tag Save-Checkpoint leaves behind, and the
-# lab-state keys that checkpoint is expected to have populated: values later checkpoints
-# read, and the *Scaffolded flags each scaffold block sets once it has fully run. A tag
-# without its flags means the checkpoint stopped partway (or its work was lost), so it is
-# the one to re-run next - unless save-checkpoint.ps1 saved it (<id>HandBuilt): then it was
-# built by hand and never had those flags.
-$checkpoints = @(
-    @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
-    @{ Id = "cp02"; Keys = @("slnxName", "publisherName", "publisherPrefix") }
-    @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
-    @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
-    @{ Id = "cp05"; Keys = @("appId") }
-    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded", "columnsScaffolded") }
-    @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
-    @{ Id = "cp08"; Keys = @("securityScaffolded") }
-    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "sitemapScaffolded", "formsScaffolded", "viewsSubgridsScaffolded", "codeAppScaffolded", "formScriptsScaffolded", "ribbonScaffolded", "gridControlScaffolded") }
-    @{ Id = "cp10"; Keys = @() }
-    # CP11 saves four times under one tag; its scaffold flags tell which of the four steps landed.
-    @{ Id = "cp11"; Keys = @("productTableScaffolded", "connectorScaffolded", "productDataSourceScaffolded", "connectorDataSourceScaffolded", "barcodeScanUiScaffolded") }
-    @{ Id = "cp12"; Keys = @("configDataDirectory", "configDataSchemaPath", "configDataFilePath") }
-    @{ Id = "cp13"; Keys = @("mainRulesetId") }
-    @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
-    @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
-)
+# Each checkpoint (the list is $LabCheckpoints in lib/Lab.Common.ps1): the git tag
+# Save-Checkpoint leaves behind, and the lab-state keys that checkpoint is expected to have
+# populated. A tag without its keys means the checkpoint stopped partway (or its work was
+# lost), so it is the one to re-run next. A checkpoint built by hand gets the same keys from
+# save-checkpoint.ps1. For CP11, which saves four times under one tag, the keys tell which of
+# the four steps landed.
+$checkpoints = $LabCheckpoints
 
 $tags = @(git -C $LabRoot tag --list "cp*" 2>$null)
 $firstMissing = $null
@@ -54,7 +37,7 @@ $firstMissing = $null
 Write-Host "`n── Checkpoints ──" -ForegroundColor Cyan
 foreach ($cp in $checkpoints) {
     $tagged = $cp.Id -in $tags
-    $missingKeys = if (Get-LabValue "$($cp.Id)HandBuilt") { @() } else { @($cp.Keys | Where-Object { -not (Get-LabValue $_) }) }
+    $missingKeys = @($cp.Keys | Where-Object { -not (Get-LabValue $_) })
 
     if ($tagged -and $missingKeys.Count -eq 0) {
         Write-Ok "$($cp.Id) — done"
