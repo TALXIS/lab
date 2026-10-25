@@ -4,6 +4,8 @@ environments, trunk-based development, PR quality gates and GitHub Actions deplo
 
 ## Start here
 
+> 👉 **At the workshop?** Follow [LAB-GUIDE.md](LAB-GUIDE.md): it walks you through the lab with Copilot Chat.
+
 1. **Fork** this repo to your personal GitHub account (top-right **Fork** button).
 2. On **your fork** (`https://github.com/<you>/lab`), click **Code → Codespaces → Create codespace on main**.
    All tools are preinstalled. The Codespace and free GitHub Actions minutes run on *your* account.

@@ -18,6 +18,9 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
 - To run a checkpoint, run its script from `.lab-scripts/`; `lab-status.ps1` says which is next. Pass on
   any link or code it prints, and wait for the person.
+- CP06–CP09, CP11 and CP12 are build checkpoints: the person types its `/cp…` command (LAB-GUIDE.md lists
+  them). When they ask for the next checkpoint and it's one of these, tell them which command to type
+  instead of running the script, unless they ask for the script.
 - CP10 waits for a key press, so ask the person to run it in their own terminal.
 - Read `.lab-scripts/` as working examples, but don't edit it.
 - Use the `txc` discovery commands to scaffold, not `dotnet new`.

@@ -99,7 +99,7 @@ Run `/cp09a-model-driven-app` first. It doesn't save; `/cp09b-code-app` does.
 .lab-scripts/CP10-deploy-and-sync.ps1
 ```
 
-It deploys the app to your Dev environment and gives you a link to open it. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
+It deploys the app to your Dev environment. To open the apps, go to [make.powerapps.com](https://make.powerapps.com), pick your Dev environment at the top right, then **Apps**: **Warehouse Management** is the manager app, **Warehouse Picking** the code app. It then shows you how to change a security role in the browser, and waits. Make the change, then press **Enter** in the terminal: the script pulls your change back into source. At the end of the checkpoint the pull request link appears. Review it and press **Enter** to merge, as in Part 1.
 
 ## Part 4: External data and reference data
 
@@ -118,7 +118,7 @@ npm install
 npm run dev
 ```
 
-It prints two links. Open the **Local Play** one, which starts with `https://apps.powerapps.com/play/`, and sign in. (The plain `http://localhost:5173/` one shows the app without its data.) Then check two things:
+It prints two links. Open the **Local Play** one, which starts with `https://apps.powerapps.com/play/`, and sign in. (The plain `http://localhost:5173/` one shows the app without its data.) If it asks to allow Warehouse Picking to access your data, click **Allow**: that's the Open Food Facts connection from CP11. If the Local Play page stays blank, open **Warehouse Picking** from **Apps** in your Dev environment instead, as in Part 3. That copy is the one CP10 deployed, so it doesn't have the barcode scan, but it shows the same data. Then check two things:
 
 1. Open **Office Laptop** (100 on hand) and create an **Outbound** transaction for a small quantity. It succeeds and the quantity on hand goes down.
 2. Try to pick more than 5 of **Wireless Mouse** (5 on hand). The server refuses it and the app shows the error.
@@ -153,7 +153,7 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | VS Code offers **Migrations: Convert Prompt to Skills** | Click **Ignore**, so the `/cp…` commands stay as this guide describes. If one is missing from the list, tell a facilitator |
 | Strange characters appear in the terminal | Close that terminal (the trash-can icon) and open a new one with **Ctrl+`**. Your progress is saved |
 | A pull request's build check is red ✗ before CP13 | You can still merge. After CP13, the merge waits for a green ✓ |
-| CP04 can't create an environment | Your account may not be allowed to. Ask a facilitator |
+| CP04 can't create an environment | Your account may not be allowed to, or it already has 3 Developer environments (the limit per user; CP04 creates 2). Delete ones you no longer need in the [Power Platform admin center](https://admin.powerplatform.microsoft.com/environments), or ask a facilitator |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

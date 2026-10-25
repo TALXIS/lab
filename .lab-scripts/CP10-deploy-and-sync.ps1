@@ -123,6 +123,7 @@ if (-not $autoMode) {
     $roleUrl = txc env component url get --file $roleFile --param solution=SolutionsSecurity --profile $devProfile --format text 2>$null |
         Where-Object { $_ -match '^https://' } | Select-Object -First 1
     Write-Ok "Your app is live in Dev: $devUrl"
+    Write-Info "  Open it at https://make.powerapps.com: pick your Dev environment, then Apps → Warehouse Management (manager app) or Warehouse Picking (code app)."
     Write-Info "Change a security role in Dev, then this checkpoint pulls the change back to source."
     if ($roleUrl) {
         Write-Info "  Open the $roleName role: $roleUrl"

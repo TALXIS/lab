@@ -105,7 +105,9 @@ try {
         if (-not $autoMode) {
             Write-Ok "Real data is seeded in Dev — try the Warehouse Picking code app live."
             Write-Info "In a second terminal: cd src/Apps.WarehousePicking && npm install && npm run dev"
-            Write-Info "  Open the Local Play link it prints (https://apps.powerapps.com/play/...) and sign in, then try:"
+            Write-Info "  Open the Local Play link it prints (https://apps.powerapps.com/play/...) and sign in. If it asks to allow Warehouse Picking to access your data, click Allow."
+            Write-Info "  If Local Play stays blank, open the app deployed in Dev instead: https://make.powerapps.com → your Dev environment → Apps → Warehouse Picking."
+            Write-Info "  Then try:"
             Write-Info "  1. Open Office Laptop (qty 100) and create an Outbound transaction for a small quantity - it succeeds and the quantity on hand updates."
             Write-Info "  2. Request more than 5 of Wireless Mouse (qty 5) - ValidateWarehouseTransactionPlugin rejects it and the app shows the error as a toast."
             Read-Host "`n  Try it in your browser, then press Enter to continue"
