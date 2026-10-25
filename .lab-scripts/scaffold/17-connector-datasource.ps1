@@ -235,7 +235,9 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
             $connectionId = Get-LabValue 'openFoodFactsConnectionId'
             if ($connectionId) {
                 $connectionsJson = pa connection list --environment-id $environmentId --search "Open Food Facts" --json
-                $known = if ($LASTEXITCODE -eq 0) { @((ConvertFrom-PaJson $connectionsJson).items | Where-Object { $_.connectionId -eq $connectionId -or $_.id -eq $connectionId -or $_.name -eq $connectionId }) } else { @() }
+                # A failed listing proves nothing: stop rather than create a duplicate connection.
+                if ($LASTEXITCODE -ne 0) { throw "pa connection list failed, so connection $connectionId could not be checked" }
+                $known = @((ConvertFrom-PaJson $connectionsJson).items | Where-Object { $_.connectionId -eq $connectionId -or $_.id -eq $connectionId -or $_.name -eq $connectionId })
                 if ($known.Count -eq 0) {
                     Write-Warn2 "Connection $connectionId from lab state no longer exists - creating a new one"
                     $connectionId = $null

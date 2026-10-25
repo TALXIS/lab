@@ -46,7 +46,10 @@ if ($LASTEXITCODE -ne 0) {
     Write-Warn2 "GitHub refused to change the ruleset from here: $updated"
     Write-Warn2 "Add it yourself: https://github.com/$repo/settings/rules/$id → Require status checks to pass → add 'build'."
     $deadline = (Get-Date).AddMinutes(30)
-    while ((gh api "repos/$repo/rulesets/$id" -q '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context] | index("build")' 2>$null) -in @($null, '', 'null')) {
+    while ($true) {
+        $buildIndex = gh api "repos/$repo/rulesets/$id" -q '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context] | index("build")' 2>&1
+        if ($LASTEXITCODE -ne 0) { Write-Err "Checking the ruleset failed: $buildIndex - re-run this checkpoint."; Remove-Item $tmp; exit 1 }
+        if ($buildIndex -notin @($null, '', 'null')) { break }
         if ((Get-Date) -gt $deadline) { Write-Err "The 'build' check is still not required on $repo - add it, then re-run this checkpoint."; Remove-Item $tmp; exit 1 }
         Start-Sleep 15
     }

@@ -16,13 +16,13 @@ if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab
 # A GH_TOKEN your environment provides (e.g. a cloud agent sandbox) is used as is.
 Write-Step "Sign in 1/4 — GitHub"
 Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
-if (-not $env:GH_TOKEN) {
-    gh auth setup-git --hostname github.com --force   # git pushes with your gh login
-    if (-not (gh auth status 2>&1 | Select-String 'workflow')) {
-        # Piping input in makes gh print the link and code instead of waiting for Enter.
-        '' | gh auth login -h github.com -p https -s workflow --web
-    }
+if (-not $env:GH_TOKEN -and -not (gh auth status 2>&1 | Select-String 'workflow')) {
+    # Piping input in makes gh print the link and code instead of waiting for Enter.
+    '' | gh auth login -h github.com -p https -s workflow --web
 }
+# git doesn't read GH_TOKEN or gh's login by itself: make gh its credential helper either way.
+gh auth setup-git --hostname github.com --force
+if ($LASTEXITCODE -ne 0) { Write-Err "Could not set up git to push with your GitHub sign-in"; exit 1 }
 Write-Ok "GitHub: $(gh api user -q .login)"
 
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────

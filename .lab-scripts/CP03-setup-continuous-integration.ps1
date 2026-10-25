@@ -78,7 +78,10 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
         Write-Warn2 "Create it yourself: https://github.com/$repo/settings/rules/new?target=branch"
         Write-Info "  Name '$rulesetName', Active, target the default branch, restrict deletions, require a pull request, block force pushes."
         $deadline = (Get-Date).AddMinutes(30)
-        while (-not ($existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>$null)) {
+        while ($true) {
+            $existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>&1
+            if ($LASTEXITCODE -ne 0) { Write-Err "Checking for the ruleset failed: $existingRuleset - re-run this checkpoint."; exit 1 }
+            if ($existingRuleset) { break }
             if ((Get-Date) -gt $deadline) { Write-Err "Ruleset '$rulesetName' still not found on $repo - create it, then re-run this checkpoint."; exit 1 }
             Start-Sleep 15
         }
