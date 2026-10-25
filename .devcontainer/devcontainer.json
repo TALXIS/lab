@@ -39,6 +39,11 @@
   // 4 cores: the code app's Vite build, MSBuild, VS Code and Copilot share the machine, and on
   // 2 cores the lab crawled and a build was killed. A free account's 120 core-hours a month
   // still give about 30 hours on 4 cores.
+  // So that `lab-signin.ps1` or `lab-status.ps1` typed on its own runs: PowerShell finds scripts
+  // on PATH, but not in a folder of the current directory.
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:${containerWorkspaceFolder}/.lab-scripts"
+  },
   "hostRequirements": {
     "cpus": 4,
     "memory": "16gb"

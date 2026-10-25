@@ -20,3 +20,6 @@ TestResults/
 Thumbs.db
 
 # Lab note: .lab-state.json is intentionally committed so progress survives crashes.
+
+# playwright-cli (browser automation) scratch files
+.playwright-cli/

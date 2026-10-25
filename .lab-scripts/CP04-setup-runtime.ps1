@@ -85,7 +85,7 @@ foreach ($key in $envs.Keys) {
             --region $region --currency $currency --language 1033 --wait
         if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key"; exit 1 }
         # Read the real URL back: its host suffix depends on the region (crm for the US, crm4 for Europe, ...).
-        $created = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
+        $created = @(txc env list --filter $domain --format json 2>$null | ConvertFrom-Json) | Select-Object -First 1
         $url = "$($created.environmentUrl)".TrimEnd('/')
         if (-not $url) { Write-Err "Created $key but could not read its URL. Run: txc env list --filter $domain"; exit 1 }
     } else {
@@ -99,7 +99,7 @@ foreach ($key in $envs.Keys) {
     if (-not $connection) {
         # Give the connection the environment's ids too: txc builds maker-portal links from them
         # (CP10's link to the security role), and doesn't look them up later by itself.
-        $listed = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
+        $listed = @(txc env list --filter $domain --format json 2>$null | ConvertFrom-Json) | Select-Object -First 1
         $ids = @()
         if ($listed.environmentId)  { $ids += '--environment-id', $listed.environmentId }
         if ($listed.organizationId) { $ids += '--organization-id', $listed.organizationId }
@@ -130,7 +130,7 @@ foreach ($key in $envs.Keys) {
 }
 
 # Pin the dev profile as default for local deploys.
-txc config profile select dev | Out-Null
+txc config profile select dev 2>&1 | Out-Null
 Write-Ok "Active profile: dev"
 
 }

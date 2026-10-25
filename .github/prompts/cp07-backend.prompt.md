@@ -20,7 +20,8 @@ assembly and generates the steps. Don't scaffold `pp-plugin-assembly` or
 fail, and a second step makes the plugin run twice.
 
 If you get stuck, .lab-scripts/CP07-implement-backend.ps1 does this same step
-and is a good example to read.
+and is a good example to read, except that it registers the steps the older way, with
+`pp-plugin-assembly-step` and no attributes. Either way works; use one, not both.
 
 When you're done, run `dotnet build WarehouseManagement.slnx` and fix anything it
 reports. Then save the checkpoint:

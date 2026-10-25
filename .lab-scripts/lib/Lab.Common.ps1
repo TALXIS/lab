@@ -258,7 +258,20 @@ function Save-Checkpoint {
             $merged = gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null
             if ($LASTEXITCODE -ne 0 -or $merged -ne 'true') { Write-Err "PR was closed without merging: $url"; exit 1 }
         } else {
-            if (-not $env:LAB_AUTO_MERGE) { Read-Host "`n  Open the PR link above in your browser, review the diff, then press Enter to merge" }
+            if (-not $env:LAB_AUTO_MERGE) {
+                # A person at the keyboard: Enter merges here, and a merge made on GitHub is noticed
+                # within 15 seconds. Either way the checkpoint finishes without further input, so
+                # a person who merged on GitHub never has to find this terminal again.
+                Write-Host "`n  Open the PR link above in your browser and review the diff. Then press Enter here to merge, or merge it on GitHub."
+                :waitForMerge while ($true) {
+                    $until = (Get-Date).AddSeconds(15)
+                    while ((Get-Date) -lt $until) {
+                        if ([Console]::KeyAvailable -and [Console]::ReadKey($true).Key -eq [ConsoleKey]::Enter) { break waitForMerge }
+                        Start-Sleep -Milliseconds 200
+                    }
+                    if ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null) -eq 'true') { break }
+                }
+            }
             Merge-CheckpointPullRequest -Repo $forkRepo -Number $pr.number -Url $url
         }
 
