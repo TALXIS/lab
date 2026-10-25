@@ -21,6 +21,10 @@ export function useCreateItem() {
   return useMutation({
     mutationFn: async ({ values, ensureProductId }: CreateItemInput): Promise<PickItem> => {
       const productId = await ensureProductId?.();
+      // The items listed before the create: the new one is the match that isn't among them
+      const known = new Set(
+        (queryClient.getQueryData<__PASCAL___warehouseitems[]>(PICK_ITEMS_KEY) ?? []).map((item) => item.__PREFIX___warehouseitemid)
+      );
       await serviceResult(__PASCAL___warehouseitemsService.create(
         servicePayload({
           __PREFIX___name: values.__PREFIX___name,
@@ -38,10 +42,10 @@ export function useCreateItem() {
       await queryClient.refetchQueries({ queryKey: PICK_ITEMS_KEY });
       const items = queryClient.getQueryData<__PASCAL___warehouseitems[]>(PICK_ITEMS_KEY) ?? [];
       const locations = queryClient.getQueryData<__PASCAL___warehouselocations[]>(LOCATIONS_KEY) ?? [];
-      // Name and SKU identify it; if two match, the last one listed is taken
-      const created = toPickItems(items, locations)
-        .filter((item) => item.name === values.__PREFIX___name && item.sku === values.__PREFIX___sku)
-        .pop();
+      // Name and SKU aren't unique: of the matches, take the one that wasn't there before
+      const matches = toPickItems(items, locations)
+        .filter((item) => item.name === values.__PREFIX___name && item.sku === values.__PREFIX___sku);
+      const created = matches.find((item) => !known.has(item.id)) ?? matches.pop();
       if (!created) throw new Error("The item was created but could not be found again - search for it.");
 
       void queryClient.invalidateQueries({ queryKey: ["warehouseItems"] });

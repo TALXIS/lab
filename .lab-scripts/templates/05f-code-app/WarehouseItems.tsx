@@ -114,7 +114,9 @@ export default function WarehouseItemsPage() {
       })));
     },
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ["warehouseItems"] });
+      // Every list shows the same few records (Pick, Receive and the other tabs keep their own copies
+      // for five minutes), so a change makes all of them stale: refetch what is on screen, the rest on its next visit
+      await queryClient.invalidateQueries();
       toast.success("Item created successfully");
     },
     onError: (err) => {

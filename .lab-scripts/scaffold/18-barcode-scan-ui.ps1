@@ -93,7 +93,7 @@ $mutationAnchor
                 <BarcodeScanDialog
                   itemId={id!}
                   currentProductId={linkedProductId}
-                  onLinked={() => queryClient.refetchQueries({ queryKey: ["warehouseItem", id] })}
+                  onLinked={() => queryClient.invalidateQueries()}
                 />
                 {linkedProduct && (
                   <div className={styles.inline} data-testid="linked-product-name">

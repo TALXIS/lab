@@ -160,8 +160,9 @@ export default function WarehouseItemDetailPage() {
       return serviceResult(__PASCAL___warehouseitemsService.update(id!, servicePayload(payload)));
     },
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ["warehouseItem", id] });
-      await queryClient.invalidateQueries({ queryKey: ["warehouseItems"] });
+      // Every list shows the same few records (Pick, Receive and the other tabs keep their own copies
+      // for five minutes), so a change makes all of them stale: refetch what is on screen, the rest on its next visit
+      await queryClient.invalidateQueries();
       toast.success("Item saved");
     },
     onError: (err) => {
@@ -181,8 +182,9 @@ export default function WarehouseItemDetailPage() {
       })));
     },
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ["itemTransactions", id] });
-      await queryClient.refetchQueries({ queryKey: ["warehouseItem", id] });
+      // Every list shows the same few records (Pick, Receive and the other tabs keep their own copies
+      // for five minutes), so a change makes all of them stale: refetch what is on screen, the rest on its next visit
+      await queryClient.invalidateQueries();
       toast.success("Transaction created");
     },
     onError: (err) => {

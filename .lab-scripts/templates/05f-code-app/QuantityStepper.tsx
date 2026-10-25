@@ -32,10 +32,11 @@ export function QuantityStepper({ id, label, value, onChange, min = 0, max, hint
       inputMode="numeric"
       pattern="[0-9]*"
       value={value === null ? "" : String(value)}
-      // Digits only: anything else typed or pasted is dropped
+      // Whole numbers only: other input is refused rather than turned into a different number
+      // (dropping the "." of 1.5 or the "-" of -2 would book 15 or 2)
       onChange={(_, data) => {
-        const digits = data.value.replace(/\D/g, "");
-        onChange(digits === "" ? null : Number(digits));
+        if (!/^\d*$/.test(data.value)) return;
+        onChange(data.value === "" ? null : Number(data.value));
       }}
     />
   );
