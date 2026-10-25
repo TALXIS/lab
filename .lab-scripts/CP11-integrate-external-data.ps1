@@ -148,4 +148,4 @@ Add a "Scan Barcode" button to the item detail page. It opens a dialog that deco
 - npm run build succeeds in src/Apps.WarehousePicking
 - manual: npm run dev, open an item, Scan Barcode, type a known EAN (e.g. 3017620422003), confirm the lookup preview and Link to Item
 '@
-Write-Next cp12
+Write-Host "`nNext: .lab-scripts/CP12-move-configuration.ps1" -ForegroundColor Cyan

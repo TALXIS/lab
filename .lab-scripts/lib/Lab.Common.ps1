@@ -58,23 +58,6 @@ if ($injectedToken -and -not (gh auth token 2>$null)) { $env:GITHUB_TOKEN = $inj
 # ── Logging ────────────────────────────────────────────────────────────────────────────────
 function Write-Step  { param([string]$m) Write-Host "`n── $m ──" -ForegroundColor Cyan }
 function Write-Ok    { param([string]$m) Write-Host "  ✓ $m" -ForegroundColor Green }
-
-# The build checkpoints are done through Copilot Chat; their scripts are the fallback. Say so in
-# every "Next:" line, or the last line of a script sends people to the next script by habit.
-$Global:LabCopilotCommands = @{
-    cp06 = '/cp06-data-model'; cp07 = '/cp07-backend'; cp08 = '/cp08-security'
-    cp09 = '/cp09a-model-driven-app (then /cp09b-code-app)'; cp11 = '/cp11-external-data'; cp12 = '/cp12-config-data'
-}
-function Write-Next {
-    param([Parameter(Mandatory)][string]$Id)
-    # Checkpoint ids are lower case, the scripts upper case (CP12-...), and Linux paths are
-    # case-sensitive: name the actual file so the command can be copied as is.
-    $script = Get-ChildItem (Join-Path $PSScriptRoot '..') -Filter "$($Id.ToUpper())-*.ps1" | Select-Object -First 1
-    $path = if ($script) { ".lab-scripts/$($script.Name)" } else { ".lab-scripts/$($Id.ToUpper())-*.ps1" }
-    $command = $Global:LabCopilotCommands[$Id]
-    if ($command) { Write-Host "`nNext: type $command in Copilot Chat (or run $path yourself)" -ForegroundColor Cyan }
-    else { Write-Host "`nNext: $path" -ForegroundColor Cyan }
-}
 function Write-Warn2 { param([string]$m) Write-Host "  ⚠ $m" -ForegroundColor Yellow }
 function Write-Err   { param([string]$m) Write-Host "  ✗ $m" -ForegroundColor Red }
 function Write-Info  { param([string]$m) Write-Host "  $m" -ForegroundColor Gray }
@@ -277,16 +260,21 @@ function Save-Checkpoint {
         } else {
             if (-not $env:LAB_AUTO_MERGE) {
                 # A person at the keyboard: Enter merges here, and a merge made on GitHub is noticed
-                # within 15 seconds. Either way the checkpoint finishes without further input, so
-                # a person who merged on GitHub never has to find this terminal again.
+                # within 15 seconds, so someone who merged there (or whose agent ran this) never has
+                # to find this terminal again. Where the keyboard can't be watched, wait for Enter as before.
                 Write-Host "`n  Open the PR link above in your browser and review the diff. Then press Enter here to merge, or merge it on GitHub."
-                :waitForMerge while ($true) {
-                    $until = (Get-Date).AddSeconds(15)
-                    while ((Get-Date) -lt $until) {
-                        if ([Console]::KeyAvailable -and [Console]::ReadKey($true).Key -eq [ConsoleKey]::Enter) { break waitForMerge }
-                        Start-Sleep -Milliseconds 200
+                try { [void][Console]::KeyAvailable; $canWatchKeyboard = $true } catch { $canWatchKeyboard = $false }
+                if ($canWatchKeyboard) {
+                    :waitForMerge while ($true) {
+                        $until = (Get-Date).AddSeconds(15)
+                        while ((Get-Date) -lt $until) {
+                            if ([Console]::KeyAvailable -and [Console]::ReadKey($true).Key -eq [ConsoleKey]::Enter) { break waitForMerge }
+                            Start-Sleep -Milliseconds 200
+                        }
+                        if ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null) -eq 'true') { break }
                     }
-                    if ((gh api "repos/$forkRepo/pulls/$($pr.number)" -q .merged 2>$null) -eq 'true') { break }
+                } else {
+                    Read-Host | Out-Null
                 }
             }
             Merge-CheckpointPullRequest -Repo $forkRepo -Number $pr.number -Url $url

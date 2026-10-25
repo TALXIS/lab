@@ -68,4 +68,4 @@ Set up the repository so the warehouse app can be developed as a single Power Pl
 ## Testing
 - solution scaffold succeeds and the repo layout is ready for follow-up checkpoints
 '@
-Write-Next cp03
+Write-Host "`nNext: .lab-scripts/CP03-setup-continuous-integration.ps1" -ForegroundColor Cyan

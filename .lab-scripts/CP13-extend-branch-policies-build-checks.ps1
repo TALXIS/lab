@@ -70,4 +70,4 @@ Tighten the main branch rules so pull requests must pass the build before they c
 ## Testing
 - ruleset update succeeds and the build check is registered as a required status
 '@
-Write-Next cp14
+Write-Host "`nNext: .lab-scripts/CP14-automate-ui-testing.ps1" -ForegroundColor Cyan

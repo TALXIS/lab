@@ -57,4 +57,4 @@ Add browser-based regression coverage so key warehouse scenarios can be validate
 ## Testing
 - dotnet build src/Tests.UI/Tests.UI.csproj passes and the PR workflow is ready to execute
 '@
-Write-Next cp15
+Write-Host "`nNext: .lab-scripts/CP15-implement-unit-tests.ps1" -ForegroundColor Cyan
