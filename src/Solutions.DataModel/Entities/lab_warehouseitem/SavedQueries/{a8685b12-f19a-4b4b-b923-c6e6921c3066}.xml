@@ -12,6 +12,12 @@
         <row name="result" id="lab_warehouseitemid">
           <cell name="lab_name" width="300" />
           <cell name="createdon" width="125" />
+          <cell name="lab_sku" width="125" />
+          <cell name="lab_category" width="125" />
+          <cell name="lab_availablequantity" width="125" />
+          <cell name="lab_unitprice" width="125" />
+          <cell name="lab_locationid" width="125" />
+          <cell name="lab_reorderpoint" width="125" />
         </row>
       </grid>
     </layoutxml>
@@ -26,6 +32,12 @@
           <filter type="and">
             <condition attribute="statecode" operator="eq" value="0" />
           </filter>
+          <attribute name="lab_sku" />
+          <attribute name="lab_category" />
+          <attribute name="lab_availablequantity" />
+          <attribute name="lab_unitprice" />
+          <attribute name="lab_locationid" />
+          <attribute name="lab_reorderpoint" />
         </entity>
       </fetch>
     </fetchxml>

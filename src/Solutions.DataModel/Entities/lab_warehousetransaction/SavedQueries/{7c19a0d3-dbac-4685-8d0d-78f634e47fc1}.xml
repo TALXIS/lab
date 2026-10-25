@@ -12,6 +12,11 @@
         <row name="result" id="lab_warehousetransactionid">
           <cell name="lab_name" width="300" />
           <cell name="createdon" width="125" />
+          <cell name="lab_transactiontype" width="125" />
+          <cell name="lab_itemid" width="125" />
+          <cell name="lab_quantity" width="125" />
+          <cell name="lab_transactiondate" width="125" />
+          <cell name="lab_totalvalue" width="125" />
         </row>
       </grid>
     </layoutxml>
@@ -26,6 +31,11 @@
           <filter type="and">
             <condition attribute="statecode" operator="eq" value="0" />
           </filter>
+          <attribute name="lab_transactiontype" />
+          <attribute name="lab_itemid" />
+          <attribute name="lab_quantity" />
+          <attribute name="lab_transactiondate" />
+          <attribute name="lab_totalvalue" />
         </entity>
       </fetch>
     </fetchxml>
