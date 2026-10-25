@@ -9,7 +9,12 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
 if ($env:LAB_LOCAL_MODE) { Write-Info "LAB_LOCAL_MODE: skipped sign-in"; return }
-if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab-scripts/lab-signin.ps1 in your terminal."; exit 1 }
+# A sign-in needs a person at the keyboard. An agent's commands have no keyboard (stdin is
+# redirected), so only a sign-in that is actually needed stops here: tools that are already signed
+# in pass, and CP01 run by an agent completes once the person has signed in themselves.
+function Assert-Terminal {
+    if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab-scripts/lab-signin.ps1 in your terminal."; exit 1 }
+}
 
 # ── 1. GitHub ─────────────────────────────────────────────────────────────────────────────
 # Your own login - the GITHUB_TOKEN Codespaces provides can't manage rulesets or workflows.
@@ -17,6 +22,7 @@ if ([Console]::IsInputRedirected) { Write-Err "Signing in is up to you: run .lab
 Write-Step "Sign in 1/4 — GitHub"
 Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
 if (-not $env:GH_TOKEN -and -not (gh auth status 2>&1 | Select-String 'workflow')) {
+    Assert-Terminal
     # Piping input in makes gh print the link and code instead of waiting for Enter.
     '' | gh auth login -h github.com -p https -s workflow --web
 }
@@ -29,7 +35,7 @@ Write-Ok "GitHub: $(gh api user -q .login)"
 # One credential named "lab"; CP04 binds your Dev and Test environments to it.
 Write-Step "Sign in 2/4 — Power Platform"
 $health = (txc config auth get lab --check-token --format json 2>$null | ConvertFrom-Json).tokenHealth.status
-if (-not $health -or $health -eq 'failed') { txc config auth login --alias lab }
+if (-not $health -or $health -eq 'failed') { Assert-Terminal; txc config auth login --alias lab }
 $tenantId = (txc config auth get lab --format json | ConvertFrom-Json).tenantId
 Write-Ok "Power Platform: tenant $tenantId"
 
@@ -38,6 +44,7 @@ Write-Ok "Power Platform: tenant $tenantId"
 # Piping the output away also skips az's subscription picker - the lab only needs the tenant.
 Write-Step "Sign in 3/4 — Azure"
 if ((az account get-access-token --query tenant -o tsv 2>$null) -ne $tenantId) {
+    Assert-Terminal
     az login --tenant $tenantId --allow-no-subscriptions | Out-Null
 }
 $account = az account show --query user.name -o tsv
@@ -50,6 +57,7 @@ Write-Step "Sign in 4/4 — Power Apps"
 # Unlike txc and az, pa can't tell when no browser can open here (Codespaces, containers).
 $deviceCode = if ($IsLinux -and -not $env:DISPLAY) { '--device-code' }
 if (-not (pa auth status --json | ConvertFrom-Json).signedIn) {
+    Assert-Terminal
     pa auth login $deviceCode --account $account
 }
 Write-Ok "Power Apps: signed in"
