@@ -50,14 +50,10 @@ function QuickTransactionFlow({ mode }: { mode: Mode }) {
     );
   }
 
-  // A pick can't take more than is on hand; the server says so too, this just says it sooner
-  const max = mode === "pick" ? item.quantity : undefined;
-  const error =
-    quantity === null || quantity < 1
-      ? undefined
-      : max !== undefined && quantity > max
-        ? `Only ${max} on hand`
-        : undefined;
+  // Picking more than is on hand is for the server to refuse (its message shows below): the app
+  // doesn't compare stock itself (US-09, US-14).
+  const max: number | undefined = undefined;
+  const error: string | undefined = undefined;
   const valid = quantity !== null && quantity >= 1 && !error;
 
   const confirm = async () => {

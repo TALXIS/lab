@@ -144,6 +144,43 @@ Any design that satisfies the user stories is acceptable.
 | 1 | I open Locations | The screen loads | Each location is listed with its count of items |
 | 2 | I'm on Locations | I create a location with name, address and capacity | It appears in the list |
 
+### US-13 Start from the home screen
+
+**As a** warehouse worker on a phone, **I want** the app to open on the four things I do all day, **so that** each is a few taps away.
+
+| # | Given | When | Then |
+|---|---|---|---|
+| 1 | I open Warehouse Picking | The home screen loads | Four tiles: **Pick stock**, **Receive stock**, **Take inventory**, **Find item**; the header offers **Home**, **Items**, **Transactions**, **Locations** |
+| 2 | I'm on a quick-action screen | I tap the back arrow | I'm back on the home screen |
+
+### US-14 Pick stock from the home screen
+
+| # | Given | When | Then |
+|---|---|---|---|
+| 1 | I tap **Pick stock** | I search by name, SKU or barcode and tap an item | The item's name, SKU, location and quantity on hand are shown, with a quantity stepper |
+| 2 | I've chosen a quantity | I confirm | An **Outbound** transaction is saved through the same services and rules as US-07; a result screen shows what was picked and the new quantity, and offers to pick another |
+| 3 | I enter more than is on hand | I confirm | The app sends it; the server's refusal (US-09) is shown unchanged. The stepper doesn't cap at the stock |
+
+### US-15 Receive stock from the home screen
+
+| # | Given | When | Then |
+|---|---|---|---|
+| 1 | I tap **Receive stock** | I scan a barcode, or search and tap an item | The item is chosen; an unknown item can be created on the spot (US-10) |
+| 2 | I've chosen a quantity | I confirm | An **Inbound** transaction is saved and the result screen shows the new quantity |
+
+### US-16 Take inventory
+
+| # | Given | When | Then |
+|---|---|---|---|
+| 1 | I tap **Take inventory** and choose an item | I count what's on the shelf (tally up, or type the total) | The quantity on record stays hidden until I confirm, so it can't colour the count |
+| 2 | I confirm a count that differs from the record | | The difference is saved as an **Inbound** or **Outbound** "Stock count" transaction; the server settles the quantity. A count equal to the record saves nothing |
+
+### US-17 Find an item from the home screen
+
+| # | Given | When | Then |
+|---|---|---|---|
+| 1 | I tap **Find item** | I search by name, SKU or barcode and tap a result | The item's page opens with its quantity and location |
+
 ## Technical specification
 
 ### Solution and model-driven app
@@ -209,7 +246,12 @@ The low-stock highlight colour is `#FDE7E9`. Group headers and empty cells are n
 |---|---|
 | Project | `src/Apps.WarehousePicking`, in `WarehouseManagement.slnx`, referenced by `Solutions.UI` |
 | App | Display name **Warehouse Picking**, app name `warehousepicking` |
-| Stack | Vite, React, TypeScript, Power Apps SDK (`@microsoft/power-apps`). Start from the `pp-app-code` starter, which brings Fluent UI v9 and the TALXIS base controls; use them for lists and form fields |
+| Stack | Vite, React, TypeScript, Power Apps SDK (`@microsoft/power-apps`). Start from the `pp-app-code` starter, which brings Fluent UI v9 and the TALXIS base controls |
+| Screens | `/` home with the four quick-action tiles (US-13); `/pick`, `/receive`, `/inventory`, `/find` (US-14 to US-17); `/items` and `/items/:id` (US-06, US-07, US-08, US-10); `/transactions` (US-11); `/locations` (US-12) |
+| Layout | Phone-first. A header with **Home**, **Items**, **Transactions** and **Locations** (tabs on a wide screen). Each quick-action screen is one column of big touch targets with a back arrow and a title, one step at a time: choose the item, enter the quantity, confirm, see the result |
+| Controls | TALXIS base controls where they fit: `Grid` for the Items, Transactions and Locations lists on a wide screen (cards on a phone), `Form`/`useForm` for the record forms and dialogs, `Lookup` for lookup fields. Fluent UI v9 for everything else, including a quantity stepper (big +/−, or type the number) |
+| Lookup names | A record from a generated service carries a lookup as `_lab_locationid_value` (the id) only. To show the location's name, load the locations once and map the id to its `lab_name`; there is no `lab_locationidname` field |
+| Test hooks | CP14's browser tests find things by these `data-testid`s and names: tabs named **Home** and **Items**; tiles `tile-pick`, `tile-receive`, `tile-inventory`, `tile-find`; `pick-item-row` for an item in a chooser; `flow-confirm` and `flow-result` on the quick-action screens; on the item page `item-detail-qty`, `field-name`, `field-quantity`, `field-transactiontype`, `submit-transaction`; and for the barcode scan (specification 5) `scan-barcode-button`, `scan-ean-input`, `scan-lookup-button`, `scan-product-name`, `scan-link-button`, `linked-product-name` |
 | Data sources | `lab_warehouseitem`, `lab_warehousetransaction`, `lab_warehouselocation`, through generated typed services (for example `Lab_warehouseitemsService`) |
 | Local development | `npm run dev` → `http://localhost:5173` |
 
@@ -219,13 +261,13 @@ Rules that apply to every screen:
 - The only client-side validation is that required fields are filled. No stock comparison happens in the app.
 - A transaction created from an item's screen saves `lab_name`, `lab_quantity`, `lab_transactiontype`, `lab_transactiondate` (now) and binds `lab_itemid` to that item.
 - Server errors are shown to the user with the server's message unchanged.
-- Extra screens (for example a home screen with quick actions, or a stock count) are allowed. They follow these same rules and write through the same services, so the server still decides every stock movement.
+- The home screen's quick actions (US-13 to US-17) follow these same rules and write through the same services, so the server still decides every stock movement. The pick screen's quantity stepper doesn't stop at the stock on hand.
 
 ## Acceptance criteria
 
 - [ ] `dotnet build WarehouseManagement.slnx` succeeds, including the script bundle and the code app.
 - [ ] Every name in the technical specification matches.
-- [ ] US-01 to US-12 pass in Dev, verified with a System Administrator account.
+- [ ] US-01 to US-17 pass in Dev, verified with a System Administrator account.
 - [ ] No stock comparison exists in `Scripts.UI` or `Apps.WarehousePicking`.
 
 ## Design rationale
