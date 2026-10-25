@@ -1,6 +1,6 @@
-# Lab 3: User Interface
+# Lab 4: User Interface
 
-Depends on specifications [1](lab-1-data-model-and-security.md) and [2](lab-2-server-side-business-logic.md).
+Depends on specifications [1](lab-1-data-model.md), [2](lab-2-server-side-business-logic.md) and [3](lab-3-security.md).
 
 ## Scope
 
@@ -18,12 +18,11 @@ Neither interface decides whether a stock movement is allowed. That is the serve
 | Fixed: must match this specification | Open: left to the design |
 |---|---|
 | App, sitemap, view and web resource names | Form layout, tabs, sections and field order |
-| Form script and ribbon behaviour, including message text | Colours, typography and component library |
+| Form script and ribbon behaviour, including message text | Colours and typography. Component library (the starter's Fluent UI and TALXIS base controls are the default) |
 | Grid customization behaviour | Additional views, charts and dashboards |
 | Code app name, data sources and the outcomes in the user stories | Code app layout, navigation style and extra screens |
-| The test-hook contract (test ids and element ids) | How each hooked element looks |
 
-The browser scenarios in specification 5 exercise only the fixed parts. Any design that satisfies the user stories and passes those scenarios is acceptable.
+Any design that satisfies the user stories is acceptable.
 
 ## User stories: Warehouse app (manager)
 
@@ -210,7 +209,7 @@ The low-stock highlight colour is `#FDE7E9`. Group headers and empty cells are n
 |---|---|
 | Project | `src/Apps.WarehousePicking`, in `WarehouseManagement.slnx`, referenced by `Solutions.UI` |
 | App | Display name **Warehouse Picking**, app name `warehousepicking` |
-| Stack | Vite, React, TypeScript, Power Apps SDK (`@microsoft/power-apps`) |
+| Stack | Vite, React, TypeScript, Power Apps SDK (`@microsoft/power-apps`). Start from the `pp-app-code` starter, which brings Fluent UI v9 and the TALXIS base controls; use them for lists and form fields |
 | Data sources | `lab_warehouseitem`, `lab_warehousetransaction`, `lab_warehouselocation`, through generated typed services (for example `Lab_warehouseitemsService`) |
 | Local development | `npm run dev` → `http://localhost:5173` |
 
@@ -220,19 +219,7 @@ Rules that apply to every screen:
 - The only client-side validation is that required fields are filled. No stock comparison happens in the app.
 - A transaction created from an item's screen saves `lab_name`, `lab_quantity`, `lab_transactiontype`, `lab_transactiondate` (now) and binds `lab_itemid` to that item.
 - Server errors are shown to the user with the server's message unchanged.
-
-### Test-hook contract
-
-| Hook | Where | Purpose |
-|---|---|---|
-| `data-testid="warehouse-item-row"` | One per item on the items list; contains the item name and a link to its detail | Find and open an item |
-| `data-testid="item-detail-qty"` | Item detail | Quantity on hand as a plain integer, nothing else |
-| `data-testid="new-transaction-button"` | Item detail | Opens the new transaction form |
-| `id="txName"`, `id="txQuantity"` | Inputs in that form | Name and quantity |
-| `data-testid="tx-type-trigger"` | Type selector in that form | Opens options with `role=option` named **Inbound** and **Outbound** |
-| `data-testid="submit-transaction"` | That form | Saves |
-
-Specification 4 adds hooks for the barcode scan.
+- Extra screens (for example a home screen with quick actions, or a stock count) are allowed. They follow these same rules and write through the same services, so the server still decides every stock movement.
 
 ## Acceptance criteria
 

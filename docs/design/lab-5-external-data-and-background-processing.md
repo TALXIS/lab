@@ -1,6 +1,6 @@
-# Lab 4: External Data and Background Processing
+# Lab 5: External Data and Background Processing
 
-Depends on specifications 1 to 3.
+Depends on specifications 1 to 4.
 
 ## Scope
 
@@ -121,18 +121,7 @@ Selecting **Link to Item**:
 
 These are three separate operations with no rollback between them. If step 3 fails, steps 1 and 2 stand.
 
-A camera scan and a typed barcode follow the same path. The typed path must always be available, because devices without a camera, and automated tests, depend on it.
-
-### Test-hook contract (extends specification 3)
-
-| Hook | Purpose |
-|---|---|
-| `data-testid="scan-barcode-button"` | Opens the scan dialog |
-| `data-testid="scan-ean-input"` | Typed barcode entry |
-| `data-testid="scan-lookup-button"` | Looks up the typed barcode |
-| `data-testid="scan-product-name"` | The preview's product name, exactly as returned |
-| `data-testid="scan-link-button"` | Links the product to the item |
-| `data-testid="linked-product-name"` | On the item detail; contains the linked product's name |
+A camera scan and a typed barcode follow the same path. The typed path must always be available, because devices without a camera depend on it.
 
 The dialog's visual design is open.
 

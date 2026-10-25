@@ -121,7 +121,6 @@ Register the Product table as a code app data source alongside the existing 3, a
 ## Changes
 - add a Product data source to Apps.WarehousePicking (pp-app-code-data)
 - add OpenFoodFactsModel.ts / OpenFoodFactsService.ts and a dataSourcesInfo.ts entry for the connector
-- add @zxing/browser (camera barcode decoding) as a dependency
 ## Testing
 - npm run build succeeds in src/Apps.WarehousePicking
 '@
@@ -141,8 +140,10 @@ Save-Checkpoint -Id "cp11" -Message "Add barcode scan UI to the item detail page
 Add a "Scan Barcode" button to the item detail page. It opens a dialog that decodes a barcode with the device camera (or accepts one typed in manually), looks it up via the Open Food Facts connector, and on confirmation upserts a Product record (matched by EAN) and links it to the item.
 
 ## Changes
-- add components/BarcodeScanDialog.tsx
-- wire it into pages/warehouse-item-detail.tsx
+- add components/BarcodeScanDialog.tsx (built on the camera scanner and barcode helpers the phone screens already have)
+- wire it into the header of pages/WarehouseItemDetail.tsx
+- replace the Receive screen's do-nothing barcode lookup with Open Food Facts: a barcode that matches no item prefills the New item form with the product's name and links the new item to its Product record
+- linking a product also stores the barcode on the item, so the Receive screen finds it on later scans
 ## Testing
 - npm run build succeeds in src/Apps.WarehousePicking
 - manual: npm run dev, open an item, Scan Barcode, type a known EAN (e.g. 3017620422003), confirm the lookup preview and Link to Item

@@ -1,26 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
-import type { IScannerControls } from "@zxing/browser";
 import { __PASCAL___warehouseitemsService } from "@/generated/services/__PASCAL___warehouseitemsService";
-import { __PASCAL___productsService } from "@/generated/services/__PASCAL___productsService";
 import { OpenFoodFactsService } from "@/generated/services/OpenFoodFactsService";
 import type { Product } from "@/generated/models/OpenFoodFactsModel";
 import { getClient } from "@microsoft/power-apps/data";
 import { dataSourcesInfo } from "../../.power/schemas/appschemas/dataSourcesInfo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  Card,
+  Caption1,
   Dialog,
+  DialogActions,
+  DialogBody,
   DialogContent,
-  DialogHeader,
+  DialogSurface,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import { ScanLine, Loader2 } from "lucide-react";
-import { toBytes, bytesToDataUrl } from "@/utils/binary";
+  Field,
+  Spinner,
+  Subtitle2,
+} from "@fluentui/react-components";
+import { BarcodeScannerRegular } from "@fluentui/react-icons";
+import { TextField, usePcfContext } from "@talxis/base-controls";
+import { useBarcodeCamera } from "@/hooks/UseBarcodeCamera";
+import { useToast } from "@/hooks/use-toast";
+import { toBytes, bytesToDataUrl } from "@/utils/Binary";
+import { eanError } from "@/utils/Barcode";
+import { ensureProductRecord } from "@/utils/BarcodeLookup";
+import { servicePayload, serviceResult } from "@/utils/ServicePayload";
+import { useStyles } from "@/styles/BarcodeScanDialog.styles";
 
 type BarcodeScanDialogProps = {
   itemId: string;
@@ -35,8 +41,12 @@ type BarcodeScanDialogProps = {
 // test hook types into the scan-ean-input and clicks scan-lookup-button directly, skipping
 // the camera.
 export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }: BarcodeScanDialogProps) {
+  const styles = useStyles();
+  const toast = useToast();
+  const context = usePcfContext();
   const [open, setOpen] = useState(false);
   const [ean, setEan] = useState("");
+  const eanMessage = eanError(ean);
   const [looking, setLooking] = useState(false);
   const [linking, setLinking] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
@@ -49,46 +59,26 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   // A callback ref, not useRef: the decode effect must not start before the <video> is
   // actually mounted, and state (unlike a ref) retriggers the effect once it is.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
   // A camera decode and a manual lookup can resolve in either order - once one of them has
   // already produced a product, a late/stray camera decode (e.g. a misread off a bad frame)
   // must not silently overwrite it.
   const productFoundRef = useRef(false);
 
+  // A fresh scan starts every time the dialog opens
   useEffect(() => {
-    if (!open || !videoEl) return;
-    productFoundRef.current = false;
+    if (open) productFoundRef.current = false;
+  }, [open]);
 
-    // React's `muted` JSX attribute doesn't reliably set the underlying DOM property; some
-    // browsers require the property itself for autoplay to work.
-    videoEl.muted = true;
-
-    const reader = new BrowserMultiFormatReader();
-    let cancelled = false;
-
-    reader
-      .decodeFromVideoDevice(undefined, videoEl, (result, _err, controls) => {
-        controlsRef.current = controls;
-        if (cancelled || !result || productFoundRef.current) return;
-        const text = result.getText();
-        controls.stop();
-        setEan(text);
-        void handleEan(text);
-      })
-      .catch(() => {
-        // No camera available (headless CI, permission denied, no device) - not an error
-        // worth surfacing, the manual EAN input below is the fallback either way.
-      });
-
-    return () => {
-      cancelled = true;
-      controlsRef.current?.stop();
-      controlsRef.current = null;
-    };
-  }, [open, videoEl]);
+  // The camera (see use-barcode-camera: back camera, skips anything that isn't a plausible barcode,
+  // stops itself); with no camera the manual input below is the fallback either way
+  useBarcodeCamera(videoEl, open, (text) => {
+    if (productFoundRef.current) return;
+    setEan(text);
+    void handleEan(text);
+  });
 
   const handleEan = async (barcode: string) => {
-    if (!barcode) return;
+    if (!barcode || eanError(barcode)) return;
     setLooking(true);
     setProduct(null);
     setImgError(false);
@@ -144,45 +134,18 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
     if (!product || !ean) return;
     setLinking(true);
     try {
-      // No alternate key on EAN (see .lab-scripts/scaffold/15-product-table.ps1) - a plain
-      // filter-then-create instead of an upsert, so scanning the same barcode twice reuses
-      // the existing Product record rather than duplicating it.
-      const existing = await __PASCAL___productsService.getAll({
-        select: ["__PREFIX___productid"],
-        filter: `__PREFIX___ean eq '${ean}'`,
-        top: 1,
-      });
-      let productId = existing.data?.[0]?.__PREFIX___productid;
-
-      if (!productId) {
-        // createRecordAsync's response shape for the new record's id isn't reliable across
-        // hosts - re-query by the same EAN filter used above instead of trusting the create
-        // call's own return value.
-        await __PASCAL___productsService.create({
-          __PREFIX___name: product.name || ean,
-          __PREFIX___ean: ean,
-          __PREFIX___brand: product.brand,
-          __PREFIX___quantity: product.quantity,
-          __PREFIX___imageurl: product.imageUrl,
-          __PREFIX___lastsyncedon: new Date().toISOString(),
-        } as any);
-
-        const created = await __PASCAL___productsService.getAll({
-          select: ["__PREFIX___productid"],
-          filter: `__PREFIX___ean eq '${ean}'`,
-          top: 1,
-        });
-        productId = created.data?.[0]?.__PREFIX___productid;
-      }
+      const productId = await ensureProductRecord(ean, product);
 
       if (!productId) {
         toast.error("Could not resolve a Product record to link");
         return;
       }
 
-      await __PASCAL___warehouseitemsService.update(itemId, {
+      await serviceResult(__PASCAL___warehouseitemsService.update(itemId, servicePayload({
         "__PREFIX___productid@odata.bind": `/__PREFIX___products(${productId})`,
-      } as any);
+        // So the Receive screen finds this item by the same barcode next time
+        __PREFIX___barcode: ean,
+      })));
 
       if (imageBytes) {
         try {
@@ -227,94 +190,112 @@ export default function BarcodeScanDialog({ itemId, currentProductId, onLinked }
   return (
     <>
       <Button
-        variant="outline"
-        size="sm"
+        appearance="outline"
+        size="small"
+        icon={<BarcodeScannerRegular />}
         data-testid="scan-barcode-button"
         onClick={() => setOpen(true)}
       >
-        <ScanLine className="h-4 w-4 mr-2" />
         {currentProductId ? "Rescan Barcode" : "Scan Barcode"}
       </Button>
 
-      <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : resetAndClose())}>
-        <DialogContent>
-          <DialogHeader>
+      <Dialog open={open} onOpenChange={(_, data) => (data.open ? setOpen(true) : resetAndClose())}>
+        <DialogSurface>
+          <DialogBody>
             <DialogTitle>Scan Product Barcode</DialogTitle>
-          </DialogHeader>
 
-          <div className="space-y-4">
-            <video
-              ref={setVideoEl}
-              className="w-full rounded-md border bg-black aspect-video"
-              muted
-              autoPlay
-              playsInline
-            />
+            <DialogContent className={styles.content}>
+              <video
+                ref={setVideoEl}
+                className={styles.video}
+                muted
+                autoPlay
+                playsInline
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="scanEan">EAN / UPC barcode</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="scanEan"
-                  data-testid="scan-ean-input"
-                  value={ean}
-                  onChange={(e) => setEan(e.target.value)}
-                  placeholder="e.g. 3017620422003"
-                />
-                <Button
-                  type="button"
-                  data-testid="scan-lookup-button"
-                  disabled={!ean || looking}
-                  onClick={() => void handleEan(ean)}
-                >
-                  {looking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Look Up"}
-                </Button>
-              </div>
-            </div>
+              {/* The TextField only underlines its error in red; the message itself shows on the Field */}
+              <Field
+                label="EAN / UPC barcode"
+                validationState={eanMessage ? "error" : "none"}
+                validationMessage={eanMessage}
+              >
+                <div className={styles.eanRow}>
+                  <div className={styles.eanInput}>
+                    <TextField
+                      context={context}
+                      parameters={{
+                        value: { raw: ean, type: "SingleLine.Text", error: !!eanMessage, errorMessage: eanMessage },
+                        Placeholder: { raw: "e.g. 3017620422003" },
+                      }}
+                      onNotifyOutputChanged={(outputs) => setEan(outputs.value ?? "")}
+                      // The control reports its value on blur; mirror keystrokes too, so Look Up
+                      // enables while the barcode is still being typed
+                      onOverrideComponentProps={(props) => ({
+                        ...props,
+                        id: "scanEan",
+                        "data-testid": "scan-ean-input",
+                        onChange: (event, value) => {
+                          props.onChange?.(event, value);
+                          setEan(value ?? "");
+                        },
+                      })}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    appearance="primary"
+                    data-testid="scan-lookup-button"
+                    disabled={!ean || !!eanMessage || looking}
+                    onClick={() => void handleEan(ean)}
+                  >
+                    {looking ? <Spinner size="tiny" /> : "Look Up"}
+                  </Button>
+                </div>
+              </Field>
 
-            {product && (
-              <Card>
-                <CardContent className="pt-4 flex items-center gap-4">
+              {product && (
+                <Card className={styles.product}>
                   {imageLoading && (
-                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center shrink-0">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <div className={styles.imagePlaceholder}>
+                      <Spinner size="tiny" />
                     </div>
                   )}
                   {previewImageUrl && !imgError && (
                     <img
                       src={previewImageUrl}
                       alt={product.name ?? ean}
-                      className="h-16 w-16 object-contain rounded"
+                      className={styles.image}
                       onError={() => setImgError(true)}
                     />
                   )}
-                  <div>
-                    <div className="font-medium" data-testid="scan-product-name">
+                  <div className={styles.productText}>
+                    <Subtitle2 data-testid="scan-product-name">
                       {product.name ?? "Unknown product"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
+                    </Subtitle2>
+                    <Caption1 className={styles.muted}>
                       {[product.brand, product.quantity].filter(Boolean).join(" · ")}
-                    </div>
+                    </Caption1>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </Card>
+              )}
+            </DialogContent>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={resetAndClose}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              data-testid="scan-link-button"
-              disabled={!product || linking}
-              onClick={() => void linkProduct()}
-            >
-              {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Link to Item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+            <DialogActions>
+              <Button type="button" appearance="secondary" onClick={resetAndClose}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                appearance="primary"
+                data-testid="scan-link-button"
+                disabled={!product || linking}
+                onClick={() => void linkProduct()}
+              >
+                {linking ? <Spinner size="tiny" /> : "Link to Item"}
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
     </>
   );
