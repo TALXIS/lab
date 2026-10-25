@@ -36,8 +36,11 @@
       }
     }
   },
+  // 4 cores: the code app's Vite build, MSBuild, VS Code and Copilot share the machine, and on
+  // 2 cores the lab crawled and a build was killed. A free account's 120 core-hours a month
+  // still give about 30 hours on 4 cores.
   "hostRequirements": {
-    "cpus": 2,
-    "memory": "8gb"
+    "cpus": 4,
+    "memory": "16gb"
   }
 }
