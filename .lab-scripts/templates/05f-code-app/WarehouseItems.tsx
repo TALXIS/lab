@@ -18,6 +18,7 @@ import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/WarehouseItems.styles";
 import { servicePayload, serviceResult } from "@/utils/ServicePayload";
+import { errorText } from "@/utils/StockTransactions";
 import { toNumber } from "@/utils/RecordValues";
 
 const columns: IColumn[] = [
@@ -117,7 +118,7 @@ export default function WarehouseItemsPage() {
       toast.success("Item created successfully");
     },
     onError: (err) => {
-      toast.error("Failed to create item: " + String(err));
+      toast.error("Failed to create item: " + errorText(err));
     },
   });
 
@@ -131,7 +132,7 @@ export default function WarehouseItemsPage() {
 
       {error && (
         <MessageBar intent="error">
-          <MessageBarBody>Failed to load items: {String(error)}</MessageBarBody>
+          <MessageBarBody>Failed to load items: {errorText(error)}</MessageBarBody>
         </MessageBar>
       )}
 

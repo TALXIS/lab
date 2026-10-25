@@ -18,6 +18,7 @@ import type { FormField } from "@/components/RecordFormFields";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Transactions.styles";
 import { servicePayload, serviceResult } from "@/utils/ServicePayload";
+import { errorText } from "@/utils/StockTransactions";
 import { toNumber } from "@/utils/RecordValues";
 
 const transactionTypeMetadata = {
@@ -122,7 +123,7 @@ export default function TransactionsPage() {
       toast.success("Transaction created successfully");
     },
     onError: (err) => {
-      toast.error("Failed to create transaction: " + String(err));
+      toast.error("Failed to create transaction: " + errorText(err));
     },
   });
 
@@ -136,7 +137,7 @@ export default function TransactionsPage() {
 
       {error && (
         <MessageBar intent="error">
-          <MessageBarBody>Failed to load transactions: {String(error)}</MessageBarBody>
+          <MessageBarBody>Failed to load transactions: {errorText(error)}</MessageBarBody>
         </MessageBar>
       )}
 

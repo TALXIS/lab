@@ -18,6 +18,7 @@ import { statusOptions } from "@/utils/OptionSets";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/Locations.styles";
 import { servicePayload, serviceResult } from "@/utils/ServicePayload";
+import { errorText } from "@/utils/StockTransactions";
 import { toNumber } from "@/utils/RecordValues";
 
 const columns: IColumn[] = [
@@ -99,7 +100,7 @@ export default function LocationsPage() {
       toast.success("Location created successfully");
     },
     onError: (err) => {
-      toast.error("Failed to create location: " + String(err));
+      toast.error("Failed to create location: " + errorText(err));
     },
   });
 
@@ -113,7 +114,7 @@ export default function LocationsPage() {
 
       {error && (
         <MessageBar intent="error">
-          <MessageBarBody>Failed to load locations: {String(error)}</MessageBarBody>
+          <MessageBarBody>Failed to load locations: {errorText(error)}</MessageBarBody>
         </MessageBar>
       )}
 

@@ -22,6 +22,7 @@ import { RecordGrid } from "@/components/RecordGrid";
 import { useToast } from "@/hooks/use-toast";
 import { useStyles } from "@/styles/WarehouseItemDetail.styles";
 import { servicePayload, serviceResult } from "@/utils/ServicePayload";
+import { errorText } from "@/utils/StockTransactions";
 import { toNumber } from "@/utils/RecordValues";
 
 const transactionColumns: IColumn[] = [
@@ -164,7 +165,7 @@ export default function WarehouseItemDetailPage() {
       toast.success("Item saved");
     },
     onError: (err) => {
-      toast.error("Failed to save item: " + String(err));
+      toast.error("Failed to save item: " + errorText(err));
     },
   });
 
@@ -185,7 +186,7 @@ export default function WarehouseItemDetailPage() {
       toast.success("Transaction created");
     },
     onError: (err) => {
-      toast.error("Failed to create transaction: " + String(err));
+      toast.error("Failed to create transaction: " + errorText(err));
     },
   });
 
