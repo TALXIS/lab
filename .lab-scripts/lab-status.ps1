@@ -34,10 +34,10 @@ $checkpoints = @(
     @{ Id = "cp03"; Keys = @("repo", "mainRulesetId", "mainRulesetName") }
     @{ Id = "cp04"; Keys = @("devEnvUrl", "testEnvUrl", "devProfile", "testProfile") }
     @{ Id = "cp05"; Keys = @("appId") }
-    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded") }
+    @{ Id = "cp06"; Keys = @("packageDeployerScaffolded", "dataModelScaffolded", "columnsScaffolded") }
     @{ Id = "cp07"; Keys = @("pluginsScaffolded", "logicSolutionScaffolded") }
     @{ Id = "cp08"; Keys = @("securityScaffolded") }
-    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded") }
+    @{ Id = "cp09"; Keys = @("uiSolutionScaffolded", "sitemapScaffolded", "formsScaffolded", "viewsSubgridsScaffolded", "formScriptsScaffolded", "ribbonScaffolded", "gridControlScaffolded") }
     @{ Id = "cp10"; Keys = @() }
     # CP11 saves four times under one tag; its scaffold flags tell which of the four steps landed.
     @{ Id = "cp11"; Keys = @("productTableScaffolded", "connectorScaffolded", "productDataSourceScaffolded", "connectorDataSourceScaffolded", "barcodeScanUiScaffolded") }

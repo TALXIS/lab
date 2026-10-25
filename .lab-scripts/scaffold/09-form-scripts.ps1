@@ -13,6 +13,12 @@
 
 Write-Host "`n── Scripts.UI ──" -ForegroundColor Cyan
 
+# Skipped once it has fully run, so re-running the checkpoint doesn't create everything again.
+if (Get-LabValue 'formScriptsScaffolded') {
+    Write-Host "  ✓ Scripts.UI and form event handlers (exist)" -ForegroundColor Green
+    return
+}
+
 txc workspace component create pp-script-library `
     --param "LibraryName=main" `
     --param "PublisherPrefix=$PublisherPrefix" `
@@ -95,3 +101,6 @@ txc workspace component create pp-form-event-handler `
     --param "AttributeName=${PublisherPrefix}_quantity"
 
 Write-Host "  ✓ Event handler: warehousetransaction quantity → onChange" -ForegroundColor Green
+
+# Set last: a re-run after a partial failure retries the whole script.
+Set-LabValue 'formScriptsScaffolded' $true
