@@ -1,0 +1,7 @@
+<Project Sdk="TALXIS.DevKit.Build.Sdk/1.11.1">
+  <PropertyGroup>
+    <ProjectType>ScriptLibrary</ProjectType>
+    <ScriptLibraryName>lab_main</ScriptLibraryName>
+    <TypeScriptDir>$(MSBuildProjectDirectory)</TypeScriptDir>
+  </PropertyGroup>
+</Project>

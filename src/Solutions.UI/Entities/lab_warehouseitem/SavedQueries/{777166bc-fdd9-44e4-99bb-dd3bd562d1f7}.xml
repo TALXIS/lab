@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries>
+  <savedquery>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>0</isdefault>
+    <savedqueryid>{777166bc-fdd9-44e4-99bb-dd3bd562d1f7}</savedqueryid>
+    <queryapi>
+    </queryapi>
+    <layoutxml>
+      <grid name="resultset" jump="name" select="1" preview="0" icon="1">
+        <row name="result" id="lab_warehouseitemid">
+          <cell name="lab_name" width="125" />
+          <cell name="lab_reorderpoint" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>64</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lab_warehouseitem">
+          <attribute name="lab_name" />
+          <order attribute="lab_name" descending="false" />
+          <attribute name="lab_reorderpoint" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Warehouse Items Lookup View" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
