@@ -84,15 +84,10 @@ if ($env:LAB_LOCAL_MODE) {
     Write-Ok "Connectors.OpenFoodFacts already deployed to Dev"
 } else {
     # Like step 1: txc builds the project in Debug (unmanaged, like the rest of Dev) and imports the
-    # solution zip it produced. txc before 1.22.2 refused connector solutions over a packager line
-    # that is a false positive for connectors (TALXIS/tools-cli#235).
+    # solution zip it produced.
     Write-Info "Deploying Solutions.Connectors to Dev environment ($devUrl)..."
     txc env sln import (Join-Path $LabRoot "src/Solutions.Connectors") --wait --profile $devProfile
-    if ($LASTEXITCODE -ne 0) {
-        Write-Err "Solutions.Connectors import to Dev failed"
-        Write-Info "  If txc said 'Refusing to import' after an ECConnector line, it is older than 1.22.2: run 'dotnet tool update -g TALXIS.CLI', then re-run this checkpoint."
-        exit 1
-    }
+    if ($LASTEXITCODE -ne 0) { Write-Err "Solutions.Connectors import to Dev failed"; exit 1 }
     Set-LabValue 'connectorDeployed' $true
     Write-Ok "Connectors.OpenFoodFacts deployed to Dev - try it in the maker portal's connector test pane before wiring it into the code app."
 }
