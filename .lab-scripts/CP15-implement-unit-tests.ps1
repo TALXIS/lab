@@ -35,15 +35,19 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/14-tests-unit.ps1"
 
-    # ── Run script tests — dotnet test drives Jest via the csproj's RunJest target ──
+    # ── Run script tests with Jest ──
     $bundle = "src/Scripts.UI/build/$($PublisherPrefix)_main.js"
     if (-not (Test-Path $bundle)) {
         Write-Info "Building Scripts.UI (the bundle is the web resource under test)..."
         dotnet build src/Scripts.UI/Scripts.UI.csproj --nologo --verbosity quiet
         if ($LASTEXITCODE -ne 0) { Write-Err "Scripts.UI build failed"; exit 1 }
     }
-    Write-Info "Running script unit tests (dotnet test → Jest)..."
-    dotnet test src/Tests.Scripts/Tests.Scripts.csproj --nologo
+    # Not 'dotnet test': on .NET 10 it no longer reaches the csproj's RunJest target, so it ran no
+    # test and still succeeded. jest.config.js finds the Xrm mock and the bundle by itself, and Jest
+    # fails when it finds no tests.
+    Write-Info "Running script unit tests (Jest)..."
+    Push-Location src/Tests.Scripts
+    try { npx jest --runInBand --ci } finally { Pop-Location }
     if ($LASTEXITCODE -ne 0) { Write-Err "Script tests failed"; exit 1 }
     Write-Ok "Script unit tests passed"
 

@@ -15,7 +15,14 @@ jobs:
           dotnet-version: '10.x'
       - name: Plugin unit tests (FakeXrmEasy)
         run: dotnet test src/Tests.Plugins/Tests.Plugins.csproj --configuration Release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Build script bundle
         run: dotnet build src/Scripts.UI/Scripts.UI.csproj --configuration Release
-      - name: Script unit tests (Jest via dotnet test)
-        run: dotnet test src/Tests.Scripts/Tests.Scripts.csproj --configuration Release
+      # Jest directly: 'dotnet test' on .NET 10 skips the project's RunJest target and passes with no tests.
+      - name: Script unit tests (Jest)
+        working-directory: src/Tests.Scripts
+        run: |
+          npm ci
+          npx jest --runInBand --ci
