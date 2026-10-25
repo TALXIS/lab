@@ -24,6 +24,11 @@ if (Get-LabValue 'formsScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 # Generate GUIDs for forms (reused in tabs, cells, controls, subgrids, event handlers)
 $warehouselocationFormGuid = [guid]::NewGuid()
 $warehouseitemFormGuid = [guid]::NewGuid()
@@ -827,6 +832,8 @@ txc workspace component create pp-form-control `
     --param "EntitySchemaName=${PublisherPrefix}_warehousetransaction"
 
 Write-Host "  ✓ warehousetransaction controls: name, itemid, quantity, transactiontype, transactiondate, notes, totalvalue, isprocessed, processedby, referencenumber" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'warehouselocationFormGuid' "$warehouselocationFormGuid"

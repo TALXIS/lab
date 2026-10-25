@@ -19,6 +19,11 @@ if (Get-LabValue 'formScriptsScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 txc workspace component create pp-script-library `
     --param "LibraryName=main" `
     --param "PublisherPrefix=$PublisherPrefix" `
@@ -101,6 +106,8 @@ txc workspace component create pp-form-event-handler `
     --param "AttributeName=${PublisherPrefix}_quantity"
 
 Write-Host "  ✓ Event handler: warehousetransaction quantity → onChange" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'formScriptsScaffolded' $true

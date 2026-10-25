@@ -16,6 +16,11 @@ if (Get-LabValue 'sitemapScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 txc workspace component create pp-sitemap-area `
     --output "src/Solutions.UI" `
     --param "AreaTitle=Warehouse" `
@@ -61,6 +66,8 @@ txc workspace component create pp-sitemap-subarea `
     --param "AppName=${PublisherPrefix}_warehouseapp"
 
 Write-Host "  ✓ Sitemap subarea: Warehouse Transactions" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'sitemapScaffolded' $true

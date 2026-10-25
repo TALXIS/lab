@@ -32,6 +32,11 @@ if (Get-LabValue 'gridControlScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                     Recover generated artifacts (form, view)
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -142,6 +147,8 @@ txc workspace control attach `
 
 if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; throw "txc workspace control attach failed" }
 Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'gridControlScaffolded' $true

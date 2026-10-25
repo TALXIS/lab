@@ -21,6 +21,11 @@ if (Get-LabValue 'ribbonScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                      Ribbon Button: Check Stock Levels (warehouseitem form)
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -48,6 +53,8 @@ txc workspace component create pp-ribbon-command-parameter `
     --param "ButtonLogicalName=checkstocklevels"
 
 Write-Host "  ✓ Ribbon command parameter: PrimaryControl" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'ribbonScaffolded' $true

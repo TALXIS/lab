@@ -17,6 +17,11 @@ if (Get-LabValue 'columnsScaffolded') {
     return
 }
 
+# A failed txc call must stop the script: the flag set at the end means "fully done",
+# and a re-run skips the script once it is set.
+$prevNativeErrorPref = $PSNativeCommandUseErrorActionPreference
+$PSNativeCommandUseErrorActionPreference = $true
+
 # --- warehouseitem columns ---
 
 txc workspace component create pp-entity-attribute `
@@ -301,6 +306,8 @@ txc workspace component create pp-entity-attribute `
     --param "DisplayName=Reference Number"
 
 Write-Host "  ✓ warehousetransaction.referencenumber (Text)" -ForegroundColor Green
+
+$PSNativeCommandUseErrorActionPreference = $prevNativeErrorPref
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'columnsScaffolded' $true
