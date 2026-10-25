@@ -3,5 +3,8 @@
   "randomIdentifier": 6277,
   "slnxName": "WarehouseManagement",
   "publisherName": "TALXISLab",
-  "publisherPrefix": "lab"
+  "publisherPrefix": "lab",
+  "repo": "randymersch/lab",
+  "mainRulesetId": 25828746,
+  "mainRulesetName": "lab-main-protection"
 }
