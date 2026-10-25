@@ -22,7 +22,8 @@ Two roles in `Solutions.Security`. Depth **Basic** means records the user owns; 
 |---|---|---|---|
 | `lab_warehouselocation` | Read | Global | Global |
 | | Create, Write, Delete | None | Global |
-| | Append, Append To | None | Global |
+| | Append | None | Global |
+| | Append To | Global | Global |
 | `lab_warehouseitem` | Read, Create, Write | Global | Global |
 | | Delete | None | Global |
 | | Append, Append To | Global | Global |
@@ -30,7 +31,8 @@ Two roles in `Solutions.Security`. Depth **Basic** means records the user owns; 
 | | Create | **Basic** | Global |
 | | Write | **Basic** | Global |
 | | Delete | None | Global |
-| | Append, Append To | None | Global |
+| | Append | **Basic** | Global |
+| | Append To | None | Global |
 
 Role names are exactly **Warehouse worker** and **Warehouse manager**.
 
@@ -39,6 +41,7 @@ Rationale:
 - **Create on transactions** is the pick itself; a worker records every pick and restock as a transaction.
 - **Write (Global) on items** is required because the stock rule updates the item as the user who saved the transaction.
 - **Write (Basic) on transactions** lets workers correct only their own transactions.
+- **Append (Basic) on transactions, Append To (Global) on locations.** Setting a lookup needs Append on the record that holds it and Append To on the record it points to. Without them a worker can't fill in a transaction's Item, or an item's Location.
 - **No Delete for workers.** Stock history is never removed by a worker.
 
 ## Acceptance criteria
