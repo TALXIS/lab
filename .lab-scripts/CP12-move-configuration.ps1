@@ -83,22 +83,12 @@ try {
 
         $autoMode = $env:LAB_AUTO -eq '1'
         if (-not $autoMode) {
-            Write-Host ""
-            Write-Host "╔══════════════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-            Write-Host "║  Real data is seeded — try the Warehouse Picking code app live!      ║" -ForegroundColor Yellow
-            Write-Host "║                                                                      ║" -ForegroundColor Yellow
-            Write-Host "║    cd src/Apps.WarehousePicking && npm install && npm run dev        ║" -ForegroundColor Yellow
-            Write-Host "║                                                                      ║" -ForegroundColor Yellow
-            Write-Host "║  Open the printed local URL, sign in, then try:                      ║" -ForegroundColor Yellow
-            Write-Host "║   1. Open Office Laptop (qty 100) and create an Outbound transaction ║" -ForegroundColor Yellow
-            Write-Host "║      for a small quantity — succeeds, qty on hand updates live.      ║" -ForegroundColor Yellow
-            Write-Host "║   2. Request more than 5 for Wireless Mouse (qty 5) — watch the live  ║" -ForegroundColor Yellow
-            Write-Host "║      ValidateWarehouseTransactionPlugin rejection surface as a toast. ║" -ForegroundColor Yellow
-            Write-Host "║                                                                      ║" -ForegroundColor Yellow
-            Write-Host "║  Press ENTER when you're done trying it...                           ║" -ForegroundColor Yellow
-            Write-Host "╚══════════════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
-            Write-Host ""
-            Read-Host "Press ENTER to continue"
+            Write-Ok "Real data is seeded in Dev — try the Warehouse Picking code app live."
+            Write-Info "In a second terminal: cd src/Apps.WarehousePicking && npm install && npm run dev"
+            Write-Info "  Open the local URL it prints and sign in, then try:"
+            Write-Info "  1. Open Office Laptop (qty 100) and create an Outbound transaction for a small quantity - it succeeds and the quantity on hand updates."
+            Write-Info "  2. Request more than 5 of Wireless Mouse (qty 5) - ValidateWarehouseTransactionPlugin rejects it and the app shows the error as a toast."
+            Read-Host "`n  Try it in your browser, then press Enter to continue"
         }
     }
 } finally { Pop-Location }

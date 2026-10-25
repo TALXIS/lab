@@ -61,7 +61,7 @@ foreach ($cp in $checkpoints) {
         Write-Warn2 "$($cp.Id) — tagged, but lab-state is missing: $($missingKeys -join ', ') (re-run it)"
         if (-not $firstMissing) { $firstMissing = $cp.Id }
     } else {
-        Write-Info "$($cp.Id) — not run"
+        Write-Info "○ $($cp.Id) — not run"
         if (-not $firstMissing) { $firstMissing = $cp.Id }
     }
 }
@@ -106,7 +106,11 @@ foreach ($profileKey in @('devProfile', 'testProfile')) {
 # ── 3. What's next ───────────────────────────────────────────────────────────────────────
 Write-Host "`n── Next ──" -ForegroundColor Cyan
 if ($firstMissing) {
-    Write-Info "Next checkpoint to run: .lab-scripts/$firstMissing-*.ps1 (re-running is safe - it only adds what is missing)"
+    # Checkpoint ids are lower case, the scripts upper case (CP12-…), and Linux paths are case-sensitive:
+    # name the actual file so the command can be copied as is.
+    $nextScript = Get-ChildItem $PSScriptRoot -Filter "$($firstMissing.ToUpper())-*.ps1" | Select-Object -First 1
+    $nextPath = if ($nextScript) { ".lab-scripts/$($nextScript.Name)" } else { ".lab-scripts/$($firstMissing.ToUpper())-*.ps1" }
+    Write-Info "Next checkpoint to run: $nextPath (re-running is safe - it only adds what is missing)"
 } else {
     Write-Ok "All checkpoints done."
 }
