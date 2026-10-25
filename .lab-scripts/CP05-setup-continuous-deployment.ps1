@@ -106,7 +106,16 @@ if (-not $existing) {
     $buId = (Invoke-RestMethod "$dvBase/api/data/v9.2/businessunits?`$filter=parentbusinessunitid eq null&`$select=businessunitid" -Headers $dvHeaders).value[0].businessunitid
     # Create application user
     $body = @{ applicationid=$appId; 'businessunitid@odata.bind'="/businessunits($buId)" } | ConvertTo-Json
-    Invoke-RestMethod "$dvBase/api/data/v9.2/systemusers" -Method Post -Headers $dvHeaders -Body $body | Out-Null
+    # A brand-new app registration takes a minute or two to reach Dataverse, which until then
+    # answers "We didn't find that application ID" (0x8004f510). Wait for it instead of failing.
+    for ($attempt = 1; ; $attempt++) {
+        try { Invoke-RestMethod "$dvBase/api/data/v9.2/systemusers" -Method Post -Headers $dvHeaders -Body $body | Out-Null; break }
+        catch {
+            if ("$_" -notmatch '0x8004f510' -or $attempt -ge 24) { throw }
+            if ($attempt -eq 1) { Write-Info "Waiting for the new app registration to reach the Test environment (up to 4 minutes)..." }
+            Start-Sleep 10
+        }
+    }
     $existing = (Invoke-RestMethod "$dvBase/api/data/v9.2/systemusers?`$filter=applicationid eq $appId&`$select=systemuserid" -Headers $dvHeaders).value
 }
 $userId = $existing[0].systemuserid
