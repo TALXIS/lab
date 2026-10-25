@@ -35,5 +35,6 @@ Save the checkpoint after each part, not only at the end, with these messages:
 4. After the barcode scan: `.lab-scripts/save-checkpoint.ps1 -Id cp11 -Step 4 -Message "Add barcode scan UI to the item detail page"`
 
 Each save opens its own pull request on the fork and waits. Give me the PR link and tell me to
-review it and merge it on GitHub (Files changed, Merge pull request, Confirm), then carry on with the
+review it and merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows
+"press Enter to merge", also tell me to press Enter there once I've merged. Then carry on with the
 next part. Don't merge it yourself.

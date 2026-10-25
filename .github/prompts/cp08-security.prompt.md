@@ -12,7 +12,8 @@ the role names and the table names exactly as the spec has them.
 
 Follow the privilege depths in the spec exactly: a worker's access is deliberately
 narrower than a manager's, and the depth matters as much as the privilege itself.
-Put the roles in their own Dataverse solution.
+Put the roles in their own Dataverse solution, and create them with the `pp-security-role` template
+under these exact names: CP10 opens `src/Solutions.Security/Roles/Warehouse worker.xml`.
 
 If you get stuck, .lab-scripts/CP08-implement-security.ps1 does this same step
 and is a good example to read.
@@ -23,4 +24,5 @@ reports. Then save the checkpoint:
 `.lab-scripts/save-checkpoint.ps1 -Id cp08 -Message "Add warehouse security roles and entity privileges"`
 
 It opens a pull request on the fork and waits. Give me the PR link and tell me to review it and
-merge it on GitHub (Files changed, Merge pull request, Confirm). Don't merge it yourself.
+merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows "press Enter
+to merge", also tell me to press Enter there once I've merged. Don't merge it yourself.

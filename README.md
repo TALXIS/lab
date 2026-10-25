@@ -4,6 +4,8 @@ environments, trunk-based development, PR quality gates and GitHub Actions deplo
 
 ## Start here
 
+> **Workshop attendees:** open [LAB-GUIDE.md](LAB-GUIDE.md) (right-click → **Open Preview**) and follow it with Copilot Chat. This README is the reference for running the scripts yourself.
+
 1. **Fork** this repo to your personal GitHub account (top-right **Fork** button).
 2. On **your fork** (`https://github.com/<you>/lab`), click **Code → Codespaces → Create codespace on main**.
    All tools are preinstalled. The Codespace and free GitHub Actions minutes run on *your* account.
@@ -11,6 +13,7 @@ environments, trunk-based development, PR quality gates and GitHub Actions deplo
    > ⚠️ Don't use a "one-click" badge that points at `TALXIS/lab` — that starts the Codespace on the parent repo, where you can't push and your free minutes won't apply. Always launch from your own fork.
 
 3. Wait for VS Code to load in the browser. Open a terminal (Ctrl+`) — you're in PowerShell.
+   The tools update for about a minute after the Codespace opens; wait until the terminal goes quiet.
 4. Work through the **Checkpoints** below, starting with `CP01`. CP01 is the only one you
    truly must run first — it's the step that signs you in. After that, every checkpoint
    checks its own prerequisites (both `.lab-state.json` and this machine's live CLI
@@ -19,8 +22,7 @@ environments, trunk-based development, PR quality gates and GitHub Actions deplo
    something it needs, it tells you exactly which earlier checkpoint to (re-)run. Not sure
    where you left off? Run `.lab-scripts/lab-status.ps1` for a summary.
 
-> 💡 Each checkpoint script is fully commented — open it, read what it does, then run it.
-> You can run them step-by-step (`F8` on selected lines) or all at once.
+> 💡 Each checkpoint script is fully commented — open it, read what it does, then run the whole file.
 
 ### Signing in (CP01)
 
@@ -41,7 +43,9 @@ Checkpoints don't push straight to `main` — they teach the real ALM loop. Each
 2. Opens a **Pull Request** and prints the link.
 3. **Pauses** — open the PR in your browser, review the diff and the running build check.
 4. Press **Enter** to continue: it squash-merges, deletes the branch, and moves the `cpNN` tag
-   to the merged commit for rollback. Once CP13 makes the build check required, the merge
+   to the merged commit for rollback. You can also click **Merge pull request** on GitHub first;
+   pressing Enter afterwards just finishes the save. (Run without a terminal, for example by an
+   agent, the script says "Review and merge the PR on GitHub" and carries on once you merge.) Once CP13 makes the build check required, the merge
    waits for it to pass — before that, GitHub accepts the merge right away, which is the point
    CP13 makes.
 

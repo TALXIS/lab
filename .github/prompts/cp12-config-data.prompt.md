@@ -21,7 +21,7 @@ When you're done, run `dotnet build WarehouseManagement.slnx` and fix anything i
 reports. Then load the records into my Dev environment, so I can try the picking app with
 real data:
 
-`txc data pkg import src/Packages.Main/Data --profile dev`
+`txc data pkg import src/Packages.Main/Data --profile dev --allow-production`
 
 If the import fails, tell me what it said and wait. Don't retry it with other options.
 
@@ -32,4 +32,5 @@ environment's id (the `environmentId` that `txc env list` shows for it). Without
 `.lab-scripts/save-checkpoint.ps1 -Id cp12 -Message "Add configuration data package for environment promotion"`
 
 It opens a pull request on the fork and waits. Give me the PR link and tell me to review it and
-merge it on GitHub (Files changed, Merge pull request, Confirm). Don't merge it yourself.
+merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows "press Enter
+to merge", also tell me to press Enter there once I've merged. Don't merge it yourself.

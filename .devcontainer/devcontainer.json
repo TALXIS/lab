@@ -8,7 +8,7 @@
   },
   "customizations": {
     "codespaces": {
-      "openFiles": ["README.md"]
+      "openFiles": ["LAB-GUIDE.md"]
     },
     "vscode": {
       "extensions": ["ms-vscode.powershell"],
