@@ -6,5 +6,13 @@
   "publisherPrefix": "lab",
   "repo": "TomProkop/lab-test",
   "mainRulesetId": 25825549,
-  "mainRulesetName": "lab-main-protection"
+  "mainRulesetName": "lab-main-protection",
+  "devEnvUrl": "https://wm-dev-2128.crm.dynamics.com",
+  "devEnvId": "3c483a51-d932-e14e-a940-73c68e45e00a",
+  "devOrgId": "ba1116f4-7dd0-f111-be85-6045bd050536",
+  "devProfile": "dev",
+  "testEnvUrl": "https://wm-test-2128.crm.dynamics.com",
+  "testEnvId": "c9b356ff-072d-e402-abc1-b7eb2fa75118",
+  "testOrgId": "b91116f4-7dd0-f111-be85-6045bd050516",
+  "testProfile": "test"
 }
