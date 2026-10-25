@@ -1,0 +1,54 @@
+<entities>
+  <entity name="lab_warehouselocation" displayname="Warehouse Location"
+          primaryidfield="lab_warehouselocationid" primarynamefield="lab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Location" name="lab_warehouselocationid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="lab_name" type="string" customfield="true" />
+      <field displayname="Address" name="lab_address" type="string" customfield="true" />
+      <field displayname="Capacity" name="lab_capacity" type="number" customfield="true" />
+      <field displayname="Is Active" name="lab_isactive" type="bool" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="lab_product" displayname="Product"
+          primaryidfield="lab_productid" primarynamefield="lab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Product" name="lab_productid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="lab_name" type="string" customfield="true" />
+      <field displayname="EAN" name="lab_ean" type="string" customfield="true" />
+      <field displayname="Brand" name="lab_brand" type="string" customfield="true" />
+      <field displayname="Quantity" name="lab_quantity" type="string" customfield="true" />
+      <field displayname="Image URL" name="lab_imageurl" type="string" customfield="true" />
+      <field displayname="Last Synced On" name="lab_lastsyncedon" type="datetime" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="lab_warehouseitem" displayname="Warehouse Item"
+          primaryidfield="lab_warehouseitemid" primarynamefield="lab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Item" name="lab_warehouseitemid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="lab_name" type="string" customfield="true" />
+      <field displayname="SKU" name="lab_sku" type="string" customfield="true" />
+      <field displayname="Available Quantity" name="lab_availablequantity" type="number" customfield="true" />
+      <field displayname="Category" name="lab_category" type="optionsetvalue" customfield="true" />
+      <field displayname="Is Perishable" name="lab_isperishable" type="bool" customfield="true" />
+      <field displayname="Unit Price" name="lab_unitprice" type="money" customfield="true" />
+      <field displayname="Reorder Point" name="lab_reorderpoint" type="number" customfield="true" />
+      <field displayname="Location" name="lab_locationid" type="entityreference" lookupType="lab_warehouselocation" customfield="true" />
+      <field displayname="Product" name="lab_productid" type="entityreference" lookupType="lab_product" customfield="true" />
+    </fields>
+  </entity>
+  <entity name="lab_warehousetransaction" displayname="Warehouse Transaction"
+          primaryidfield="lab_warehousetransactionid" primarynamefield="lab_name"
+          disableplugins="true">
+    <fields>
+      <field displayname="Warehouse Transaction" name="lab_warehousetransactionid" type="guid" primaryKey="true" />
+      <field displayname="Name" name="lab_name" type="string" customfield="true" />
+      <field displayname="Item" name="lab_itemid" type="entityreference" lookupType="lab_warehouseitem" customfield="true" />
+      <field displayname="Quantity" name="lab_quantity" type="number" customfield="true" />
+      <field displayname="Transaction Type" name="lab_transactiontype" type="optionsetvalue" customfield="true" />
+      <field displayname="Reference Number" name="lab_referencenumber" type="string" customfield="true" />
+    </fields>
+  </entity>
+</entities>
