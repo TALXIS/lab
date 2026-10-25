@@ -38,12 +38,16 @@ cd ../..
 
 Write-Host "  ✓ ProjectReference: Plugins.Warehouse → Solutions.Logic" -ForegroundColor Green
 
-
 # ──────────────────────────────────────────────────────────────────────────────────────────
 #                              Build Logic Solution
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-# Generates PluginAssemblies/ and SdkMessageProcessingSteps/ from the referenced plugin project.
+# No pp-plugin-assembly call: pp-solution defaults to GeneratePluginAssembly=true, so this
+# first build registers the referenced plugin assembly in the solution itself. Scaffolding
+# the assembly by hand as well is only for GeneratePluginAssembly=false; after a generated
+# build it adds a second PluginAssembly root and the next build fails (#83).
+# No pp-plugin-assembly-step calls either: the same build generates SdkMessageProcessingSteps/
+# from the [PluginStep] attributes on the plugin classes.
 Write-Host "  → Building Solutions.Logic..." -ForegroundColor White
 cd src/Solutions.Logic
 dotnet build --nologo --verbosity quiet
