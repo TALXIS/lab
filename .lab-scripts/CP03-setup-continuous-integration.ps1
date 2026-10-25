@@ -110,4 +110,4 @@ Files changed shows only .lab-state.json: the ruleset itself lives in GitHub, un
 ## Testing
 - ruleset creation succeeds and main is configured to accept changes through PRs
 '@
-Write-Host "`nNext: .lab-scripts/CP04-setup-runtime.ps1" -ForegroundColor Cyan
+Write-Next cp04

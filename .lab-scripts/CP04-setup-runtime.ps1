@@ -146,4 +146,4 @@ Create dedicated Dev and Test Dataverse environments so the warehouse app can be
 ## Testing
 - environment provisioning completes and txc can target the dev profile locally
 '@
-Write-Host "`nNext: .lab-scripts/CP05-setup-continuous-deployment.ps1" -ForegroundColor Cyan
+Write-Next cp05

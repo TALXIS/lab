@@ -100,4 +100,4 @@ Files changed shows only .lab-state.json: the sign-ins live on this machine, not
 ## Testing
 - tool checks pass; authenticated sessions are ready for subsequent scripts
 '@
-Write-Host "`nNext: .lab-scripts/CP02-create-repository-layout.ps1" -ForegroundColor Cyan
+Write-Next cp02
