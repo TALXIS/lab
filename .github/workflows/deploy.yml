@@ -1,0 +1,41 @@
+name: deploy
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    branches: [main]
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: drop
+          path: ./drop
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install txc
+        run: dotnet tool install --global TALXIS.CLI
+
+      - name: Configure txc WIF auth
+        env:
+          AZURE_CLIENT_ID: d1a899e9-caf7-4c0b-a2a8-268ac9976f73
+          AZURE_TENANT_ID: 957a313a-971b-4add-b513-038b581bc3e7
+          DATAVERSE_TEST_URL: https://wm-test-6277.crm.dynamics.com
+        run: |
+          txc config auth add-federated --alias ci --tenant $AZURE_TENANT_ID --application-id $AZURE_CLIENT_ID
+          txc config connection create test --provider Dataverse --url $DATAVERSE_TEST_URL
+          txc config profile create --name ci --auth ci --connection test
+
+      - name: Import TALXIS Grid control package
+        run: txc env pkg import TALXIS.Controls.Grid.Package --profile ci
+
+      - name: Deploy package to Test environment
+        run: txc env pkg import ./drop/Packages.Main.pdpkg.zip --profile ci
+
