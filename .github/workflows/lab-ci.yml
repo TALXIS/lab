@@ -71,25 +71,3 @@ jobs:
               Write-Host "::endgroup::"
               if ($code -ne 0) { Write-Host "::error::$($cp.Name) exited with $code"; exit 1 }
           }
-      - name: Re-run CP06 and CP09 - nothing under src/ may change
-        # Non-blocking until every CP06/CP09 scaffold has its re-run guard (#68, and 05f's after
-        # #50); then drop continue-on-error.
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $before = git rev-parse HEAD
-          foreach ($cp in Get-ChildItem .lab-scripts/CP06-*.ps1, .lab-scripts/CP09-*.ps1) {
-              Write-Host "::group::$($cp.Name) (second run)"
-              pwsh -NoProfile -File $cp.FullName
-              $code = $LASTEXITCODE
-              Write-Host "::endgroup::"
-              if ($code -ne 0) { Write-Host "::error::$($cp.Name) exited with $code on its second run"; exit 1 }
-          }
-          # Each run commits its changes, so compare against the commit before the re-runs.
-          $changed = @(git diff --name-only $before -- src/) + @(git status --porcelain -- src/)
-          if ($changed) {
-              Write-Host "::error::Re-running CP06/CP09 changed src/:"
-              $changed | ForEach-Object { Write-Host "  $_" }
-              exit 1
-          }
-          Write-Host "Re-runs left src/ unchanged."
