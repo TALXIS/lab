@@ -161,6 +161,9 @@ foreach ($file in @(
     @{ Template = "RecordDetailForm.tsx";      Target = "components/RecordDetailForm.tsx" },
     @{ Template = "RecordDetailForm.styles.ts"; Target = "styles/RecordDetailForm.styles.ts" },
     @{ Template = "main.tsx";                  Target = "main.tsx" },
+    # Base controls' icon font, served by the app itself: the code app CSP blocks Microsoft's font CDN
+    @{ Template = "FabricConfig.ts";           Target = "utils/FabricConfig.ts" },
+    @{ Template = "vite.config.ts";            Target = "../vite.config.ts" },
     @{ Template = "RecordLookup.tsx";          Target = "components/RecordLookup.tsx" },
     @{ Template = "UsePickItems.ts"; Target = "hooks/UsePickItems.ts" },
     @{ Template = "StockTransactions.ts"; Target = "utils/StockTransactions.ts" },
