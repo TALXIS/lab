@@ -12,6 +12,9 @@
         <row name="result" id="lab_warehouselocationid">
           <cell name="lab_name" width="300" />
           <cell name="createdon" width="125" />
+          <cell name="lab_address" width="125" />
+          <cell name="lab_capacity" width="125" />
+          <cell name="lab_isactive" width="125" />
         </row>
       </grid>
     </layoutxml>
@@ -26,6 +29,9 @@
           <filter type="and">
             <condition attribute="statecode" operator="eq" value="0" />
           </filter>
+          <attribute name="lab_address" />
+          <attribute name="lab_capacity" />
+          <attribute name="lab_isactive" />
         </entity>
       </fetch>
     </fetchxml>

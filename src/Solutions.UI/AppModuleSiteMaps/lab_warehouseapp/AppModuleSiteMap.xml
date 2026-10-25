@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<AppModuleSiteMap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SiteMapUniqueName>lab_warehouseapp</SiteMapUniqueName>
+  <EnableCollapsibleGroups>False</EnableCollapsibleGroups>
+  <ShowHome>True</ShowHome>
+  <ShowPinned>True</ShowPinned>
+  <ShowRecents>True</ShowRecents>
+  <SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="area_c37830c8" ResourceId="SitemapDesigner.Warehouse" DescriptionResourceId="SitemapDesigner.Warehouse" ShowGroups="true" IntroducedVersion="7.0.0.0">
+      <Titles>
+        <Title LCID="1033" Title="Warehouse" />
+      </Titles>
+      <Group Id="group_0d3d3592" ResourceId="SitemapDesigner.Management" DescriptionResourceId="SitemapDesigner.Management" IntroducedVersion="7.0.0.0" IsProfile="false" ToolTipResourseId="SitemapDesigner.Unknown">
+        <Titles>
+          <Title LCID="1033" Title="Management" />
+        </Titles>
+        <SubArea Id="subarea_40e0a3ff" Icon="/_imgs/imagestrips/transparent_spacer.gif" Entity="lab_warehouselocation" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
+          <Titles>
+            <Title LCID="1033" Title="Warehouse Locations" />
+          </Titles>
+        </SubArea>
+        <SubArea Id="subarea_4513eba8" Icon="/_imgs/imagestrips/transparent_spacer.gif" Entity="lab_warehouseitem" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
+          <Titles>
+            <Title LCID="1033" Title="Warehouse Items" />
+          </Titles>
+        </SubArea>
+        <SubArea Id="subarea_b8247073" Icon="/_imgs/imagestrips/transparent_spacer.gif" Entity="lab_warehousetransaction" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA">
+          <Titles>
+            <Title LCID="1033" Title="Warehouse Transactions" />
+          </Titles>
+        </SubArea>
+      </Group>
+    </Area>
+  </SiteMap>
+  <LocalizedNames>
+    <LocalizedName description="Warehouse Management" languagecode="1033" />
+  </LocalizedNames>
+</AppModuleSiteMap>
