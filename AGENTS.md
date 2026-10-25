@@ -35,6 +35,9 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   minutes is still running: wait, don't start it again.
 - A checkpoint that fails is safe to run again: it skips what's already done. If it fails the same
   way twice, show the person the error and wait.
+- `playwright-cli` can open a page in a browser for you (`playwright-cli --help`). Use it only when
+  the person explicitly asks you to check something in a browser, never on your own. Signing in in
+  that browser is up to them: never ask for or type their password.
 - Read `.lab-scripts/` as working examples, but don't edit it.
 - Use the `txc` discovery commands to scaffold, not `dotnet new`.
 - Ignore the build warning that PDPackage targets aren't verified against the .NET SDK.
