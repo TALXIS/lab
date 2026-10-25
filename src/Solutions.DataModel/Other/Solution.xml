@@ -83,6 +83,7 @@
       <RootComponent type="1" schemaName="lab_warehouselocation" behavior="0" />
       <RootComponent type="1" schemaName="lab_warehouseitem" behavior="0" />
       <RootComponent type="1" schemaName="lab_warehousetransaction" behavior="0" />
+      <RootComponent type="1" schemaName="lab_product" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>
