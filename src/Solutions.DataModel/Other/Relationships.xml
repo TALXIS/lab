@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <EntityRelationship Name="lab_lab_warehouselocation_lab_warehouseitem_locationid" />
+  <EntityRelationship Name="lab_lab_warehouseitem_lab_warehousetransaction_itemid" />
+</EntityRelationships>
