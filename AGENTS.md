@@ -25,7 +25,8 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   the merge on GitHub instead of for a key press, and finish by themselves within a minute of the
   merge. If one is waiting at `press Enter to merge` anyway, tell the person to merge on GitHub, and
   only once they say they have, press Enter in that terminal: it sees the merge and finishes. Don't
-  start a waiting script again.
+  start a waiting script again, and don't edit any file while one is waiting: wait for `✓ Merged + tagged`
+  first, or the next save fails with "Could not fast-forward main" (re-running it fixes that).
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
 - To run a setup checkpoint (CP01–CP05, CP10, CP13–CP15), run its script from `.lab-scripts/`;
   `lab-status.ps1` says which is next. Pass on any link or code it prints, and wait for the person.
