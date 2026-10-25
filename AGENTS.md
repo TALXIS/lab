@@ -5,8 +5,9 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
 - When the person asks you to sign them in, run `.lab-scripts/lab-signin.ps1` in the terminal
   and walk them through it one tool at a time: tell them which link to open and which code
   to enter, then wait until they're done. Never start a sign-in on your own.
-- A sign-in prints a link and a code and waits for the person: pass both on and wait. If the
-  script instead stops with `Signing in is up to you` (your terminal has no keyboard), ask the
+- Run `lab-signin.ps1` without `$null |`, so the sign-ins can run. A sign-in prints a link and a
+  code and waits for the person: pass both on and wait. If the script instead stops with
+  `Signing in is up to you` (your terminal has no keyboard), ask the
   person to run `.lab-scripts/lab-signin.ps1` in their own terminal (Ctrl+`) and pass on what it
   prints the same way. Afterwards run the checkpoint again: signed-in tools pass.
 - Don't commit, push or merge yourself, and don't deploy unless a prompt tells you to. Save a finished
@@ -17,10 +18,12 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
 - Checkpoint scripts and `save-checkpoint.ps1` open a PR and then wait until it's merged, so they
   don't finish until the person merges. Run them in the background and read the terminal output
   every 20 seconds or so. As soon as `PR opened:` or `Reusing the open PR:` appears, give the person
-  that link; don't wait for the command to finish first. Once they've merged, the script finishes by
-  itself within a minute, whether it said `press Enter here to merge` or `Review and merge the PR on
-  GitHub`. Never press Enter in it yourself (that would merge), and don't start it again while it's
-  waiting.
+  that link; don't wait for the command to finish first. Start them with their input redirected
+  (`$null | pwsh -NoProfile -File .lab-scripts/CP02-create-repository-layout.ps1`), so they wait for
+  the merge on GitHub instead of for a key press, and finish by themselves within a minute of the
+  merge. If one is waiting at `press Enter to merge` anyway, tell the person to merge on GitHub, and
+  only once they say they have, press Enter in that terminal: it sees the merge and finishes. Don't
+  start a waiting script again.
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
 - To run a setup checkpoint (CP01–CP05, CP10, CP13–CP15), run its script from `.lab-scripts/`;
   `lab-status.ps1` says which is next. Pass on any link or code it prints, and wait for the person.
