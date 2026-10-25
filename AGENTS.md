@@ -35,6 +35,11 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   unless they ask for the script.
 - CP10, and CP12 when run as a script, wait for a key press, so ask the person to run them in their
   own terminal.
+- A build that ends with `exited with code 143` or `Terminated` during the code app's `vite build`
+  ran out of memory. Don't retry: tell the person their Codespace needs the 4-core machine type
+  (LAB-GUIDE's last table says how).
+- The build checkpoints are long. Keep going until the prompt's list is complete; if you have to
+  stop, say exactly what is still missing.
 - Scaffolding is slow: a `txc` call takes about 5 seconds, CP09 makes about a hundred of them, and
   `dotnet build` with the code app takes 2 to 3 minutes. A command that prints nothing for a few
   minutes is still running: wait, don't start it again.
