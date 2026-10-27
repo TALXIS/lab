@@ -49,7 +49,15 @@ Copilot builds the app with the TALXIS skills. Ask it:
 
 > Hey Copilot, which skills are loaded and available?
 
-You should see TALXIS skills such as data-model, backend, security, frontend and deploy. If you don't, tell a facilitator before you go on.
+You should see TALXIS skills such as data-model, backend, security, frontend and deploy.
+
+If you don't, type this in the chat box and press Enter, then ask again:
+
+```
+/plugin enable implement@talxis
+```
+
+This happens most often after a Codespace stopped and you opened it again: Copilot Chat starts without the plugin, and a new chat doesn't fix it. If the skills still aren't there, tell a facilitator before you go on.
 
 ## Part 1: Set up the project
 
@@ -158,6 +166,6 @@ That's the end of the guided lab. **Finished early?** CP14 and CP15 add automate
 | CP04 can't create an environment | Your account may not be allowed to, or it already has 3 Developer environments (the limit per user; CP04 creates 2, and one the facilitators made for you counts too). Delete one you no longer need in the [Power Platform admin center](https://admin.powerplatform.microsoft.com/environments), or ask a facilitator |
 | CP05 fails with "We didn't find that application ID" | The new app registration hasn't reached Dataverse yet. Wait a minute and run CP05 again |
 | A script stopped halfway | Run it again. Scripts pick up where they left off |
-| Your Codespace stopped (idle too long) | Open it again from your fork (**Code → Codespaces**), wait until the terminal goes quiet, then ask *Where am I in the lab?* and run that checkpoint again. Your files and progress are kept. If a sign-in is gone, ask *Sign me in* |
+| Your Codespace stopped (idle too long) | Open it again from your fork (**Code → Codespaces**), wait until the terminal goes quiet, then ask *Where am I in the lab?* and run that checkpoint again. Your files and progress are kept. If a sign-in is gone, ask *Sign me in*. If Copilot no longer lists the TALXIS skills, type `/plugin enable implement@talxis` in the chat ([details](#check-that-copilot-has-its-skills)) |
 
 More detail is in the [README](README.md): the [full checkpoint list](README.md#checkpoints), [checkpoint tags](README.md#checkpoint-tags) and [resuming on another machine](README.md#resuming-on-a-different-machine).

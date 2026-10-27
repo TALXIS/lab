@@ -14,6 +14,11 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   prints the same way. Afterwards run the checkpoint again: signed-in tools pass.
 - Don't commit, push or merge yourself, and don't deploy unless a prompt tells you to. Save a finished
   checkpoint only with `.lab-scripts/save-checkpoint.ps1`, as the prompt says.
+- The TALXIS skills (data-model, backend, security, frontend, deploy, test, init) come from the
+  `implement@talxis` plugin. After a Codespace restarts, Copilot Chat sometimes starts without
+  them. If a prompt asks you to use a TALXIS skill and it isn't in your skill list, don't carry on
+  from memory: read `~/.copilot/installed-plugins/talxis/implement/skills/<name>/SKILL.md` and
+  follow it, and tell the person they can type `/plugin enable implement@talxis` in the chat to get the skills back.
 - The person may be new to Git, so explain in plain words.
 - When a script prints a PR link, give it to the person with the three clicks (Files changed,
   Merge pull request, Confirm) and wait. Never merge it yourself.
