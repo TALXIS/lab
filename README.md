@@ -76,6 +76,7 @@ PR left open by an interrupted run is picked up again instead of duplicated.
 | 13 | `CP13-extend-branch-policies-build-checks.ps1` | Require build check on PRs |
 | 14 | `CP14-automate-ui-testing.ps1` | BDD UI test project + (manual) test workflow |
 | 15 | `CP15-implement-unit-tests.ps1` | Plugin (FakeXrmEasy) + script (Jest) unit tests |
+| 16 | `CP16-implement-background-flow.ps1` | Cloud flow on a recurrence trigger, bound to a Dataverse connection reference |
 
 Run a checkpoint:
 
