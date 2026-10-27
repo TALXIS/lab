@@ -6,6 +6,8 @@
   "features": {
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
+  // Runs after the image's own start step has updated the plugin. See the script for why.
+  "postStartCommand": "bash .devcontainer/mirror-skills.sh",
   "customizations": {
     // The first screen LAB-GUIDE.md describes: the guide rendered on the left, Copilot Chat on the
     // right, and the specs in docs/design opening as readable pages.
