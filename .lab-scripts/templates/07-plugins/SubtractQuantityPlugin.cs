@@ -1,9 +1,12 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using TALXIS.DevKit.Build.Dataverse.Plugin;
 
 namespace Plugins.Warehouse
 {
+    // Post-operation runs after the write but inside the transaction, so the stock update commits or rolls back with the record.
+    [PluginStep("Create", "__PREFIX___warehousetransaction", PluginStage.PostOperation)]
     public class SubtractQuantityPlugin : PluginBase
     {
         public SubtractQuantityPlugin(string unsecureConfiguration, string secureConfiguration)

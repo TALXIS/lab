@@ -5,12 +5,16 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Server-side logic: a plugin project (validates transactions, subtracts stock) and the
-# Logic solution that registers the SDK message processing steps. Plugins are C#, compiled
-# by dotnet build and packaged for deployment.
+# Logic solution that carries the plugin assembly and its SDK message processing steps.
+# Plugins are C#, compiled by dotnet build and packaged for deployment.
 #
-# Note the split: Plugins.Warehouse holds the code, Solutions.Logic holds the registration.
-# The assembly is a build artifact; where and when it runs is Dataverse configuration, and
-# each belongs to its own project.
+# Note the split: Plugins.Warehouse holds the code and declares where and when it runs
+# (the [PluginStep] attribute), Solutions.Logic holds the registration the build generates
+# from it. The assembly is a build artifact, so each belongs to its own project.
+#
+# The steps themselves are declared in code: each plugin class carries a [PluginStep]
+# attribute (message, table, stage), and dotnet build of Solutions.Logic generates the
+# SdkMessageProcessingSteps XML from it. Change the attribute, rebuild, commit the XML.
 #
 # Stage choice matters: ValidateWarehouseTransaction runs in Pre-validation - before the
 # database transaction starts - the cheapest place to reject bad input with an
@@ -41,7 +45,7 @@ Introduce server-side inventory logic so warehouse transactions are validated an
 ## Changes
 - add src/Plugins.Warehouse with validation and quantity update plugins
 - add src/Solutions.Logic, which references the plugin project; the build registers the assembly
-- register pre-validation and post-operation steps for transaction creation
+- declare pre-validation and post-operation steps for transaction creation with [PluginStep] attributes, generated into the logic solution on build
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the new plugin and logic projects
 '@
