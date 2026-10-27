@@ -5,12 +5,12 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Server-side logic: a plugin project (validates transactions, subtracts stock) and the
-# Logic solution that registers the SDK message processing steps. Plugins are C#, compiled
-# by dotnet build and packaged for deployment.
+# Logic solution that carries the plugin assembly and its SDK message processing steps.
+# Plugins are C#, compiled by dotnet build and packaged for deployment.
 #
-# Note the split: Plugins.Warehouse holds the code, Solutions.Logic holds the registration.
-# The assembly is a build artifact; where and when it runs is Dataverse configuration, and
-# each belongs to its own project.
+# Note the split: Plugins.Warehouse holds the code and declares where and when it runs
+# (the [PluginStep] attribute), Solutions.Logic holds the registration the build generates
+# from it. The assembly is a build artifact, so each belongs to its own project.
 #
 # The steps themselves are declared in code: each plugin class carries a [PluginStep]
 # attribute (message, table, stage), and dotnet build of Solutions.Logic generates the
