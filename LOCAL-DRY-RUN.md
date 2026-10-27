@@ -23,6 +23,10 @@ docker run -it --rm \
 does on every start. Git identity and branch state are handled by the scripts themselves —
 nothing to set up first.
 
+CP17 and CP18 only scaffold agent definitions into the repo, so they need no infrastructure.
+CP18's lookup of the deployed code app's URL is skipped in local mode; its agent file gets a
+placeholder instead.
+
 ## If your network intercepts HTTPS
 
 Behind a corporate or sandboxed proxy that intercepts TLS, `dotnet` and the Playwright

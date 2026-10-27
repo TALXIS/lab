@@ -27,8 +27,9 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
   only once they say they have, press Enter in that terminal: it sees the merge and finishes. Don't
   start a waiting script again.
 - `.lab-scripts/lab-status.ps1` shows where the lab left off.
-- To run a setup checkpoint (CP01–CP05, CP10, CP13–CP15), run its script from `.lab-scripts/`;
-  `lab-status.ps1` says which is next. Pass on any link or code it prints, and wait for the person.
+- To run a setup checkpoint (CP01–CP05, CP10, CP13–CP15, and the optional CP17 and CP18), run its
+  script from `.lab-scripts/`; `lab-status.ps1` says which is next. Pass on any link or code it
+  prints, and wait for the person.
 - When the next checkpoint is a build checkpoint (CP06–CP09, CP11, CP12), don't run its script: tell
   the person which command to type (`/cp06-data-model`, `/cp07-backend`, `/cp08-security`,
   `/cp09a-model-driven-app` then `/cp09b-code-app`, `/cp11-external-data`, `/cp12-config-data`),

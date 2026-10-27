@@ -48,6 +48,8 @@ $Global:LabCheckpoints = @(
     @{ Id = "cp13"; Keys = @("mainRulesetId") }
     @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
     @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
+    @{ Id = "cp17"; Keys = @("testPlannerScaffolded") }
+    @{ Id = "cp18"; Keys = @("testExplorerScaffolded") }
 )
 
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
