@@ -131,7 +131,7 @@ If the Local Play page stays blank or can't load the app (this can happen when t
 
 **CP13** makes the build check required. From now on a pull request can only merge after its build shows a green ✓.
 
-That's the end of the guided lab. **Finished early?** CP14 and CP15 add automated tests: ask Copilot to run checkpoint 14, then 15. They're optional and not covered by this guide, and the CP14 browser tests expect the picking app the CP09 script builds, so they may fail against one Copilot built.
+That's the end of the guided lab. **Finished early?** CP14 and CP15 add automated tests: ask Copilot to run checkpoint 14, then 15. They're optional and not covered by this guide, and the CP14 browser tests look for the test ids listed in the Lab 4 spec, so a picking app that kept them passes whichever way it was built.
 
 ## If Copilot gets stuck
 
