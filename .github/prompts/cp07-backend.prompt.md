@@ -18,6 +18,7 @@ stage from the spec's step registrations: building the logic solution registers 
 assembly and generates the steps. Don't scaffold `pp-plugin-assembly` or
 `pp-plugin-assembly-step` as well: a second assembly registration makes the next build
 fail, and a second step makes the plugin run twice.
+<!-- Remove this warning once a released txc ships the corrected docs (TALXIS/tools-cli#227, #231). -->
 
 If you get stuck, .lab-scripts/CP07-implement-backend.ps1 does this same step
 and is a good example to read.
