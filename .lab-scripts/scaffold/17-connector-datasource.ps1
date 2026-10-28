@@ -190,10 +190,10 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
 
     $connectorSchemaName = "${PublisherPrefix}_connectorsopenfoodfacts"
     if ($env:LAB_LOCAL_MODE) {
-        Write-Info "LAB_LOCAL_MODE: skipped — would look the connector up with 'pa connector list',"
-        Write-Info "  run 'pa connection create --connector <id>' and 'pa app add data-source --connector"
-        Write-Info "  <id> --connection-id <connection>' from src/Apps.WarehousePicking to bind a real"
-        Write-Info "  Dev connection into power.config.json."
+        Write-Info "LAB_LOCAL_MODE: skipped — would look the connector up with 'txc environment connector list',"
+        Write-Info "  run 'txc environment connection create --connector $connectorSchemaName' and 'pa app add"
+        Write-Info "  data-source --connector <id> --connection-id <connection>' from src/Apps.WarehousePicking"
+        Write-Info "  to bind a real Dev connection into power.config.json."
     } else {
         # Non-interactive pa (an agent, an unattended run) refuses without --environment-id.
         $environmentId = Resolve-DevEnvironmentId
@@ -201,51 +201,31 @@ if (-not (Get-LabValue 'connectorDataSourceScaffolded')) {
 
         Push-Location $appRoot
         try {
-            # The connectivity API does not know the connector by its Dataverse schema name
-            # ($connectorSchemaName): it addresses custom connectors by a generated id built from
-            # the hex-escaped display name plus a suffix, e.g. shared_lab-5fopen-20food-20facts-5f7e99...
-            # That suffix cannot be derived locally, so look it up.
+            # The code app addresses the connector by its environment-specific apiId (the
+            # hex-escaped display name plus a generated suffix, e.g. shared_lab-5fopen-20food-20facts-5f7e99...),
+            # which cannot be derived locally; txc maps the stable logical name to it.
             Write-Info "Resolving the connector's id..."
-            $connectorListJson = pa connector list --environment-id $environmentId --search "Open Food Facts" --json
-            if ($LASTEXITCODE -ne 0) {
-                # Lab state is a cache: if the stored environment id is stale, look it up again once.
-                $environmentId = Resolve-DevEnvironmentId -Refresh
-                Write-Warn2 "Retrying with the environment id resolved from the tenant: $environmentId"
-                $connectorListJson = pa connector list --environment-id $environmentId --search "Open Food Facts" --json
-                if ($LASTEXITCODE -ne 0) { throw "pa connector list failed for environment $environmentId" }
-            }
-            $connectorApiName = (ConvertFrom-PaJson $connectorListJson).items |
-                Where-Object { $_.displayName -eq "Open Food Facts" } |
-                Select-Object -First 1 -ExpandProperty name
+            $connectors = txc environment connector list --filter "Open Food Facts" --profile $devProfile --format json |
+                Out-String | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0) { throw "txc environment connector list failed" }
+            $connectorApiName = @($connectors) | Where-Object { $_.logicalName -eq $connectorSchemaName } |
+                Select-Object -First 1 -ExpandProperty apiId
             if (-not $connectorApiName) {
                 throw "The 'Open Food Facts' connector is not in this environment. Deploy Solutions.Connectors (CP11 step 2) before wiring it into the app."
             }
-            Write-Ok "Connector id: $connectorApiName (Dataverse schema name is $connectorSchemaName)"
+            Write-Ok "Connector id: $connectorApiName (logical name $connectorSchemaName)"
 
-            # Each run of CP11 should bind one connection, not create another - but the stored one
-            # may have been deleted in the maker portal, so confirm it is still there.
-            $connectionId = Get-LabValue 'openFoodFactsConnectionId'
-            if ($connectionId) {
-                $connectionsJson = pa connection list --environment-id $environmentId --search "Open Food Facts" --json
-                # A failed listing proves nothing: stop rather than create a duplicate connection.
-                if ($LASTEXITCODE -ne 0) { throw "pa connection list failed, so connection $connectionId could not be checked" }
-                $known = @((ConvertFrom-PaJson $connectionsJson).items | Where-Object { $_.connectionId -eq $connectionId -or $_.id -eq $connectionId -or $_.name -eq $connectionId })
-                if ($known.Count -eq 0) {
-                    Write-Warn2 "Connection $connectionId from lab state no longer exists - creating a new one"
-                    $connectionId = $null
-                }
+            # Idempotent by connector and display name: a re-run finds the connection it created
+            # rather than adding another, and replaces one deleted in the maker portal.
+            Write-Info "Creating a connection to the Open Food Facts connector..."
+            $created = txc environment connection create --connector $connectorSchemaName --display-name "Open Food Facts" `
+                --profile $devProfile --format json | Out-String | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or -not $created.connectionId) {
+                throw "txc environment connection create failed: $($created.status) $($created.statusMessage)"
             }
-            if ($connectionId) {
-                Write-Ok "Connection exists: $connectionId"
-            } else {
-                Write-Info "Creating a connection to the Open Food Facts connector..."
-                $connectionJson = pa connection create --environment-id $environmentId --connector $connectorApiName --display-name "Open Food Facts" --json
-                if ($LASTEXITCODE -ne 0) { throw "pa connection create failed" }
-                $connectionId = (ConvertFrom-PaJson $connectionJson).connectionId
-                if (-not $connectionId) { throw "Could not parse connectionId from 'pa connection create' output" }
-                Set-LabValue 'openFoodFactsConnectionId' $connectionId
-                Write-Ok "Connection created: $connectionId"
-            }
+            $connectionId = $created.connectionId
+            Set-LabValue 'openFoodFactsConnectionId' $connectionId
+            Write-Ok "Connection $($created.status): $connectionId"
 
             Write-Info "Adding the connector as a data source..."
             pa app add data-source --environment-id $environmentId --connector $connectorApiName --connection-id $connectionId
