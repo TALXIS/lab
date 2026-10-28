@@ -12,9 +12,10 @@
 # checkpoint asks the Dev environment for the real contract of the two Dataverse operations
 # the flow uses - that is how an agent should author flows too.
 #
-# Step 2 deploys to Dev and binds the connection reference to a connection created with
-# 'pa connection create', then turns the flow on. The connection is the one piece that
-# never lives in source: it is a signed-in account in one environment.
+# Step 2 deploys to Dev, creates the Dataverse connection and binds the connection
+# reference to it with txc, checks through that connection that the column the flow writes
+# exists, and turns the flow on. The connection is the one piece that never lives in
+# source: it is a signed-in account in one environment.
 #
 # Run:  .lab-scripts/CP16-implement-background-flow.ps1
 # ──────────────────────────────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ if ($env:LAB_LOCAL_MODE) {
     # UpdateRecord is "Upsert a row" in this connector; the plain update is UpdateOnlyRecord.
     foreach ($operation in "ListRecords", "UpdateOnlyRecord") {
         Write-Info "Operation contract from Dev: $operation"
-        txc environment connector operation get --connector $dataverseConnector --operation $operation --profile $devProfile --format text
+        txc environment connector operation get $dataverseConnector $operation --profile $devProfile --format text
         if ($LASTEXITCODE -ne 0) { Write-Err "Connector discovery failed for $operation"; exit 1 }
     }
 }
@@ -60,70 +61,67 @@ Add a Power Automate cloud flow that runs every 5 minutes without a user and kee
 - dotnet build --nologo --verbosity quiet passes from the repository root
 '@
 
-Write-Step "CP16: Background flow (step 2: deploy, bind the connection, turn the flow on)"
+Write-Step "CP16: Background flow (step 2: deploy, connect, turn the flow on)"
 
 if ($env:LAB_LOCAL_MODE) {
-    Write-Info "LAB_LOCAL_MODE: skipped, would publish Packages.Main, run 'txc env pkg import' to"
-    Write-Info "  Dev ($devUrl), create a Dataverse connection with 'pa connection create',"
+    Write-Info "LAB_LOCAL_MODE: skipped, would import Solutions.DataModel and Solutions.Logic to"
+    Write-Info "  Dev ($devUrl), create a Dataverse connection with 'txc environment connection create',"
     Write-Info "  bind $connectionReference to it and turn the flow on."
     exit 0
 }
 
-Push-Location $LabRoot
-try {
-    dotnet publish "src/Packages.Main/Packages.Main.csproj" -c Release --nologo --verbosity quiet
-    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet publish failed"; exit 1 }
-    $pdpkg = Get-ChildItem "src/Packages.Main/bin/Release" -Filter "*.pdpkg.zip" -Recurse | Select-Object -First 1
-    if (-not $pdpkg) { Write-Err "Packages.Main.pdpkg.zip not found after publish"; exit 1 }
+# Same-version solutions: 'txc env sln import' updates them, where a package re-import would
+# be skipped by Package Deployer. DataModel first: the flow filters on its new column.
+foreach ($solution in "Solutions.DataModel", "Solutions.Logic") {
+    Write-Info "Importing $solution to Dev ($devUrl)..."
+    txc env sln import (Join-Path $LabRoot "src/$solution") --wait --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "$solution import to Dev failed"; exit 1 }
+}
+Write-Ok "Deployed - the flow can't run until its connection reference is bound"
 
-    Write-Info "Deploying $($pdpkg.Name) to Dev ($devUrl)..."
-    txc env pkg import $pdpkg.FullName --profile $devProfile
-    if ($LASTEXITCODE -ne 0) { Write-Err "Package import to Dev failed"; exit 1 }
-    Write-Ok "Deployed - the flow can't run until its connection reference is bound"
+# Idempotent by connector and display name: a re-run finds the connection it created.
+Write-Info "Creating the Dataverse connection (signs in as you, silently)..."
+$created = txc environment connection create --connector $dataverseConnector --display-name "Microsoft Dataverse" `
+    --profile $devProfile --format json | Out-String | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or -not $created.connectionId) {
+    Write-Err "Creating the Dataverse connection failed: $($created.status) $($created.statusMessage)"
+    if ($created.consentLink) { Write-Info "Finish the sign-in here, then run this checkpoint again: $($created.consentLink)" }
+    exit 1
+}
+Write-Ok "Dataverse connection: $($created.connectionId) ($($created.status))"
 
-    $connectionId = Get-LabValue 'dataverseConnectionId'
-    if (-not $connectionId) {
-        # pa resolves the environment from power.config.json, so it runs from the code app.
-        Write-Info "pa opens a browser window to sign in to Microsoft Dataverse:"
-        Write-Info "  keep Authentication Type = Oauth, click Create, then come back here."
-        Push-Location "src/Apps.WarehousePicking"
-        try {
-            $connectionJson = pa connection create --connector $dataverseConnector --display-name "Microsoft Dataverse" --json
-            if ($LASTEXITCODE -ne 0) { throw "pa connection create failed" }
-        } finally { Pop-Location }
-        # pa prints status lines around the JSON even with --json.
-        $raw = $connectionJson | Out-String
-        $start = $raw.IndexOf('{'); $end = $raw.LastIndexOf('}')
-        if ($start -lt 0 -or $end -lt $start) { Write-Err "pa connection create returned no JSON: $raw"; exit 1 }
-        $connectionId = ($raw.Substring($start, $end - $start + 1) | ConvertFrom-Json).connectionId
-        if (-not $connectionId) { Write-Err "Could not parse connectionId from 'pa connection create' output"; exit 1 }
-        Set-LabValue 'dataverseConnectionId' $connectionId
-    }
-    Write-Ok "Dataverse connection: $connectionId"
+txc environment connection-reference update $connectionReference --connection-id $created.connectionId --profile $devProfile
+if ($LASTEXITCODE -ne 0) { Write-Err "Binding $connectionReference failed"; exit 1 }
+Write-Ok "$connectionReference bound to the connection"
 
-    $references = txc env data query odata connectionreferences `
-        --filter "connectionreferencelogicalname eq '$connectionReference'" `
-        --select connectionreferenceid --profile $devProfile --format json | ConvertFrom-Json
-    $referenceId = @($references)[0].connectionreferenceid
-    if (-not $referenceId) { Write-Err "Connection reference $connectionReference not found in Dev"; exit 1 }
+# The flow writes item/<column> keys that only exist once the table is known. Ask the
+# connector, through the connection just bound, for the real field names of UpdateOnlyRecord
+# on this table - the call a flow author (or an agent) makes instead of guessing. It runs as
+# you, the connection's owner, and only reads metadata.
+$needsRestockField = "item/${PublisherPrefix}_needsrestock"
+Write-Info "Checking $needsRestockField against the connector, through the connection..."
+$answer = txc environment connector operation parameter get $dataverseConnector UpdateOnlyRecord item `
+    --value "entityName=${PublisherPrefix}_warehouseitems" --connection-reference $connectionReference `
+    --use-connection --filter needsrestock `
+    --profile $devProfile --format json | Out-String | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { Write-Err "Reading UpdateOnlyRecord's fields failed"; exit 1 }
+if (-not (@($answer.fields) | Where-Object { $_.name -eq $needsRestockField })) {
+    Write-Err "UpdateOnlyRecord has no '$needsRestockField' field ($($answer.status): $($answer.message))"
+    exit 1
+}
+Write-Ok "$needsRestockField is a field of UpdateOnlyRecord"
 
-    txc env data record update $referenceId --entity connectionreference `
-        --data (@{ connectionid = $connectionId } | ConvertTo-Json -Compress) --apply --profile $devProfile
-    if ($LASTEXITCODE -ne 0) { Write-Err "Binding the connection reference failed"; exit 1 }
-    Write-Ok "$connectionReference bound to the connection"
+$flowXml = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Logic/Workflows") -Filter "${PublisherPrefix}_lowstockcheck-*.json.data.xml" | Select-Object -First 1
+$workflowId = ([xml](Get-Content -Raw $flowXml.FullName)).Workflow.WorkflowId.Trim('{}')
 
-    $flowXml = Get-ChildItem "src/Solutions.Logic/Workflows" -Filter "${PublisherPrefix}_lowstockcheck-*.json.data.xml" | Select-Object -First 1
-    $workflowId = ([xml](Get-Content -Raw $flowXml.FullName)).Workflow.WorkflowId.Trim('{}')
-
-    # Import already marks the flow on (statecode 1) without a connection; an off/on cycle
-    # makes Power Automate start it against the now bound reference.
-    foreach ($state in @{ statecode = 0; statuscode = 1 }, @{ statecode = 1; statuscode = 2 }) {
-        txc env data record update $workflowId --entity workflow `
-            --data ($state | ConvertTo-Json -Compress) --apply --profile $devProfile
-        if ($LASTEXITCODE -ne 0) { Write-Err "Turning the flow on failed"; exit 1 }
-    }
-    Write-Ok "lowstockcheck is on - it runs every 5 minutes"
-} finally { Pop-Location }
+# Import already marks the flow on (statecode 1) without a connection; an off/on cycle
+# makes Power Automate start it against the now bound reference.
+foreach ($state in @{ statecode = 0; statuscode = 1 }, @{ statecode = 1; statuscode = 2 }) {
+    txc env data record update $workflowId --entity workflow `
+        --data ($state | ConvertTo-Json -Compress) --apply --profile $devProfile
+    if ($LASTEXITCODE -ne 0) { Write-Err "Turning the flow on failed"; exit 1 }
+}
+Write-Ok "lowstockcheck is on - it runs every 5 minutes"
 
 Write-Info "Try it: set an item's Available Quantity below 10 in the app and wait for the next run."
 Write-Info "Runs are listed at https://make.powerautomate.com under the Dev environment's solution."
