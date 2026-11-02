@@ -115,13 +115,38 @@ $flowXml = Get-ChildItem (Join-Path $LabRoot "src/Solutions.Logic/Workflows") -F
 $workflowId = ([xml](Get-Content -Raw $flowXml.FullName)).Workflow.WorkflowId.Trim('{}')
 
 # Import already marks the flow on (statecode 1) without a connection; an off/on cycle
-# makes Power Automate start it against the now bound reference.
+# makes Power Automate start it against the now bound reference. Once pp-flow scaffolds
+# flows as drafts (TALXIS/tools-devkit-templates#190), this becomes a plain activate.
 foreach ($state in @{ statecode = 0; statuscode = 1 }, @{ statecode = 1; statuscode = 2 }) {
     txc env data record update $workflowId --entity workflow `
         --data ($state | ConvertTo-Json -Compress) --apply --profile $devProfile
     if ($LASTEXITCODE -ne 0) { Write-Err "Turning the flow on failed"; exit 1 }
 }
 Write-Ok "lowstockcheck is on - it runs every 5 minutes"
+
+# "On" doesn't prove the flow works: a run against a broken binding fails without a trace
+# here. Wait for its effect instead - every item below the threshold gets flagged. The
+# recurrence is 5 minutes, so the first run lands within about 6.
+$entitySet = "${PublisherPrefix}_warehouseitems"
+$lowStock = "${PublisherPrefix}_availablequantity lt $RestockThreshold"
+$pending = "$lowStock and ${PublisherPrefix}_needsrestock ne true"
+$count = { param($filter) @(txc env data query odata $entitySet --filter $filter --select "${PublisherPrefix}_name" `
+    --profile $devProfile --format json | Out-String | ConvertFrom-Json).Count }
+if ((& $count $lowStock) -eq 0) {
+    Write-Info "No item is below $RestockThreshold yet, so there is nothing for the flow to flag."
+} else {
+    Write-Info "Waiting for the flow's first run to flag the items below $RestockThreshold (up to 7 minutes)..."
+    $deadline = (Get-Date).AddMinutes(7)
+    while (($left = & $count $pending) -gt 0) {
+        if ((Get-Date) -gt $deadline) {
+            Write-Err "$left item(s) below $RestockThreshold are still not flagged. Open the flow's run history:"
+            Write-Info "  https://make.powerautomate.com - Dev environment - Solutions - Logic - lowstockcheck"
+            exit 1
+        }
+        Start-Sleep 30
+    }
+    Write-Ok "The flow ran: every item below $RestockThreshold is flagged Needs Restock"
+}
 
 Write-Info "Try it: set an item's Available Quantity below 10 in the app and wait for the next run."
 Write-Info "Runs are listed at https://make.powerautomate.com under the Dev environment's solution."
