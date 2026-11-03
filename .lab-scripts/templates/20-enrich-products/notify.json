@@ -1,0 +1,37 @@
+{
+  "connectionReferences": {
+    "shared_teams": {
+      "runtimeSource": "embedded",
+      "connection": {
+        "connectionReferenceLogicalName": "__TEAMS_REFERENCE__"
+      },
+      "api": {
+        "name": "shared_teams"
+      }
+    }
+  },
+  "actions": {
+    "Post_in_Teams": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_teams",
+          "operationId": "PostMessageToConversation",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams"
+        },
+        "parameters": {
+          "poster": "__POSTER__",
+          "location": "__LOCATION__",
+          "body/recipient": "__RECIPIENT__",
+          "body/messageBody": "<p>Product <b>@{outputs('Get_product_by_barcode')?['body/name']}</b> (@{outputs('Get_product_by_barcode')?['body/brand']}) was filled in from Open Food Facts for barcode @{triggerOutputs()?['body/__PREFIX___ean']}.</p>"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runAfter": {
+        "Update_the_product": [
+          "Succeeded"
+        ]
+      }
+    }
+  }
+}

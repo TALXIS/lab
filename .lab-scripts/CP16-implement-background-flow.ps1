@@ -150,3 +150,4 @@ if ((& $count $lowStock) -eq 0) {
 
 Write-Info "Try it: set an item's Available Quantity below 10 in the app and wait for the next run."
 Write-Info "Runs are listed at https://make.powerautomate.com under the Dev environment's solution."
+Write-Host "`nNext: .lab-scripts/CP17-enrich-products-with-a-flow.ps1" -ForegroundColor Cyan

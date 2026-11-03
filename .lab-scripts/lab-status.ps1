@@ -27,7 +27,7 @@ Write-Step "Lab status"
 # Save-Checkpoint leaves behind, and the lab-state keys that checkpoint is expected to have
 # populated. A tag without its keys means the checkpoint stopped partway (or its work was
 # lost), so it is the one to re-run next. A checkpoint built by hand gets the same keys from
-# save-checkpoint.ps1. For CP11, which saves four times under one tag, the keys tell which of
+# save-checkpoint.ps1. For CP11 and CP17, which save four times under one tag, the keys tell which of
 # the four steps landed.
 $checkpoints = $LabCheckpoints
 

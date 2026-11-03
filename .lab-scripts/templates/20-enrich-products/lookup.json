@@ -1,0 +1,55 @@
+{
+  "connectionReferences": {
+    "__CONNECTOR__": {
+      "runtimeSource": "embedded",
+      "connection": {
+        "connectionReferenceLogicalName": "__CONNECTOR_REFERENCE__"
+      },
+      "api": {
+        "name": "__CONNECTOR__"
+      }
+    }
+  },
+  "actions": {
+    "Get_product_by_barcode": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "__CONNECTOR__",
+          "operationId": "GetProductByBarcode",
+          "apiId": "/providers/Microsoft.PowerApps/apis/__CONNECTOR__"
+        },
+        "parameters": {
+          "barcode": "@triggerOutputs()?['body/__PREFIX___ean']"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runAfter": {}
+    },
+    "Update_the_product": {
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "UpdateOnlyRecord",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "entityName": "__PREFIX___products",
+          "recordId": "@triggerOutputs()?['body/__PREFIX___productid']",
+          "item/__PREFIX___name": "@coalesce(outputs('Get_product_by_barcode')?['body/name'], triggerOutputs()?['body/__PREFIX___name'])",
+          "item/__PREFIX___brand": "@outputs('Get_product_by_barcode')?['body/brand']",
+          "item/__PREFIX___quantity": "@outputs('Get_product_by_barcode')?['body/quantity']",
+          "item/__PREFIX___imageurl": "@outputs('Get_product_by_barcode')?['body/imageUrl']",
+          "item/__PREFIX___lastsyncedon": "@utcNow()"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runAfter": {
+        "Get_product_by_barcode": [
+          "Succeeded"
+        ]
+      }
+    }
+  }
+}

@@ -25,12 +25,18 @@ $Global:LabDefaultPublisherPrefix = "lab"
 # The lab-state keys each checkpoint leaves behind: values later checkpoints read, and the
 # *Scaffolded flags each scaffold block sets once it has fully run. lab-status.ps1 checks them
 # against the tags; save-checkpoint.ps1 sets the *Scaffolded ones for a checkpoint built by hand.
-# CP11 saves four times under one tag, so its flags are split by step.
+# CP11 and CP17 save four times under one tag, so their flags are split by step.
 $cp11Steps = @(
     @('productTableScaffolded'),
     @('connectorScaffolded'),
     @('productDataSourceScaffolded', 'connectorDataSourceScaffolded'),
     @('barcodeScanUiScaffolded')
+)
+$cp17Steps = @(
+    @('enrichFlowScaffolded'),
+    @('enrichTriggerScaffolded'),
+    @('enrichLookupScaffolded'),
+    @('enrichNotifyScaffolded')
 )
 $Global:LabCheckpoints = @(
     @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
@@ -49,6 +55,7 @@ $Global:LabCheckpoints = @(
     @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
     @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
     @{ Id = "cp16"; Keys = @("needsRestockColumnScaffolded", "backgroundFlowScaffolded") }
+    @{ Id = "cp17"; Keys = @($cp17Steps | ForEach-Object { $_ }); Steps = $cp17Steps }
 )
 
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
