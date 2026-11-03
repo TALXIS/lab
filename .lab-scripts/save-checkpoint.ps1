@@ -30,10 +30,10 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot/lib/Lab.Common.ps1"
 
 # The same keys lab-status.ps1 checks, from $LabCheckpoints in lib/Lab.Common.ps1. Only the
-# *Scaffolded flags are true/false; the other keys hold values a script looked up. CP11 lands
-# in four steps, each with its own flags.
+# *Scaffolded flags are true/false; the other keys hold values a script looked up. CP11 and
+# CP17 land in four steps, each with its own flags.
 $checkpoint = $LabCheckpoints | Where-Object { $_.Id -eq $Id }
-if (-not $checkpoint) { Write-Err "Unknown checkpoint '$Id' - use cp06 to cp15."; exit 1 }
+if (-not $checkpoint) { Write-Err "Unknown checkpoint '$Id' - use cp06 to cp17."; exit 1 }
 $keys = $checkpoint.Keys
 if ($checkpoint.Steps) {
     if ($Step -lt 1 -or $Step -gt $checkpoint.Steps.Count) { Write-Err "$Id saves in $($checkpoint.Steps.Count) steps: pass -Step 1 to $($checkpoint.Steps.Count)."; exit 1 }

@@ -1,0 +1,49 @@
+{
+  "connectionReferences": {
+    "shared_commondataserviceforapps": {
+      "runtimeSource": "embedded",
+      "connection": {
+        "connectionReferenceLogicalName": "__DATAVERSE_REFERENCE__"
+      },
+      "api": {
+        "name": "shared_commondataserviceforapps"
+      }
+    }
+  },
+  "triggers": {
+    "When_a_product_is_added": {
+      "type": "OpenApiConnectionWebhook",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "SubscribeWebhookTrigger",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "subscriptionRequest/message": 1,
+          "subscriptionRequest/entityname": "__PREFIX___product",
+          "subscriptionRequest/scope": 4
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Has_barcode": {
+      "type": "If",
+      "expression": {
+        "not": {
+          "equals": [
+            "@coalesce(triggerOutputs()?['body/__PREFIX___ean'], '')",
+            ""
+          ]
+        }
+      },
+      "actions": {},
+      "else": {
+        "actions": {}
+      },
+      "runAfter": {}
+    }
+  }
+}
