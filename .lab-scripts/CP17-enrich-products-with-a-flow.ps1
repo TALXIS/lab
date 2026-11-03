@@ -211,7 +211,9 @@ if ($env:LAB_LOCAL_MODE) {
     # are read-only metadata lookups made as you, the connections' owner.
     $expected = @{ "subscriptionRequest/message" = "1"; "subscriptionRequest/entityname" = "${PublisherPrefix}_product"; "subscriptionRequest/scope" = "4" }
     foreach ($name in $expected.Keys) {
+        # Scope's list depends on the table, so pass the table along with every lookup.
         $answer = Invoke-TxcJson environment connector operation parameter get $DataverseConnector SubscribeWebhookTrigger $name `
+            --value "subscriptionRequest/entityname=${PublisherPrefix}_product" `
             --connection-reference $DataverseReference --use-connection --profile $devProfile
         $match = @($answer.values) | Where-Object { "$($_.value)" -eq $expected[$name] }
         if (-not $match) { Write-Err "$name has no value '$($expected[$name])' ($($answer.status): $($answer.message))"; exit 1 }
