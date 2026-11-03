@@ -137,7 +137,7 @@ Write-Step "CP17: Enrich products (step 3: Open Food Facts, from the repository)
 $lookup = Invoke-TxcJson environment connector operation get $ConnectorName GetProductByBarcode
 Write-Ok "GetProductByBarcode - $(Format-Source $lookup)"
 Write-Info "  inputs:  $((@($lookup.parameters) | ForEach-Object { $_.name }) -join ', ')"
-Write-Info "  outputs: $((@($lookup.outputs) | ForEach-Object { $_.name }) -join ', ')"
+Write-Info "  outputs: $((@($lookup.outputs) | ForEach-Object { $_.key }) -join ', ')"
 if ($lookup.source -ne "workspace") { Write-Err "Expected the connector's contract from the repository, got $($lookup.source)"; exit 1 }
 
 if ($env:LAB_LOCAL_MODE) {
@@ -221,7 +221,7 @@ if ($env:LAB_LOCAL_MODE) {
         --value "subscriptionRequest/entityname=${PublisherPrefix}_product" --connection-reference $DataverseReference `
         --use-connection --filter "${PublisherPrefix}_" --profile $devProfile
     foreach ($column in "ean", "productid", "name") {
-        if (-not (@($body.fields) | Where-Object { $_.name -eq "body/${PublisherPrefix}_$column" })) {
+        if (-not (@($body.outputs) | Where-Object { $_.key -eq "body/${PublisherPrefix}_$column" })) {
             Write-Err "The trigger has no 'body/${PublisherPrefix}_$column' output ($($body.status): $($body.message))"; exit 1
         }
     }
