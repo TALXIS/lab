@@ -6,7 +6,7 @@
 #
 # The UI solution: a model-driven app, sitemap navigation, forms, views and subgrids, plus
 # form scripts, ribbon buttons and the TALXIS Grid PCF overlaid on the items subgrid
-# (attached manifest-driven via `txc workspace control attach`, customized from Scripts.UI
+# (bound manifest-driven via `txc workspace control bind`, customized from Scripts.UI
 # through the control's Client API). On top of that a Power Apps code app — a fully custom
 # Vite + React SPA built with TALXIS base controls for warehouse picking — referenced
 # straight into this same solution, so both UI styles ship from the same repo and the same
@@ -60,7 +60,7 @@ Build the model-driven warehouse experience so users can navigate inventory data
 - add src/Solutions.UI with the warehouse model-driven application
 - configure sitemap navigation, entity forms, views, and subgrids
 - add form scripts and ribbon commands for warehouse workflows
-- attach talxis_TALXIS.PCF.Grid to the Warehouse Items subgrid via txc workspace control attach (group by category, sum of quantity, low-stock highlighting from Scripts.UI)
+- bind talxis_TALXIS.PCF.Grid to the Warehouse Items subgrid via txc workspace control bind (group by category, sum of quantity, low-stock highlighting from Scripts.UI)
 - add src/Apps.WarehousePicking, a Vite + React + TypeScript code app referenced directly into Solutions.UI
 - build the code app's screens with TALXIS base controls on the pp-app-code starter's Fluent UI shell, so it looks and behaves like Dataverse: Grids with a dataset ribbon (New / Refresh), and base-controls Forms for the create dialogs and the item page (ribbon with Back and Save, a header with the record state, General and Transactions tabs), all validated by their columns
 - register the three warehouse tables as code app data sources (typed models + services)
