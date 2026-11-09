@@ -4,7 +4,7 @@
 # ╚════════════════════════════════════════════════════════════════════════════════════════╝
 #
 # Overlays the TALXIS Grid PCF control on the "Warehouse Items" subgrid of the
-# Warehouse Location form via `txc workspace control attach` — the CLI reads the
+# Warehouse Location form via `txc workspace control bind` — the CLI reads the
 # parameter schema from the control's own ControlManifest.xml (no per-control
 # template needed) — then customizes the grid at runtime from our own Scripts.UI
 # web resource through the control's Client API bridge:
@@ -16,12 +16,12 @@
 #
 # The Grid control itself ships as a public Package Deployer package on nuget.org
 # (TALXIS.Controls.Grid.Package). Nothing is downloaded by hand and no version is
-# pinned: `control attach` resolves the latest version of the NuGet package itself,
+# pinned: `control bind` resolves the latest version of the NuGet package itself,
 # and CP10 imports the same package into Dev by name BEFORE the app package, because
 # the patched form now references the control.
 #
 # Expects: $PublisherPrefix from parent scope (after 05a–05d and 09-form-scripts),
-#          TALXIS.CLI with `workspace control attach`.
+#          TALXIS.CLI with `workspace control bind`.
 
 $prefix = $PublisherPrefix
 $gridPackage = "TALXIS.Controls.Grid.Package"
@@ -111,12 +111,12 @@ txc workspace component create pp-form-event-handler `
 Write-Host "  ✓ Event handler: warehouselocation form → onLoad" -ForegroundColor Green
 
 # ──────────────────────────────────────────────────────────────────────────────────────────
-#                 Attach TALXIS Grid to the items subgrid (manifest-driven)
+#                  Bind TALXIS Grid to the items subgrid (manifest-driven)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-Write-Host "`n── Grid overlay (txc workspace control attach) ──" -ForegroundColor Cyan
+Write-Host "`n── Grid overlay (txc workspace control bind) ──" -ForegroundColor Cyan
 
-# The attach command copies the subgrid's binding (view + RelationshipName, set by
+# The bind command copies the subgrid's binding (view + RelationshipName, set by
 # pp-form-subgrid in 05d) into the grid — nothing is patched by hand here.
 # No per-control template and no manual download: the CLI pulls the package from
 # nuget.org, reads the parameter schema straight from its ControlManifest.xml,
@@ -126,12 +126,12 @@ Write-Host "`n── Grid overlay (txc workspace control attach) ──" -Foregr
 # Columns: group by category, sum the quantity, keep reorder point available but hidden.
 $columnsJson = "[ { `"name`": `"${prefix}_category`", `"grouping`": { `"isGrouped`": true } }, { `"name`": `"${prefix}_availablequantity`", `"aggregation`": { `"aggregationFunction`": `"sum`" } }, { `"name`": `"${prefix}_reorderpoint`", `"isHidden`": true } ]"
 
-txc workspace control attach `
+txc workspace control bind `
     --output "src/Solutions.UI" `
     --entity "${prefix}_warehouselocation" `
     --form-id $locationFormGuid `
     --target-control "subgrid" `
-    --package $gridPackage `
+    --source $gridPackage `
     --param "Columns=$columnsJson" `
     --param "EnableGrouping=true" `
     --param "EnableAggregation=true" `
@@ -140,8 +140,8 @@ txc workspace control attach `
     --param "ClientApiFunctionName=WarehouseScripts.GridApi.onDatasetControlInitialized" `
     --force
 
-if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control attach failed" -ForegroundColor Red; throw "txc workspace control attach failed" }
-Write-Host "  ✓ talxis_TALXIS.PCF.Grid attached to the Warehouse Items subgrid" -ForegroundColor Green
+if ($LASTEXITCODE -ne 0) { Write-Host "  ✗ txc workspace control bind failed" -ForegroundColor Red; throw "txc workspace control bind failed" }
+Write-Host "  ✓ talxis_TALXIS.PCF.Grid bound to the Warehouse Items subgrid" -ForegroundColor Green
 
 # Set last: a re-run after a partial failure retries the whole script.
 Set-LabValue 'gridControlScaffolded' $true
