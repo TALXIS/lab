@@ -207,6 +207,7 @@ function Save-Checkpoint {
         if ($LASTEXITCODE -eq 0) { git branch -D $Id 2>&1 | Out-Null }
 
         Save-LabState  # write state AFTER branch switch so lab-state.json diff is captured
+        Undo-AppVersionOnlyChange
         git add --all
         $dirty = [bool](git status --porcelain)
         $ahead = if ($resuming) { [int](git rev-list --count main..HEAD) } else { 0 }
@@ -272,6 +273,21 @@ function Save-Checkpoint {
 
         Complete-Checkpoint -Id $Id -Branch $branch -Repo $forkRepo
     } finally { Pop-Location }
+}
+
+# Every build stamps the build time into each code app's CanvasApps/*.meta.xml (the build SDK's
+# GenerateCodeAppMetaXml task, with no switch to turn it off). So a re-run that changes nothing
+# else would commit that timestamp and open a PR for it. A meta.xml whose only change is its
+# <AppVersion> line is put back as it was; any other change in it is kept.
+function Undo-AppVersionOnlyChange {
+    foreach ($file in @(git ls-files --modified -- 'src/*/CanvasApps/*.meta.xml' 2>$null)) {
+        # Changed lines only: -U0 leaves no context, and the ---/+++ file headers are skipped.
+        $changes = @(git diff -U0 -- $file | Where-Object { $_ -match '^[-+](?![-+]{2} )' })
+        if ($changes.Count -gt 0 -and -not ($changes | Where-Object { $_ -notmatch '<AppVersion>' })) {
+            git checkout -- $file 2>&1 | Out-Null
+            Write-Info "Ignored the build's new AppVersion timestamp in $file"
+        }
+    }
 }
 
 # After the PR is merged: bring main up to date, drop the work branch here and on the fork,
