@@ -342,6 +342,67 @@ function Publish-CheckpointTag {
     if ($LASTEXITCODE -ne 0) { Write-Err "Pushing tag $Id to origin failed. Re-run this checkpoint to retry."; exit 1 }
 }
 
+# Waits until main's latest commit has been deployed to Test. A merged checkpoint reaches Test
+# through two workflows: build runs on the push to main, and deploy runs once that build has
+# completed (workflow_run). A checkpoint that uses Test right after the previous one merged -
+# CP12 imports data that needs CP11's Product table - must wait for that deploy, or Test is
+# still missing the new tables. A deploy started by workflow_run is labelled with main's head
+# at the moment it starts, not the commit it built, so it is matched by time instead: the
+# first deploy created after the build of main's head finished.
+# If the Actions runs can't be read from here, it says so and carries on.
+function Wait-TestDeploy {
+    param([int]$Minutes = 20)
+    if ($env:LAB_LOCAL_MODE) { return }
+    $repo = Get-LabValue 'repo'
+    git -C $LabRoot fetch origin main --quiet 2>&1 | Out-Null
+    $sha = git -C $LabRoot rev-parse origin/main 2>$null
+    $actions = "https://github.com/$repo/actions"
+    if (-not $repo -or -not $sha) { Write-Warn2 "Can't tell which deploy to wait for - make sure the latest deploy on $actions has finished."; return }
+    # One run of a workflow: the newest that matches, or $null while there is none yet.
+    function Get-Run([string]$Query, [scriptblock]$Pick) {
+        $raw = gh api $Query 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "$raw" }
+        return @((($raw -join "`n") | ConvertFrom-Json).workflow_runs | Where-Object $Pick) | Select-Object -Last 1
+    }
+    Write-Info "Waiting for main ($($sha.Substring(0, 7))) to be built and deployed to Test (up to $Minutes minutes, see $actions)..."
+    $deadline = (Get-Date).AddMinutes($Minutes)
+    $build = $null
+    while ($true) {
+        try {
+            if (-not $build -or $build.status -ne 'completed') {
+                $build = Get-Run "repos/$repo/actions/workflows/build.yml/runs?head_sha=$sha&event=push&per_page=5" { $true }
+                if ($build.status -eq 'completed' -and $build.conclusion -ne 'success') {
+                    Write-Err "The build of main finished '$($build.conclusion)', so nothing was deployed to Test: $($build.html_url)"
+                    exit 1
+                }
+            }
+            if ($build.status -eq 'completed') {
+                # Runs are listed newest first; Select-Object -Last 1 picks the earliest match.
+                $built = [datetime]$build.updated_at
+                $deploy = Get-Run "repos/$repo/actions/workflows/deploy.yml/runs?event=workflow_run&per_page=10" {
+                    ([datetime]$_.created_at) -ge $built.AddSeconds(-10)
+                }
+                if ($deploy.status -eq 'completed') {
+                    if ($deploy.conclusion -eq 'success') { Write-Ok "main is deployed to Test"; return }
+                    Write-Err "The deploy to Test finished '$($deploy.conclusion)': $($deploy.html_url)"
+                    Write-Info "Fix it (re-run the deploy on GitHub), then re-run this checkpoint."
+                    exit 1
+                }
+            }
+        } catch {
+            Write-Warn2 "Can't read the Actions runs from here ($_)."
+            Write-Warn2 "Make sure the latest deploy on $actions has finished before Test is used."
+            return
+        }
+        if ((Get-Date) -gt $deadline) {
+            Write-Err "main still isn't deployed to Test after $Minutes minutes: $actions"
+            Write-Info "Re-run this checkpoint once the deploy has finished."
+            exit 1
+        }
+        Start-Sleep 15
+    }
+}
+
 # Real mode: bring main up to date before a checkpoint starts scaffolding. A run interrupted
 # after its PR merged leaves local main one squash commit behind origin; if the scaffolds
 # regenerate those files first, the later fast-forward pull would refuse to run over them.

@@ -69,6 +69,9 @@ try {
         Write-Ok "Dev data exported back to source"
 
         # Step 3: Import into Test — config travels with the app, no re-keying per environment.
+        # The records need CP11's Product table, which reaches Test through the deploy workflow
+        # after CP11 merged - wait for that deploy first.
+        Wait-TestDeploy
         txc data pkg import $dataDir --profile $testProfile --allow-production
         if ($LASTEXITCODE -ne 0) { Write-Err "Config import failed"; exit 1 }
         Write-Ok "Config imported to Test"
