@@ -80,10 +80,27 @@ foreach ($key in $envs.Keys) {
     $displayName = "Warehouse $key $rid"
     $url = Get-LabValue "${key}EnvUrl"
     if (-not $url) {
-        Write-Info "Creating $key environment ($domain, type $envType, region $region, currency $currency)..."
-        txc env create --type $envType --name $displayName --domain $domain `
-            --region $region --currency $currency --language 1033 --wait
-        if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create $key"; exit 1 }
+        while ($true) {
+            Write-Info "Creating $key environment ($domain, type $envType, region $region, currency $currency)..."
+            txc env create --type $envType --name $displayName --domain $domain `
+                --region $region --currency $currency --language 1033 --wait 2>&1 | Tee-Object -Variable createOutput | Out-Host
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($envType -ne 'Developer' -or ($createOutput -join "`n") -notmatch 'OverCapacity_DeveloperScenario') { Write-Err "Failed to create $key"; exit 1 }
+            # Each user can own 3 Developer environments. Sandbox environments don't count
+            # against that, but the tenant must let you create them.
+            Write-Err "You already have 3 Developer environments, the limit per user."
+            if (-not [Console]::IsInputRedirected -and $env:LAB_AUTO -ne '1') {
+                $answer = Read-Host "  Create Sandbox environments instead? Your tenant must allow you to create them [y/N]"
+                if ($answer -match '^\s*y(es)?\s*$') {
+                    $envType = 'Sandbox'
+                    Set-LabValue 'envType' $envType
+                    continue
+                }
+            }
+            Write-Info "Delete one you no longer need in https://admin.powerplatform.microsoft.com/environments and re-run this checkpoint,"
+            Write-Info "or, if you may create Sandbox environments, re-run it with: `$env:LAB_ENV_TYPE='Sandbox'; .lab-scripts/CP04-setup-runtime.ps1"
+            exit 1
+        }
         # Read the real URL back: its host suffix depends on the region (crm for the US, crm4 for Europe, ...).
         $created = @(txc env list --filter $domain --format json | ConvertFrom-Json) | Select-Object -First 1
         $url = "$($created.environmentUrl)".TrimEnd('/')
