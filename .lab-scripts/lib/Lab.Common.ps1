@@ -335,11 +335,32 @@ function Merge-CheckpointPullRequest {
 # Pushes the checkpoint tag to the fork. The explicit refspec matters: 'git push origin cp05'
 # is ambiguous whenever a branch of that name exists or has existed, and git then pushes
 # nothing. The tags are what 'git checkout tags/cp05' relies on when resuming elsewhere.
+# By the time it runs, the checkpoint's work is merged, so a refused push (some sandboxes
+# don't allow pushing tags) only warns: the local tag still works for rolling back here.
 function Publish-CheckpointTag {
     param([Parameter(Mandatory)][string]$Id)
     if ($env:LAB_LOCAL_MODE) { return }
-    git push --force origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) { Write-Err "Pushing tag $Id to origin failed. Re-run this checkpoint to retry."; exit 1 }
+    $pushed = git push --force origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn2 "The work is merged, but pushing tag $Id to origin failed: $($pushed -join ' ')"
+        Write-Warn2 "The tag exists only on this machine. Re-run this checkpoint later to push it."
+    }
+}
+
+# A step only a person can do in the browser (some sandboxes can't change repository settings).
+# $Check says whether it's done. In a terminal: ask the person to do it and press Enter, check
+# again, repeat - or go on without it when they type 'skip'. Without a terminal (an agent runs
+# this, or LAB_AUTO=1) nobody can do it now, so don't wait. Returns whether the step is done.
+function Wait-LabManualStep {
+    param([Parameter(Mandatory)][string]$What, [Parameter(Mandatory)][scriptblock]$Check)
+    if (& $Check) { return $true }
+    if ([Console]::IsInputRedirected -or $env:LAB_AUTO -eq '1') { return $false }
+    while ($true) {
+        $answer = Read-Host "  Press Enter once it's done (or type 'skip' to continue without it)"
+        if ($answer.Trim() -eq 'skip') { return $false }
+        if (& $Check) { return $true }
+        Write-Warn2 "$What - not found yet."
+    }
 }
 
 # Waits until main's latest commit has been deployed to Test. A merged checkpoint reaches Test
