@@ -29,6 +29,11 @@ if (-not $id) {
     $id = gh api "repos/$repo/rulesets" -q ".[] | select(.name==`"$rulesetName`") | .id"
     if ($id) { Set-LabValue 'mainRulesetId' $id }
 }
+if (-not $id -and (Get-LabValue 'mainRulesetSkipped')) {
+    # CP03 went on without the ruleset (it couldn't be created from here): no rule to extend.
+    Write-Warn2 "main has no ruleset (CP03 continued without it), so the 'build' check can't be required."
+    Write-Warn2 "Create the ruleset, re-run CP03, then re-run this checkpoint."
+} else {
 if (-not $id) { Write-Err "Main ruleset not found on $repo — run CP03-setup-continuous-integration.ps1 first (it must actually complete at least once, not just be skipped)."; exit 1 }
 $rules = @(
     @{ type="deletion" }, @{ type="non_fast_forward" },
@@ -45,18 +50,17 @@ if ($LASTEXITCODE -ne 0) {
     # Some sandboxes can't change repository settings - then you add the rule yourself.
     Write-Warn2 "GitHub refused to change the ruleset from here: $updated"
     Write-Warn2 "Add it yourself: https://github.com/$repo/settings/rules/$id → Require status checks to pass → add 'build'."
-    $deadline = (Get-Date).AddMinutes(30)
-    while ($true) {
+    $required = Wait-LabManualStep -What "The 'build' check in ruleset $id" -Check {
         $buildIndex = gh api "repos/$repo/rulesets/$id" -q '[.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context] | index("build")' 2>&1
         if ($LASTEXITCODE -ne 0) { Write-Err "Checking the ruleset failed: $buildIndex - re-run this checkpoint."; Remove-Item $tmp; exit 1 }
-        if ($buildIndex -notin @($null, '', 'null')) { break }
-        if ((Get-Date) -gt $deadline) { Write-Err "The 'build' check is still not required on $repo - add it, then re-run this checkpoint."; Remove-Item $tmp; exit 1 }
-        Start-Sleep 15
+        $buildIndex -notin @($null, '', 'null')
     }
-}
+} else { $required = $true }
 Remove-Item $tmp
 Set-LabValue 'mainRulesetId' $id
-Write-Ok "Ruleset now requires 'build' to pass"
+if ($required) { Write-Ok "Ruleset now requires 'build' to pass" }
+else { Write-Warn2 "Continuing without it: PRs can merge with a failing build. Add it later, then re-run this checkpoint." }
+}
 
 }
 

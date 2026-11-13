@@ -77,16 +77,19 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
         Write-Warn2 "GitHub refused to create the ruleset from here: $createdRuleset"
         Write-Warn2 "Create it yourself: https://github.com/$repo/settings/rules/new?target=branch"
         Write-Info "  Name '$rulesetName', Active, target the default branch, restrict deletions, require a pull request, block force pushes."
-        $deadline = (Get-Date).AddMinutes(30)
-        while ($true) {
-            $existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>&1
-            if ($LASTEXITCODE -ne 0) { Write-Err "Checking for the ruleset failed: $existingRuleset - re-run this checkpoint."; exit 1 }
-            if ($existingRuleset) { break }
-            if ((Get-Date) -gt $deadline) { Write-Err "Ruleset '$rulesetName' still not found on $repo - create it, then re-run this checkpoint."; exit 1 }
-            Start-Sleep 15
+        $found = Wait-LabManualStep -What "Ruleset '$rulesetName' on $repo" -Check {
+            $script:existingRuleset = gh api "repos/$repo/rulesets" --jq ".[] | select(.name==`"$rulesetName`")" 2>&1
+            if ($LASTEXITCODE -ne 0) { Write-Err "Checking for the ruleset failed: $script:existingRuleset - re-run this checkpoint."; exit 1 }
+            [bool]$script:existingRuleset
         }
-        $rulesetRecord = $existingRuleset | ConvertFrom-Json
-        Write-Ok "Ruleset found — main now requires PRs"
+        if ($found) {
+            $rulesetRecord = $existingRuleset | ConvertFrom-Json
+            Write-Ok "Ruleset found — main now requires PRs"
+        } else {
+            # CP13 reads this and skips its rule too; re-run CP03 once the ruleset exists.
+            Set-LabValue 'mainRulesetSkipped' $true
+            Write-Warn2 "Continuing without the ruleset: main is NOT protected. Create it later, then re-run this checkpoint."
+        }
     } else {
         Write-Err "Ruleset creation failed: $createdRuleset"
         Remove-Item $tmp -ErrorAction SilentlyContinue
@@ -94,8 +97,11 @@ if ($LASTEXITCODE -eq 0 -and $existingRuleset) {
     }
 }
 Remove-Item $tmp -ErrorAction SilentlyContinue
-Set-LabValue 'mainRulesetId'   $rulesetRecord.id
-Set-LabValue 'mainRulesetName' $rulesetRecord.name
+Set-LabValue 'mainRulesetName' $rulesetName
+if ($rulesetRecord) {
+    Set-LabValue 'mainRulesetId' $rulesetRecord.id
+    Set-LabValue 'mainRulesetSkipped' $false
+}
 
 }
 

@@ -35,8 +35,7 @@ Write-Step "CP11 — Integrate external data (step 1: data model)"
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/15-product-table.ps1"
-    dotnet build --nologo --verbosity quiet
-    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
+    Invoke-LabBuild
 } finally { Pop-Location }
 
 # CP10 deployed the whole package before the Product table existed; Dev has to learn about it
@@ -67,7 +66,7 @@ Add the data model for external product-catalog integration: a dedicated Product
 - add Item.Product lookup column, pointing to Product
 - deploy Solutions.DataModel to Dev via txc env sln import (a same-version update, unlike a package re-import)
 ## Testing
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.DataModel builds locally; the build check on this PR builds the whole repository
 - the Product table and the Item.Product column exist in the Dev environment
 '@
 

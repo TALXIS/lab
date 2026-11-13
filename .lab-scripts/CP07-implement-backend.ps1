@@ -35,8 +35,7 @@ Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/07-plugins.ps1"
     . "$PSScriptRoot/scaffold/08-logic-solution.ps1"
-    dotnet build --nologo --verbosity quiet
-    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
+    Invoke-LabBuild
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp07" -Message "Add inventory transaction plugin and logic solution steps" -Body @'

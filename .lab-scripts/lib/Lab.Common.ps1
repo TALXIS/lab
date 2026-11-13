@@ -25,12 +25,18 @@ $Global:LabDefaultPublisherPrefix = "lab"
 # The lab-state keys each checkpoint leaves behind: values later checkpoints read, and the
 # *Scaffolded flags each scaffold block sets once it has fully run. lab-status.ps1 checks them
 # against the tags; save-checkpoint.ps1 sets the *Scaffolded ones for a checkpoint built by hand.
-# CP11 saves four times under one tag, so its flags are split by step.
+# CP11 and CP17 save four times under one tag, so their flags are split by step.
 $cp11Steps = @(
     @('productTableScaffolded'),
     @('connectorScaffolded'),
     @('productDataSourceScaffolded', 'connectorDataSourceScaffolded'),
     @('barcodeScanUiScaffolded')
+)
+$cp17Steps = @(
+    @('enrichFlowScaffolded'),
+    @('enrichTriggerScaffolded'),
+    @('enrichLookupScaffolded'),
+    @('enrichNotifyScaffolded')
 )
 $Global:LabCheckpoints = @(
     @{ Id = "cp01"; Keys = @("tenantId", "randomIdentifier") }
@@ -48,6 +54,8 @@ $Global:LabCheckpoints = @(
     @{ Id = "cp13"; Keys = @("mainRulesetId") }
     @{ Id = "cp14"; Keys = @("testsUiScaffolded") }
     @{ Id = "cp15"; Keys = @("pluginsTestsScaffolded", "scriptsTestsScaffolded") }
+    @{ Id = "cp16"; Keys = @("needsRestockColumnScaffolded", "backgroundFlowScaffolded") }
+    @{ Id = "cp17"; Keys = @($cp17Steps | ForEach-Object { $_ }); Steps = $cp17Steps }
 )
 
 # Codespaces injects a GITHUB_TOKEN into every terminal, and gh prefers it over your own login.
@@ -199,6 +207,7 @@ function Save-Checkpoint {
         if ($LASTEXITCODE -eq 0) { git branch -D $Id 2>&1 | Out-Null }
 
         Save-LabState  # write state AFTER branch switch so lab-state.json diff is captured
+        Undo-AppVersionOnlyChange
         git add --all
         $dirty = [bool](git status --porcelain)
         $ahead = if ($resuming) { [int](git rev-list --count main..HEAD) } else { 0 }
@@ -266,6 +275,62 @@ function Save-Checkpoint {
     } finally { Pop-Location }
 }
 
+# Builds only the projects this step changed. The build SDK's targets aren't incremental, so a
+# root 'dotnet build' repacks every solution and rebuilds the code app (about 70 s) even when
+# nothing changed. A project is the first folder under src/ that holds a *.csproj; building it
+# also builds the projects it references. A change to a file every project reads (the .slnx,
+# Directory.*.props/.targets, global.json, nuget.config, .config/) builds everything, as do
+# -Full and a change under src/ that belongs to no project. -Project adds projects a later step
+# needs built whatever changed. The PR's CI build still builds the whole repository.
+function Invoke-LabBuild {
+    param([switch]$Full, [string[]]$Project = @())
+    Push-Location $LabRoot
+    try {
+        $changed = @(git status --porcelain --untracked-files=all 2>$null | ForEach-Object {
+            # "XY path" or "R  old -> new": both sides of a rename count.
+            $_.Substring(3) -split ' -> ' | ForEach-Object { $_.Trim('"') }
+        })
+        $projects = [System.Collections.Generic.List[string]]::new()
+        foreach ($p in $Project) { if (-not $projects.Contains($p)) { $projects.Add($p) } }
+        foreach ($path in $changed) {
+            if ($path -match '^(?:[^/]+\.slnx?|Directory\.[^/]+\.(?:props|targets)|global\.json|nuget\.config|\.config/.*)$') { $Full = $true; break }
+            if ($path -notmatch '^src/') { continue }   # lab state, docs, workflows, .txc/: nothing to build
+            $dir = Split-Path $path -Parent
+            while ($dir -and $dir -ne 'src' -and -not (Get-ChildItem $dir -Filter *.csproj -ErrorAction SilentlyContinue)) { $dir = Split-Path $dir -Parent }
+            if (-not $dir -or $dir -eq 'src') { $Full = $true; break }
+            $name = Split-Path $dir -Leaf
+            if (-not $projects.Contains($name)) { $projects.Add($name) }
+        }
+        if ($Full) {
+            Write-Info "Building the whole repository..."
+            dotnet build --nologo --verbosity quiet
+            if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
+            return
+        }
+        if ($projects.Count -eq 0) { Write-Info "No project changed - nothing to build"; return }
+        Write-Info "Building $($projects -join ', ') (and what they reference)..."
+        foreach ($name in $projects) {
+            dotnet build "src/$name/$name.csproj" --nologo --verbosity quiet
+            if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed ($name)"; exit 1 }
+        }
+    } finally { Pop-Location }
+}
+
+# Every build stamps the build time into each code app's CanvasApps/*.meta.xml (the build SDK's
+# GenerateCodeAppMetaXml task, with no switch to turn it off). So a re-run that changes nothing
+# else would commit that timestamp and open a PR for it. A meta.xml whose only change is its
+# <AppVersion> line is put back as it was; any other change in it is kept.
+function Undo-AppVersionOnlyChange {
+    foreach ($file in @(git ls-files --modified -- 'src/*/CanvasApps/*.meta.xml' 2>$null)) {
+        # Changed lines only: -U0 leaves no context, and the ---/+++ file headers are skipped.
+        $changes = @(git diff -U0 -- $file | Where-Object { $_ -match '^[-+](?![-+]{2} )' })
+        if ($changes.Count -gt 0 -and -not ($changes | Where-Object { $_ -notmatch '<AppVersion>' })) {
+            git checkout -- $file 2>&1 | Out-Null
+            Write-Info "Ignored the build's new AppVersion timestamp in $file"
+        }
+    }
+}
+
 # After the PR is merged: bring main up to date, drop the work branch here and on the fork,
 # move the tag. Also the whole job when a re-run finds the merge already done.
 function Complete-Checkpoint {
@@ -327,11 +392,93 @@ function Merge-CheckpointPullRequest {
 # Pushes the checkpoint tag to the fork. The explicit refspec matters: 'git push origin cp05'
 # is ambiguous whenever a branch of that name exists or has existed, and git then pushes
 # nothing. The tags are what 'git checkout tags/cp05' relies on when resuming elsewhere.
+# By the time it runs, the checkpoint's work is merged, so a refused push (some sandboxes
+# don't allow pushing tags) only warns: the local tag still works for rolling back here.
 function Publish-CheckpointTag {
     param([Parameter(Mandatory)][string]$Id)
     if ($env:LAB_LOCAL_MODE) { return }
-    git push --force origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) { Write-Err "Pushing tag $Id to origin failed. Re-run this checkpoint to retry."; exit 1 }
+    $pushed = git push --force origin "refs/tags/${Id}:refs/tags/${Id}" --quiet 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn2 "The work is merged, but pushing tag $Id to origin failed: $($pushed -join ' ')"
+        Write-Warn2 "The tag exists only on this machine. Re-run this checkpoint later to push it."
+    }
+}
+
+# A step only a person can do in the browser (some sandboxes can't change repository settings).
+# $Check says whether it's done. In a terminal: ask the person to do it and press Enter, check
+# again, repeat - or go on without it when they type 'skip'. Without a terminal (an agent runs
+# this, or LAB_AUTO=1) nobody can do it now, so don't wait. Returns whether the step is done.
+function Wait-LabManualStep {
+    param([Parameter(Mandatory)][string]$What, [Parameter(Mandatory)][scriptblock]$Check)
+    if (& $Check) { return $true }
+    if ([Console]::IsInputRedirected -or $env:LAB_AUTO -eq '1') { return $false }
+    while ($true) {
+        $answer = Read-Host "  Press Enter once it's done (or type 'skip' to continue without it)"
+        if ($answer.Trim() -eq 'skip') { return $false }
+        if (& $Check) { return $true }
+        Write-Warn2 "$What - not found yet."
+    }
+}
+
+# Waits until main's latest commit has been deployed to Test. A merged checkpoint reaches Test
+# through two workflows: build runs on the push to main, and deploy runs once that build has
+# completed (workflow_run). A checkpoint that uses Test right after the previous one merged -
+# CP12 imports data that needs CP11's Product table - must wait for that deploy, or Test is
+# still missing the new tables. A deploy started by workflow_run is labelled with main's head
+# at the moment it starts, not the commit it built, so it is matched by time instead: the
+# first deploy created after the build of main's head finished.
+# If the Actions runs can't be read from here, it says so and carries on.
+function Wait-TestDeploy {
+    param([int]$Minutes = 20)
+    if ($env:LAB_LOCAL_MODE) { return }
+    $repo = Get-LabValue 'repo'
+    git -C $LabRoot fetch origin main --quiet 2>&1 | Out-Null
+    $sha = git -C $LabRoot rev-parse origin/main 2>$null
+    $actions = "https://github.com/$repo/actions"
+    if (-not $repo -or -not $sha) { Write-Warn2 "Can't tell which deploy to wait for - make sure the latest deploy on $actions has finished."; return }
+    # One run of a workflow: the newest that matches, or $null while there is none yet.
+    function Get-Run([string]$Query, [scriptblock]$Pick) {
+        $raw = gh api $Query 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "$raw" }
+        return @((($raw -join "`n") | ConvertFrom-Json).workflow_runs | Where-Object $Pick) | Select-Object -Last 1
+    }
+    Write-Info "Waiting for main ($($sha.Substring(0, 7))) to be built and deployed to Test (up to $Minutes minutes, see $actions)..."
+    $deadline = (Get-Date).AddMinutes($Minutes)
+    $build = $null
+    while ($true) {
+        try {
+            if (-not $build -or $build.status -ne 'completed') {
+                $build = Get-Run "repos/$repo/actions/workflows/build.yml/runs?head_sha=$sha&event=push&per_page=5" { $true }
+                if ($build.status -eq 'completed' -and $build.conclusion -ne 'success') {
+                    Write-Err "The build of main finished '$($build.conclusion)', so nothing was deployed to Test: $($build.html_url)"
+                    exit 1
+                }
+            }
+            if ($build.status -eq 'completed') {
+                # Runs are listed newest first; Select-Object -Last 1 picks the earliest match.
+                $built = [datetime]$build.updated_at
+                $deploy = Get-Run "repos/$repo/actions/workflows/deploy.yml/runs?event=workflow_run&per_page=10" {
+                    ([datetime]$_.created_at) -ge $built.AddSeconds(-10)
+                }
+                if ($deploy.status -eq 'completed') {
+                    if ($deploy.conclusion -eq 'success') { Write-Ok "main is deployed to Test"; return }
+                    Write-Err "The deploy to Test finished '$($deploy.conclusion)': $($deploy.html_url)"
+                    Write-Info "Fix it (re-run the deploy on GitHub), then re-run this checkpoint."
+                    exit 1
+                }
+            }
+        } catch {
+            Write-Warn2 "Can't read the Actions runs from here ($_)."
+            Write-Warn2 "Make sure the latest deploy on $actions has finished before Test is used."
+            return
+        }
+        if ((Get-Date) -gt $deadline) {
+            Write-Err "main still isn't deployed to Test after $Minutes minutes: $actions"
+            Write-Info "Re-run this checkpoint once the deploy has finished."
+            exit 1
+        }
+        Start-Sleep 15
+    }
 }
 
 # Real mode: bring main up to date before a checkpoint starts scaffolding. A run interrupted

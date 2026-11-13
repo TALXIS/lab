@@ -1,9 +1,18 @@
 name: deploy
+# Named after the commit this deploy actually ships: a workflow_run run otherwise shows main's
+# latest commit at the time it starts, so two builds merged a minute apart look like one
+# commit deployed twice.
+run-name: deploy ${{ github.event.workflow_run.head_sha }}
 on:
   workflow_run:
     workflows: [build]
     types: [completed]
     branches: [main]
+# One deploy to Test at a time, in order: without this, two quick merges deploy in parallel
+# and the older package can finish importing after the newer one.
+concurrency:
+  group: deploy-test
+  cancel-in-progress: false
 permissions:
   id-token: write
   contents: read

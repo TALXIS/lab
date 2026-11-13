@@ -134,9 +134,19 @@ Write-Ok "Service principal added to Test environment as application user (Syste
 if ($env:LAB_LOCAL_MODE) {
     Write-Info "LAB_LOCAL_MODE: skipped — would run 'gh api -X PUT repos/<repo>/actions/permissions'"
 } else {
-    gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) { Write-Ok "GitHub Actions enabled on the fork" }
-    else { Write-Warn2 "If Actions are off on your fork, open https://github.com/$repo/actions and click the green button." }
+    $enabling = gh api -X PUT "repos/$repo/actions/permissions" -F enabled=true -f allowed_actions=all 2>&1
+    if ($LASTEXITCODE -ne 0) { Write-Warn2 "Couldn't turn GitHub Actions on from here: $($enabling -join ' ')" }
+    # Read the setting back rather than trusting the answer: it is what decides whether the
+    # build and deploy workflows installed below will run.
+    $actionsOn = { (gh api "repos/$repo/actions/permissions" -q .enabled 2>$null) -eq 'true' }
+    if (& $actionsOn) {
+        Write-Ok "GitHub Actions are on for the fork"
+    } else {
+        Write-Warn2 "GitHub Actions are off on your fork, or this session can't check them."
+        Write-Warn2 "Open https://github.com/$repo/actions and click 'I understand my workflows, go ahead and enable them' (if it's there)."
+        if (Wait-LabManualStep -What "GitHub Actions on $repo" -Check $actionsOn) { Write-Ok "GitHub Actions are on for the fork" }
+        else { Write-Warn2 "Continuing: the build and deploy workflows only run once Actions are on." }
+    }
 }
 
 # Step 6: Install workflows, with your app's client id, tenant id and Test URL written into

@@ -1,0 +1,105 @@
+{
+  "connectionReferences": {
+    "shared_commondataserviceforapps": {
+      "runtimeSource": "embedded",
+      "connection": {
+        "connectionReferenceLogicalName": "__CONNECTION_REFERENCE__"
+      },
+      "api": {
+        "name": "shared_commondataserviceforapps"
+      }
+    }
+  },
+  "actions": {
+    "List_low_stock_items": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "ListRecords",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "entityName": "__PREFIX___warehouseitems",
+          "$select": "__PREFIX___warehouseitemid",
+          "$filter": "__PREFIX___availablequantity lt __THRESHOLD__ and __PREFIX___needsrestock ne true"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Flag_each_low_stock_item": {
+      "foreach": "@outputs('List_low_stock_items')?['body/value']",
+      "actions": {
+        "Set_needs_restock": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "__PREFIX___warehouseitems",
+              "recordId": "@items('Flag_each_low_stock_item')?['__PREFIX___warehouseitemid']",
+              "item/__PREFIX___needsrestock": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "runAfter": {
+        "List_low_stock_items": [
+          "Succeeded"
+        ]
+      },
+      "type": "Foreach"
+    },
+    "List_restocked_items": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "connectionName": "shared_commondataserviceforapps",
+          "operationId": "ListRecords",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+        },
+        "parameters": {
+          "entityName": "__PREFIX___warehouseitems",
+          "$select": "__PREFIX___warehouseitemid",
+          "$filter": "__PREFIX___availablequantity ge __THRESHOLD__ and __PREFIX___needsrestock eq true"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Clear_each_restocked_item": {
+      "foreach": "@outputs('List_restocked_items')?['body/value']",
+      "actions": {
+        "Clear_needs_restock": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "__PREFIX___warehouseitems",
+              "recordId": "@items('Clear_each_restocked_item')?['__PREFIX___warehouseitemid']",
+              "item/__PREFIX___needsrestock": false
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "runAfter": {
+        "List_restocked_items": [
+          "Succeeded"
+        ]
+      },
+      "type": "Foreach"
+    }
+  }
+}
