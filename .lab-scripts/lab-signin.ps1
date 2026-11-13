@@ -39,9 +39,22 @@ Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
 # Piping input in makes gh print the link and code instead of waiting for Enter.
 Invoke-SignIn -Service "GitHub" -Login { '' | gh auth login -h github.com -p https -s workflow --web } `
     -Test { $env:GH_TOKEN -or (gh auth status 2>&1 | Select-String 'workflow') }
-# git doesn't read GH_TOKEN or gh's login by itself: make gh its credential helper either way.
-gh auth setup-git --hostname github.com --force
-if ($LASTEXITCODE -ne 0) { Write-Err "Could not set up git to push with your GitHub sign-in"; exit 1 }
+# git doesn't read GH_TOKEN or gh's login by itself. If git can already push to your fork (a
+# credential helper your environment set up), its configuration is left alone; otherwise gh
+# becomes git's credential helper. A dry-run push checks that: it signs in but writes nothing,
+# and reading alone would succeed without any sign-in on a public fork.
+$savedPrompt = $env:GIT_TERMINAL_PROMPT; $env:GIT_TERMINAL_PROMPT = '0'
+try {
+    git -C $LabRoot -c http.lowSpeedLimit=1 -c http.lowSpeedTime=20 push --dry-run --quiet origin HEAD:refs/heads/lab-signin-check 2>&1 | Out-Null
+    $gitCanPush = $LASTEXITCODE -eq 0
+} finally { $env:GIT_TERMINAL_PROMPT = $savedPrompt }
+if ($gitCanPush) {
+    Write-Info "git can already push to your fork - its credential setup is left as it is."
+} else {
+    # --force: also when gh only knows the host through GH_TOKEN.
+    gh auth setup-git --hostname github.com --force
+    if ($LASTEXITCODE -ne 0) { Write-Err "Could not set up git to push with your GitHub sign-in"; exit 1 }
+}
 Write-Ok "GitHub: $(gh api user -q .login)"
 
 # ── 2. Power Platform (txc) ───────────────────────────────────────────────────────────────
