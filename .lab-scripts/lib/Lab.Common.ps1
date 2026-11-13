@@ -275,6 +275,47 @@ function Save-Checkpoint {
     } finally { Pop-Location }
 }
 
+# Builds only the projects this step changed. The build SDK's targets aren't incremental, so a
+# root 'dotnet build' repacks every solution and rebuilds the code app (about 70 s) even when
+# nothing changed. A project is the first folder under src/ that holds a *.csproj; building it
+# also builds the projects it references. A change to a file every project reads (the .slnx,
+# Directory.*.props/.targets, global.json, nuget.config, .config/) builds everything, as do
+# -Full and a change under src/ that belongs to no project. -Project adds projects a later step
+# needs built whatever changed. The PR's CI build still builds the whole repository.
+function Invoke-LabBuild {
+    param([switch]$Full, [string[]]$Project = @())
+    Push-Location $LabRoot
+    try {
+        $changed = @(git status --porcelain --untracked-files=all 2>$null | ForEach-Object {
+            # "XY path" or "R  old -> new": both sides of a rename count.
+            $_.Substring(3) -split ' -> ' | ForEach-Object { $_.Trim('"') }
+        })
+        $projects = [System.Collections.Generic.List[string]]::new()
+        foreach ($p in $Project) { if (-not $projects.Contains($p)) { $projects.Add($p) } }
+        foreach ($path in $changed) {
+            if ($path -match '^(?:[^/]+\.slnx?|Directory\.[^/]+\.(?:props|targets)|global\.json|nuget\.config|\.config/.*)$') { $Full = $true; break }
+            if ($path -notmatch '^src/') { continue }   # lab state, docs, workflows, .txc/: nothing to build
+            $dir = Split-Path $path -Parent
+            while ($dir -and $dir -ne 'src' -and -not (Get-ChildItem $dir -Filter *.csproj -ErrorAction SilentlyContinue)) { $dir = Split-Path $dir -Parent }
+            if (-not $dir -or $dir -eq 'src') { $Full = $true; break }
+            $name = Split-Path $dir -Leaf
+            if (-not $projects.Contains($name)) { $projects.Add($name) }
+        }
+        if ($Full) {
+            Write-Info "Building the whole repository..."
+            dotnet build --nologo --verbosity quiet
+            if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
+            return
+        }
+        if ($projects.Count -eq 0) { Write-Info "No project changed - nothing to build"; return }
+        Write-Info "Building $($projects -join ', ') (and what they reference)..."
+        foreach ($name in $projects) {
+            dotnet build "src/$name/$name.csproj" --nologo --verbosity quiet
+            if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed ($name)"; exit 1 }
+        }
+    } finally { Pop-Location }
+}
+
 # Every build stamps the build time into each code app's CanvasApps/*.meta.xml (the build SDK's
 # GenerateCodeAppMetaXml task, with no switch to turn it off). So a re-run that changes nothing
 # else would commit that timestamp and open a PR for it. A meta.xml whose only change is its

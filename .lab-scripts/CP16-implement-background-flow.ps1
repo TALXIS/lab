@@ -49,8 +49,7 @@ if ($env:LAB_LOCAL_MODE) {
 Push-Location $LabRoot
 try {
     . "$PSScriptRoot/scaffold/19-background-flow.ps1"
-    dotnet build --nologo --verbosity quiet
-    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
+    Invoke-LabBuild
 } finally { Pop-Location }
 
 Save-Checkpoint -Id "cp16" -Message "Add a background flow that flags low-stock items" -Body @'
@@ -58,7 +57,7 @@ Add a Power Automate cloud flow that runs every 5 minutes without a user and kee
 - add warehouseitem.needsrestock (Boolean) to Solutions.DataModel
 - add a Dataverse connection reference to Solutions.Logic (pp-connection-reference)
 - add the lowstockcheck flow to Solutions.Logic (pp-flow, recurrence trigger) with ListRecords and UpdateOnlyRecord actions
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.DataModel and Solutions.Logic build locally; the build check on this PR builds the whole repository
 '@
 
 Write-Step "CP16: Background flow (step 2: deploy, connect, turn the flow on)"

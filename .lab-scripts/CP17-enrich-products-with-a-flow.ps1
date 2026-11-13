@@ -65,18 +65,13 @@ function Invoke-TxcJson {
 # Where an answer came from: workspace (this repository), snapshot (.txc/connectors/), or environment.
 function Format-Source { param($Answer) if ($Answer.sourcePath) { "$($Answer.source): $($Answer.sourcePath)" } else { "$($Answer.source)" } }
 
-function Build-Lab {
-    dotnet build --nologo --verbosity quiet
-    if ($LASTEXITCODE -ne 0) { Write-Err "dotnet build failed"; exit 1 }
-}
-
 Push-Location $LabRoot
 try {
 
 # ── Step 1: a clean flow ──────────────────────────────────────────────────────────────────
 Write-Step "CP17: Enrich products (step 1: a clean flow)"
 . "$PSScriptRoot/scaffold/20a-enrich-flow.ps1"
-Build-Lab
+Invoke-LabBuild
 
 Save-Checkpoint -Id "cp17" -Message "Add a clean Enrich Products flow" -Body @'
 Add an empty cloud flow to Solutions.Logic: the pp-flow template's manual trigger and no actions. It grows in the next three updates of this checkpoint - a Dataverse trigger, the Open Food Facts lookup and a Teams message - each from a different source of truth.
@@ -84,7 +79,7 @@ Add an empty cloud flow to Solutions.Logic: the pp-flow template's manual trigge
 ## Changes
 - add the enrichproducts flow to Solutions.Logic (pp-flow, manual trigger)
 ## Testing
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.Logic builds locally; the build check on this PR builds the whole repository
 '@
 
 # ── Step 2: trigger and condition, from the contract only ─────────────────────────────────
@@ -117,7 +112,7 @@ if ($env:LAB_LOCAL_MODE) {
 }
 
 . "$PSScriptRoot/scaffold/20b-enrich-trigger.ps1"
-Build-Lab
+Invoke-LabBuild
 
 Save-Checkpoint -Id "cp17" -Message "Trigger Enrich Products when a product is added" -Body @'
 Replace the manual trigger with Dataverse "When a row is added" on Product (organization scope), and add a condition that the new row has a barcode. Written from the connector's operation contract, read once from Dev and kept in .txc/connectors/ - no connection is used. The trigger's three values are the connector's dynamic lists, so they are checked through the connection in the last update of this checkpoint.
@@ -127,7 +122,7 @@ Replace the manual trigger with Dataverse "When a row is added" on Product (orga
 - bind it to the existing Dataverse connection reference (CP16)
 - .txc/connectors/: the operation contracts the flow was written against
 ## Testing
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.Logic builds locally; the build check on this PR builds the whole repository
 '@
 
 # ── Step 3: the custom connector, from local source only ─────────────────────────────────
@@ -155,7 +150,7 @@ if ($env:LAB_LOCAL_MODE) {
 }
 
 . "$PSScriptRoot/scaffold/20c-enrich-lookup.ps1"
-Build-Lab
+Invoke-LabBuild
 
 Save-Checkpoint -Id "cp17" -Message "Look new products up in Open Food Facts" -Body @'
 Inside the condition, look the barcode up with the lab's own Open Food Facts connector and write name, brand, quantity, image URL and sync time back to the Product row. Both contracts come from this repository - the connector's apiDefinition.swagger.json and the Product table's Entity.xml - so this update needs no environment.
@@ -166,7 +161,7 @@ The connection reference names the connector by its logical name and carries its
 - add the lab_openfoodfacts connection reference (lab_connectorsopenfoodfacts, with customconnectorid) to Solutions.Logic
 - enrichproducts: Get_product_by_barcode (Open Food Facts) and Update_the_product (Dataverse UpdateOnlyRecord)
 ## Testing
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.Logic builds locally; the build check on this PR builds the whole repository
 - 'txc environment connector operation get lab_connectorsopenfoodfacts GetProductByBarcode' answers with source: workspace
 '@
 
@@ -179,7 +174,7 @@ if ($env:LAB_LOCAL_MODE) {
     Write-Info "  through them (--use-connection), deploy Solutions.Logic to Dev ($devUrl) and add a Product."
     $TeamsPoster = "Flow bot"; $TeamsLocation = "Chat with Flow bot"; $TeamsRecipient = "you@example.com"
     . "$PSScriptRoot/scaffold/20d-enrich-notify.ps1"
-    Build-Lab
+    Invoke-LabBuild
 } else {
     # Idempotent by connector and display name: a re-run finds the connections it created.
     $connections = @{}
@@ -255,7 +250,8 @@ if ($env:LAB_LOCAL_MODE) {
     $TeamsRecipient = $message.connectionOwner
 
     . "$PSScriptRoot/scaffold/20d-enrich-notify.ps1"
-    Build-Lab
+    # The import below uses the built Solutions.Logic.zip, so build it even on a re-run.
+    Invoke-LabBuild -Project Solutions.Logic
 
     # Swap the custom connector's logical name for its id in Dev, in a copy of the built zip.
     $connectors = Invoke-TxcJson environment connector list --filter "Open Food Facts" --profile $devProfile
@@ -344,7 +340,7 @@ The custom connector's id in Dev carries a hash, so the source names it by its l
 - enrichproducts: Post_in_Teams (PostMessageToConversation, Flow bot to the connection's owner)
 - .txc/connectors/: the Teams contract
 ## Testing
-- dotnet build --nologo --verbosity quiet passes from the repository root
+- Solutions.Logic builds locally; the build check on this PR builds the whole repository
 - Dev: a Product added with barcode 3017620422003 gets its name, brand, quantity and image from the flow within 3 minutes
 '@
 
