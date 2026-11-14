@@ -4,7 +4,8 @@ description: CP12 - move configuration data as source (Lab 1, reference data)
 ---
 
 Please implement the reference data from docs/design/lab-1-data-model.md
-(the Reference data section) as a Configuration Migration package, using the TALXIS
+(the Reference data section), plus the two products from Lab 5 part A with the two food items
+linked to them, as a Configuration Migration package, using the TALXIS
 skills, so the records travel with the app instead of being typed into each environment.
 
 Work under src/ and the solution file. Use the project names from the project table in docs/design/00-solution-architecture.md,

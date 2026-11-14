@@ -37,6 +37,7 @@ if ((Test-Path $updateLock) -and (Get-Command flock -ErrorAction SilentlyContinu
     Write-Info "Waiting for the Codespace's tool update to finish (up to 3 minutes)..."
     flock -w 180 $updateLock true
     if ($LASTEXITCODE -ne 0) { Write-Warn2 "The tool update is still running after 3 minutes - checking the tools anyway." }
+    else { Write-Ok "Tool update finished" }
 }
 
 # Each tool is actually run, not just looked up on PATH: a tool mid-update can be on PATH and
@@ -90,6 +91,8 @@ Write-Ok "Random identifier for this lab: $rid"
 Save-Checkpoint -Id "cp01" -Message "Verify developer tooling and initialize lab credentials" -Body @'
 Verify the local toolchain and sign in to the services required to build and deploy the warehouse app. This seeds shared lab state so later checkpoints can reuse the same identities and environment metadata.
 
+Files changed shows only .lab-state.json: the sign-ins live on this machine, not in the repository.
+
 ## Changes
 - wait for the Codespace's start-time tool update, then run dotnet, git, gh, pac, txc, az, pa and node
 - authenticate GitHub CLI, TALXIS CLI, and Azure CLI
@@ -97,4 +100,4 @@ Verify the local toolchain and sign in to the services required to build and dep
 ## Testing
 - tool checks pass; authenticated sessions are ready for subsequent scripts
 '@
-Write-Host "`nNext: .lab-scripts/CP02-create-repository-layout.ps1" -ForegroundColor Cyan
+Write-Next cp02

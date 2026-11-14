@@ -25,5 +25,17 @@ the next prompt, /cp09b-code-app.
 If you get stuck, .lab-scripts/CP09-implement-ui.ps1 does the whole UI step, and the
 scaffold files it calls (05a to 05d, 09, 10 and 05e) are good examples for this half.
 
+This takes about a hundred `txc` calls; keep going until everything below exists. Before you
+finish, go through this list and tell me which items are done:
+
+1. Solutions.UI referencing the existing tables, with the app and its sitemap
+2. a main form per table with every column from the spec
+3. the Active views with the spec's columns
+4. the Items subgrid on the Location form and the Transactions subgrid on the Item form
+5. the form script handlers and the ribbon button, with the spec's messages
+6. the TALXIS Grid on the Location form
+
+If something is missing, do it before telling me to continue.
+
 When you're done, run `dotnet build WarehouseManagement.slnx` and fix anything it
 reports. Then tell me to continue with /cp09b-code-app. Don't save the checkpoint yet.

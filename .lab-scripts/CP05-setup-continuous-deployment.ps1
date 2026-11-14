@@ -158,4 +158,4 @@ Set up GitHub Actions deployment for the warehouse app without long-lived secret
 ## Testing
 - GitHub Actions is enabled and deploy.yml names the app registration, tenant and Test environment
 '@
-Write-Host "`nNext: .lab-scripts/CP06-implement-data-model.ps1" -ForegroundColor Cyan
+Write-Next cp06

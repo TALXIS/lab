@@ -47,8 +47,11 @@ $locationFormGuid = $locationFormFile.BaseName.Trim('{}')
 #            Add Reorder Point to the item view (data for the low-stock rule)
 # ──────────────────────────────────────────────────────────────────────────────────────────
 
-$itemViewFile = Get-ChildItem "src/Solutions.UI/Entities/${prefix}_warehouseitem/SavedQueries/*.xml" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (-not $itemViewFile) { Write-Host "  ✗ Warehouse Item view not found — run CP09 first" -ForegroundColor Red; throw "Warehouse Item view not found" }
+# The default "Active Warehouse Items" view in the data model (05d added the spec's columns to it).
+$itemViewFile = Get-ChildItem "src/Solutions.DataModel/Entities/${prefix}_warehouseitem/SavedQueries/*.xml" | Where-Object {
+    ([xml](Get-Content $_.FullName -Raw)).SelectSingleNode("//querytype").InnerText -eq '0'
+} | Select-Object -First 1
+if (-not $itemViewFile) { Write-Host "  ✗ Warehouse Item view not found — run CP06 first" -ForegroundColor Red; throw "Warehouse Item view not found" }
 $itemViewXml  = [xml](Get-Content $itemViewFile.FullName -Raw)
 if (-not $itemViewXml.SelectSingleNode("//cell[@name='${prefix}_reorderpoint']")) {
     $cell = $itemViewXml.CreateElement("cell")

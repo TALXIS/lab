@@ -16,6 +16,10 @@
 # attribute (message, table, stage), and dotnet build of Solutions.Logic generates the
 # SdkMessageProcessingSteps XML from it. Change the attribute, rebuild, commit the XML.
 #
+# The steps themselves are declared in code: each plugin class carries a [PluginStep]
+# attribute (message, table, stage), and dotnet build of Solutions.Logic generates the
+# SdkMessageProcessingSteps XML from it. Change the attribute, rebuild, commit the XML.
+#
 # Stage choice matters: ValidateWarehouseTransaction runs in Pre-validation - before the
 # database transaction starts - the cheapest place to reject bad input with an
 # InvalidPluginExecutionException. SubtractQuantity runs in Post-operation: the record is
@@ -49,4 +53,4 @@ Introduce server-side inventory logic so warehouse transactions are validated an
 ## Testing
 - dotnet build --nologo --verbosity quiet passes with the new plugin and logic projects
 '@
-Write-Host "`nNext: .lab-scripts/CP08-implement-security.ps1" -ForegroundColor Cyan
+Write-Next cp08

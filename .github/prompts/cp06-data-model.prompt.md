@@ -13,7 +13,14 @@ the table, column and choice names exactly as the spec has them, because later
 checkpoints read them by name.
 
 Put the tables in their own Dataverse solution, and add a Package Deployer project
-that references it, so one `dotnet build` produces the single package we deploy.
+that references it, so one `dotnet build` produces the single package we deploy. Make sure
+both projects are in `WarehouseManagement.slnx` (`dotnet sln list`, then `dotnet sln add`
+what's missing): the package template doesn't add itself, and the build check publishes
+`src/Packages.Main`.
+
+Delete the empty `RibbonDiff.xml` the entity template puts next to each `Entity.xml`. Ribbon
+buttons belong to the UI solution of CP09; an empty ribbon in the data model removes them from
+Dev whenever the data model is imported on its own, as CP11 does.
 
 If you get stuck, .lab-scripts/CP06-implement-data-model.ps1 does this same step
 and is a good example to read.

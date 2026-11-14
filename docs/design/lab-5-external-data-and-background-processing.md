@@ -84,7 +84,7 @@ A `Script : ScriptBase` class that routes on `Context.OperationId`:
 | Operation | Behaviour |
 |---|---|
 | `GetProductByBarcode` | Adds the header `User-Agent: TALXIS-Lab-WarehousePicking/1.0 (+https://github.com/TALXIS/lab)`, which Open Food Facts requires, and sends the request. A non-success response passes through. If the body's `status` isn't `1`, returns **404** with `{"message": "No product found for this barcode"}`. Otherwise returns the flattened product: `ean` ← `code`, `name` ← `product.product_name`, `brand` ← `product.brands`, `quantity` ← `product.quantity`, `imageUrl` ← `product.image_url` |
-| `GetProductImage` | If `imageUrl` is missing, returns **400** with `{"message": "imageUrl query parameter is required"}`. Otherwise sends the request to `imageUrl` with the same `User-Agent` and returns the bytes, so the code app can display images its content security policy would otherwise block |
+| `GetProductImage` | If `imageUrl` is missing, returns **400** with `{"message": "imageUrl query parameter is required"}`. If `imageUrl` isn't an `https` URL on an `openfoodfacts.org` host, returns **400** with `{"message": "imageUrl must point to openfoodfacts.org"}` (the connector must not fetch arbitrary URLs). Otherwise sends the request to `imageUrl` with the same `User-Agent` and returns the bytes, so the code app can display images its content security policy would otherwise block |
 
 ## Part C: Code app integration
 

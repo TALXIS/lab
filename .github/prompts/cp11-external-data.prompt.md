@@ -12,6 +12,10 @@ Work under src/ and the solution file. Use the project names from the project ta
 because the build and deploy steps look for them, and keep
 the table, column and choice names exactly as the spec has them.
 
+Skip the *Reference data* subsection of part A: `/cp12-config-data` adds the products to the
+reference data package, which doesn't exist yet. For `GetProductImage`, only fetch images from
+`openfoodfacts.org` hosts; refuse other URLs with a 400.
+
 Do it in the order the spec lists the parts, and make sure each one works before
 starting the next.
 
@@ -36,5 +40,6 @@ Save the checkpoint after each part, not only at the end, with these messages:
 
 Each save opens its own pull request on the fork and waits. Give me the PR link and tell me to
 review it and merge it on GitHub (Files changed, Merge pull request, Confirm). If the terminal shows
-"press Enter to merge", also tell me to press Enter there once I've merged. Then carry on with the
-next part. Don't merge it yourself.
+"press Enter to merge", also tell me to press Enter there once I've merged. Wait until the save
+prints `✓ Merged + tagged`, then carry on with the next part; don't edit files while it's waiting.
+Don't merge it yourself.

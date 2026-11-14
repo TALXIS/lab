@@ -72,8 +72,8 @@ public class Script : ScriptBase
         return response;
     }
 
-    // Forwards a caller-supplied absolute URL unvalidated - an open-proxy shape, deliberately
-    // left simplified here since this is a NoAuth teaching connector with low blast radius.
+    // Fetches only from openfoodfacts.org over https: a connector that forwarded any URL the
+    // caller supplies would be an open proxy running on Microsoft's infrastructure.
     private async Task<HttpResponseMessage> GetProductImageAsync()
     {
         var imageUrl = GetQueryParameter(this.Context.Request.RequestUri, "imageUrl");
@@ -84,7 +84,18 @@ public class Script : ScriptBase
             return badRequest;
         }
 
-        this.Context.Request.RequestUri = new Uri(imageUrl);
+        Uri target;
+        if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out target)
+            || target.Scheme != Uri.UriSchemeHttps
+            || !(target.Host.Equals("openfoodfacts.org", StringComparison.OrdinalIgnoreCase)
+                 || target.Host.EndsWith(".openfoodfacts.org", StringComparison.OrdinalIgnoreCase)))
+        {
+            var badRequest = new HttpResponseMessage(HttpStatusCode.BadRequest);
+            badRequest.Content = CreateJsonContent("{\"message\": \"imageUrl must point to openfoodfacts.org\"}");
+            return badRequest;
+        }
+
+        this.Context.Request.RequestUri = target;
         this.Context.Request.Headers.UserAgent.ParseAdd(UserAgent);
 
         return await this.Context.SendAsync(this.Context.Request, this.CancellationToken)

@@ -131,4 +131,4 @@ Package warehouse reference data so environments stay consistent as the app move
 - code app npm run dev against Dev shows real items/locations, a successful pick updates
   quantity live, and an over-pick on Wireless Mouse surfaces the plugin's rejection message
 '@
-Write-Host "`nNext: .lab-scripts/CP13-extend-branch-policies-build-checks.ps1" -ForegroundColor Cyan
+Write-Next cp13
