@@ -51,17 +51,13 @@ A hands-on Power Platform ALM lab: attendees run the checkpoint scripts in `.lab
 
 ## In a GitHub Copilot cloud session
 
-You're in one when `/tmp/agentbox` exists: the session-start hook creates it. There, these rules
+You're in one when `/tmp/agentbox` exists or `GITHUB_COPILOT_API_TOKEN` is set. There, these rules
 replace the ones above about committing and saving checkpoints.
 
-- A session-start hook (`.github/hooks/agentbox.json`) installs the tools in the background; it
-  takes about 5 minutes. Read and plan meanwhile, but before you run `dotnet`, `txc`, `pac`, `pa`,
-  `pwsh` or a `.lab-scripts` script, wait until `/tmp/agentbox/ready` exists: check every 20
-  seconds, and tell the person once that the tools are still installing.
-- If `/tmp/agentbox/ready` is missing and `/tmp/agentbox/setup.log` hasn't grown for two minutes,
-  or doesn't exist, run the setup yourself: `curl -fsSL https://talxis.com/agentbox-setup | bash`.
-  It's safe to run again. If it reports a host it couldn't reach, tell the person to add that host
-  under the repository's Settings → Copilot → Internet access, then start a new session.
+- The person's AgentBox setup for Copilot installs the tools: before you run `dotnet`, `txc`, `pac`,
+  `pa`, `pwsh` or a `.lab-scripts` script, wait until `/tmp/agentbox/done` exists. If neither
+  `/tmp/agentbox` nor `txc` exists, tell the person that AgentBox isn't set up for their Copilot
+  cloud sessions yet and point them to https://github.com/TALXIS/tools-agentbox.
 - The build checkpoints (CP06–CP09, CP11, CP12) have no `/cp…` commands here: when the person names
   one, read the matching `.github/prompts/cpNN-*.prompt.md` and follow it.
 - Don't run `save-checkpoint.ps1` here: you commit to your session's branch and open the pull
