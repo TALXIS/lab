@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "timeoutSec": 30,
+        "bash": "curl -fsSL https://raw.githubusercontent.com/TALXIS/tools-agentbox/claude/funny-feynman-wt3l4m/src/container/scripts/copilot-session-start.sh | bash"
+      }
+    ]
+  }
+}
