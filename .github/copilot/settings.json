@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "talxis": {
+      "source": {
+        "source": "github",
+        "repo": "TALXIS/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "implement@talxis": true
+  }
+}
